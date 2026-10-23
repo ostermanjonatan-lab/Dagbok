@@ -42,8 +42,12 @@ function normalize(e) {
   return {
     text,
     mood: Number.isInteger(e.mood) && e.mood >= 1 && e.mood <= 5 ? e.mood : null,
-    weather: w && typeof w.code === 'number' && typeof w.temp === 'number' && typeof w.time === 'string'
-      ? { code: w.code, temp: w.temp, time: w.time }
+    weather: w && (typeof w.code === 'number' || typeof w.temp === 'number')
+      ? {
+        code: typeof w.code === 'number' ? w.code : null,
+        temp: typeof w.temp === 'number' ? w.temp : null,
+        time: typeof w.time === 'string' ? w.time : null,
+      }
       : null,
     updated: typeof e.updated === 'string' ? e.updated : new Date().toISOString(),
   };
@@ -106,9 +110,12 @@ const WEATHER_TEXT = {
   95: 'Åska', 96: 'Åska med hagel', 99: 'Åska med hagel',
 };
 
+// Väder som valts för hand i artifact-versionen saknar klockslag och kan sakna kod eller temperatur.
 function fmtWeather(w) {
-  const temp = String(Math.round(w.temp)).replace('-', '−');
-  return `${WEATHER_TEXT[w.code] || 'Okänt väder'}, ${temp} °C kl ${w.time}`;
+  const parts = [];
+  if (w.code != null) parts.push(w.code === 0 ? 'Sol' : WEATHER_TEXT[w.code] || 'Okänt väder');
+  if (w.temp != null) parts.push(`${String(Math.round(w.temp)).replace('-', '\u2212')}\u00a0°C`);
+  return parts.join(', ') + (w.time ? ` kl ${w.time}` : '');
 }
 
 function getPosition() {
@@ -166,6 +173,8 @@ async function updateWeather(key) {
   if (!e || weatherBusy.has(key)) return;
   // Före kl 12 uppdateras vädret vid varje sparning, högst var 15:e minut.
   // Annars hämtas 12-vädret en gång.
+  // Väder som valts för hand skrivs inte över
+  if (e.weather && !e.weather.time) return;
   if (e.weather && !wantsNow(key) && e.weather.time === '12:00') return;
   if (wantsNow(key) && e.weatherAt && Date.now() - e.weatherAt < 15 * 60 * 1000) return;
 

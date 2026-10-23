@@ -32,6 +32,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body {
   background: var(--bg);
   color: var(--text);
@@ -114,7 +115,15 @@ textarea {
 }
 textarea.main { font-size: 19px; border-color: var(--accent); }
 
-.weather { margin: 0 0 0 44px; font-size: 14px; color: var(--muted); min-height: 21px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips button {
+  border: 1px solid var(--line); background: var(--surface);
+  border-radius: 999px; padding: 7px 13px; cursor: pointer;
+}
+.chips button[aria-checked="true"] { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.temp { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 14px; color: var(--muted); }
+.temp input { width: 90px; }
+.auto { font-size: 13px; color: var(--muted); margin: 6px 0 0; }
 .scale { display: flex; gap: 4px; }
 .scale button {
   flex: 1; height: 44px; cursor: pointer;
@@ -282,8 +291,6 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
     </div>
     <button type="button" class="link" id="to-today" hidden>Gå till idag</button>
 
-    <p class="weather" id="weather"></p>
-
     <form id="entry" autocomplete="off">
       <label class="field">
         <span id="text-label">Vad som hänt idag</span>
@@ -299,6 +306,23 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
           <button type="button" role="radio" data-v="5" style="--m: var(--m5)" aria-label="5, bra">5</button>
         </div>
         <div class="ends"><span>Tungt</span><span>Bra</span></div>
+      </fieldset>
+      <fieldset class="field">
+        <legend>Väder</legend>
+        <div class="chips" id="f-weather" role="radiogroup">
+          <button type="button" role="radio" data-code="0">Sol</button>
+          <button type="button" role="radio" data-code="2">Halvklart</button>
+          <button type="button" role="radio" data-code="3">Mulet</button>
+          <button type="button" role="radio" data-code="63">Regn</button>
+          <button type="button" role="radio" data-code="73">Snö</button>
+          <button type="button" role="radio" data-code="95">Åska</button>
+          <button type="button" role="radio" data-code="45">Dimma</button>
+        </div>
+        <label class="temp">
+          <input id="f-temp" inputmode="decimal" placeholder="12" aria-label="Temperatur i grader">
+          <span>°C</span>
+        </label>
+        <p class="auto" id="weather-auto" hidden></p>
       </fieldset>
     </form>
 
@@ -357,6 +381,8 @@ const CACHE_KEY = 'dagbok.v1';
 const $ = (id) => document.getElementById(id);
 
 const textField = $('f-text');
+const tempField = $('f-temp');
+const weatherButtons = [...$('f-weather').querySelectorAll('button')];
 const moodButtons = [...$('f-mood').querySelectorAll('button')];
 
 let entries = normalizeAll(loadCache());
@@ -416,13 +442,23 @@ const WEATHER_TEXT = {
   95: 'Åska', 96: 'Åska med hagel', 99: 'Åska med hagel',
 };
 
+// Knapparna samlar väderkoderna i grupper. Koden på knappen är gruppens första.
+const WEATHER_GROUPS = [
+  [0, [0, 1]], [2, [2]], [3, [3]],
+  [63, [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82]],
+  [73, [71, 73, 75, 77, 85, 86]], [95, [95, 96, 99]], [45, [45, 48]],
+];
+const groupOf = (code) => (WEATHER_GROUPS.find(([, codes]) => codes.includes(code)) || [null])[0];
+
 function fmtWeather(w) {
-  const temp = String(Math.round(w.temp)).replace('-', '\u2212');
-  return `${WEATHER_TEXT[w.code] || 'Okänt väder'}, ${temp}\u00a0°C kl ${w.time}`;
+  const parts = [];
+  if (w.code != null) parts.push(w.code === 0 ? 'Sol' : WEATHER_TEXT[w.code] || 'Okänt väder');
+  if (w.temp != null) parts.push(`${String(Math.round(w.temp)).replace('-', '\u2212')}\u00a0°C`);
+  return parts.join(', ') + (w.time ? ` kl ${w.time}` : '');
 }
 
 // Gör om ett inlägg till dagens format. Äldre inlägg hade två textfält.
-// Vädret hämtas av telefonappen och följer med vid import.
+// Vädret väljs här eller hämtas av telefonappen och följer med vid import.
 function clean(e) {
   const text = typeof e.text === 'string'
     ? e.text
@@ -431,8 +467,12 @@ function clean(e) {
   return {
     text,
     mood: Number.isInteger(e.mood) && e.mood >= 1 && e.mood <= 5 ? e.mood : null,
-    weather: w && typeof w.code === 'number' && typeof w.temp === 'number' && typeof w.time === 'string'
-      ? { code: w.code, temp: w.temp, time: w.time }
+    weather: w && (typeof w.code === 'number' || typeof w.temp === 'number')
+      ? {
+        code: typeof w.code === 'number' ? w.code : null,
+        temp: typeof w.temp === 'number' ? w.temp : null,
+        time: typeof w.time === 'string' ? w.time : null,
+      }
       : null,
     updated: typeof e.updated === 'string' ? e.updated : new Date().toISOString(),
   };
@@ -520,11 +560,31 @@ async function connect() {
 
 /* Dagvy */
 
+function parseTemp(str) {
+  const n = parseFloat(String(str).replace(/[\u2212\u2013]/g, '-').replace(',', '.').replace(/\s/g, ''));
+  return Number.isFinite(n) && n > -80 && n < 60 ? n : null;
+}
+
+function readWeather(old) {
+  const chip = weatherButtons.find((b) => b.getAttribute('aria-checked') === 'true');
+  const temp = parseTemp(tempField.value);
+  if (!chip && temp == null) return null;
+  const code = chip ? Number(chip.dataset.code) : null;
+  // Oförändrat val behåller det hämtade vädret med klockslag och exakt kod
+  if (old && groupOf(old.code) === code &&
+      (old.temp == null ? temp == null : temp != null && Math.round(old.temp) === Math.round(temp))) {
+    return old;
+  }
+  return { code, temp, time: null };
+}
+
 function readForm() {
   const checked = moodButtons.find((b) => b.getAttribute('aria-checked') === 'true');
+  const old = entries[current];
   return {
     text: textField.value.trim(),
     mood: checked ? Number(checked.dataset.v) : null,
+    weather: readWeather(old && old.weather),
   };
 }
 
@@ -532,8 +592,18 @@ function setMood(v) {
   moodButtons.forEach((b) => b.setAttribute('aria-checked', String(Number(b.dataset.v) === v)));
 }
 
+function setWeatherChip(code) {
+  weatherButtons.forEach((b) => b.setAttribute('aria-checked', String(Number(b.dataset.code) === code)));
+}
+
 function showWeather(e) {
-  $('weather').textContent = e && e.weather ? fmtWeather(e.weather) : '';
+  const w = e && e.weather;
+  setWeatherChip(w ? groupOf(w.code) : null);
+  tempField.value = w && w.temp != null ? String(Math.round(w.temp)).replace('-', '\u2212') : '';
+  // Hämtat väder från telefonappen visas med sin exakta text
+  const auto = w && w.time;
+  $('weather-auto').hidden = !auto;
+  $('weather-auto').textContent = auto ? `Hämtat: ${fmtWeather(w)}` : '';
 }
 
 function autosize(el) {
@@ -576,23 +646,22 @@ function setStatus(text) { $('status').textContent = text; }
 function save() {
   saveTimer = null;
   const data = readForm();
-  if (!data.text && data.mood == null) {
+  if (!data.text && data.mood == null && !data.weather) {
     if (!entries[current]) return;
     delete entries[current];
     writeCache();
     remoteDelete(current);
-    showWeather(null);
+    $('weather-auto').hidden = true;
     setStatus('');
     $('delete').hidden = true;
     return;
   }
-  const old = entries[current];
-  data.weather = old ? old.weather : null;
   data.updated = new Date().toISOString();
   entries[current] = data;
   writeCache();
   remoteSet(current, data);
   setStatus(savedText(data.updated));
+  $('weather-auto').hidden = !(data.weather && data.weather.time);
   if ($('confirm').hidden) $('delete').hidden = false;
 }
 
@@ -616,6 +685,20 @@ moodButtons.forEach((b) => {
     setMood(on ? null : Number(b.dataset.v));
     scheduleSave();
   });
+});
+
+weatherButtons.forEach((b) => {
+  b.addEventListener('click', () => {
+    const on = b.getAttribute('aria-checked') === 'true';
+    setWeatherChip(on ? null : Number(b.dataset.code));
+    scheduleSave();
+  });
+});
+
+tempField.addEventListener('input', scheduleSave);
+tempField.addEventListener('blur', () => {
+  const n = parseTemp(tempField.value);
+  tempField.value = n != null ? String(Math.round(n)).replace('-', '\u2212') : '';
 });
 
 $('prev').addEventListener('click', () => showDay(shiftKey(current, -1)));
