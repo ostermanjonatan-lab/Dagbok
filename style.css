@@ -508,6 +508,59 @@ mark {
   background: var(--m);
   margin-right: 5px;
 }
+/* Den här dagen tidigare år */
+.memories {
+  margin-top: 28px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.memories h2 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--accent);
+}
+.memory {
+  display: block;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 12px 14px;
+  text-align: left;
+  color: var(--text);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+}
+.memory:hover { border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+.memory .ago {
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.memory .ago .dot { margin-right: 7px; }
+.memory .on { display: block; margin-top: 1px; font-size: 13px; color: var(--muted); }
+.memory .excerpt {
+  display: -webkit-box;
+  margin-top: 6px;
+  overflow: hidden;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  font-family: var(--serif);
+  font-size: 16px;
+  line-height: 1.5;
+}
+.memory .mthumbs { display: flex; gap: 4px; margin-top: 8px; }
+.memory .mthumbs img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 6px;
+  background: var(--line);
+}
+
 /* Läsrutan som öppnas från kalendern, ett fönster mitt på skärmen */
 .reader {
   width: calc(100% - 32px);

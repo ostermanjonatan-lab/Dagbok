@@ -444,6 +444,59 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
 }
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--m); margin-right: 8px; }
 
+/* Den här dagen tidigare år */
+.memories {
+  margin-top: 28px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.memories h2 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--accent);
+}
+.memory {
+  display: block;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 12px 14px;
+  text-align: left;
+  color: var(--text);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+}
+.memory:hover { border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+.memory .ago {
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.memory .ago .dot { margin-right: 7px; }
+.memory .on { display: block; margin-top: 1px; font-size: 13px; color: var(--muted); }
+.memory .excerpt {
+  display: -webkit-box;
+  margin-top: 6px;
+  overflow: hidden;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  font-family: var(--serif);
+  font-size: 16px;
+  line-height: 1.5;
+}
+.memory .mthumbs { display: flex; gap: 4px; margin-top: 8px; }
+.memory .mthumbs img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 6px;
+  background: var(--line);
+}
+
 /* Läsrutan som öppnas från kalendern, ett fönster mitt på skärmen */
 .reader {
   width: calc(100% - 32px);
@@ -699,6 +752,10 @@ body.keyboard .nav { visibility: hidden; }
         <button type="button" class="link" id="delete-no">Avbryt</button>
       </span>
     </div>
+    <section class="memories" id="memories" aria-labelledby="memories-title" hidden>
+      <h2 id="memories-title">Den här dagen</h2>
+      <div id="memory-list"></div>
+    </section>
   </section>
 
   <section id="view-cal" hidden>
@@ -1481,6 +1538,7 @@ function showDay(key) {
   $('confirm').hidden = true;
   $('delete').hidden = !entries[key];
   setStatus(e ? savedText(e.updated) : '');
+  renderMemories(key);
 }
 
 function savedText(iso) {
@@ -1737,6 +1795,37 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') flushSave();
 });
 window.addEventListener('pagehide', flushSave);
+
+/* Den här dagen tidigare år */
+
+// Inlägg från samma datum tidigare år, det senaste först
+function renderMemories(key) {
+  const md = key.slice(4);
+  const year = Number(key.slice(0, 4));
+  const keys = Object.keys(entries).filter((k) => k.slice(4) === md && k < key).sort().reverse();
+  $('memories').hidden = !keys.length;
+  $('memory-list').innerHTML = keys.map((k) => {
+    const e = entries[k];
+    const n = year - Number(k.slice(0, 4));
+    // Rader slås ihop till ett utdrag, med punkt efter rubriker och listpunkter
+    const text = Paper.mdToText(e.text).split('\n').map((l) => l.trim()).filter(Boolean)
+      .map((l) => (/[.!?:…]$/.test(l) ? l : l + '.')).join(' ');
+    const dot = e.mood ? `<span class="dot" style="--m: var(--m${e.mood})"></span>` : '';
+    const pics = e.photos.slice(0, 4).map((id) =>
+      `<img src="${escapeHtml(photoUrl(id))}" data-id="${escapeHtml(id)}" alt="" loading="lazy">`).join('');
+    return `<button type="button" class="memory" data-key="${k}">
+      <span class="ago">${dot}För ${n} år sedan</span>
+      <span class="on">${fmtDate(k)}${e.weather ? `, ${escapeHtml(fmtWeather(e.weather))}` : ''}</span>
+      ${text ? `<span class="excerpt">${escapeHtml(text)}</span>` : ''}
+      ${pics ? `<span class="mthumbs">${pics}</span>` : ''}
+    </button>`;
+  }).join('');
+}
+
+$('memory-list').addEventListener('click', (ev) => {
+  const m = ev.target.closest('.memory');
+  if (m) openReader(m.dataset.key);
+});
 
 /* Flöde */
 

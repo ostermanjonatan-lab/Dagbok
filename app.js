@@ -242,6 +242,7 @@ function showDay(key) {
   $('text-label').textContent = key === today ? 'Vad som hänt idag' : 'Vad som hände';
   $('delete').hidden = !e;
   setStatus(e ? savedText(e.updated) : '');
+  renderMemories(key);
 }
 
 function savedText(iso) {
@@ -504,6 +505,37 @@ $('photo-delete-yes').addEventListener('click', () => {
   renderPhotos();
   scheduleSave();
   closePhoto();
+});
+
+/* Den här dagen tidigare år */
+
+// Inlägg från samma datum tidigare år, det senaste först
+function renderMemories(key) {
+  const md = key.slice(4);
+  const year = Number(key.slice(0, 4));
+  const keys = Object.keys(entries).filter((k) => k.slice(4) === md && k < key).sort().reverse();
+  $('memories').hidden = !keys.length;
+  $('memory-list').innerHTML = keys.map((k) => {
+    const e = entries[k];
+    const n = year - Number(k.slice(0, 4));
+    // Rader slås ihop till ett utdrag, med punkt efter rubriker och listpunkter
+    const text = Paper.mdToText(e.text).split('\n').map((l) => l.trim()).filter(Boolean)
+      .map((l) => (/[.!?:…]$/.test(l) ? l : l + '.')).join(' ');
+    const dot = e.mood ? `<span class="dot" style="--m: var(--m${e.mood})"></span>` : '';
+    const pics = e.photos.slice(0, 4).map((id) =>
+      `<img src="${escapeHtml(photoUrl(id))}" data-id="${escapeHtml(id)}" alt="" loading="lazy">`).join('');
+    return `<button type="button" class="memory" data-key="${k}">
+      <span class="ago">${dot}För ${n} år sedan</span>
+      <span class="on">${fmtDate(k)}${e.weather ? `, ${escapeHtml(fmtWeather(e.weather))}` : ''}</span>
+      ${text ? `<span class="excerpt">${escapeHtml(text)}</span>` : ''}
+      ${pics ? `<span class="mthumbs">${pics}</span>` : ''}
+    </button>`;
+  }).join('');
+}
+
+$('memory-list').addEventListener('click', (ev) => {
+  const m = ev.target.closest('.memory');
+  if (m) openReader(m.dataset.key);
 });
 
 /* Flöde */
