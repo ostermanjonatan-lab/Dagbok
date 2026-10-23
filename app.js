@@ -698,65 +698,36 @@ try {
   calShow = ['', 'mood', 'weather'].includes(show) ? show : '';
 } catch {}
 
-/* Rullgardinsmenyn för vad kalendern visar */
+/* Tabletterna för vad kalendern visar */
 
-const ddBtn = $('cal-show');
-const ddList = $('cal-show-list');
-const ddOptions = [...ddList.querySelectorAll('li')];
+const pills = [...$('cal-show').querySelectorAll('.pill')];
 
 function syncShow() {
-  const opt = ddOptions.find((o) => o.dataset.value === calShow) || ddOptions[0];
-  ddBtn.textContent = opt.textContent;
-  ddOptions.forEach((o) => o.setAttribute('aria-selected', String(o === opt)));
-}
-
-function openShow() {
-  ddList.hidden = false;
-  ddBtn.setAttribute('aria-expanded', 'true');
-  // Fäll uppåt om listan inte får plats ovanför bottenmenyn
-  ddList.classList.remove('up');
-  const nav = document.querySelector('.nav');
-  const limit = window.innerHeight - (nav ? nav.offsetHeight : 0) - 8;
-  if (ddList.getBoundingClientRect().bottom > limit) ddList.classList.add('up');
-  (ddOptions.find((o) => o.getAttribute('aria-selected') === 'true') || ddOptions[0]).focus();
-}
-
-function closeShow(focusButton) {
-  if (ddList.hidden) return;
-  ddList.hidden = true;
-  ddBtn.setAttribute('aria-expanded', 'false');
-  if (focusButton) ddBtn.focus();
+  pills.forEach((b) => {
+    const on = b.dataset.value === calShow;
+    b.setAttribute('aria-checked', String(on));
+    // Bara den valda tabletten går att nå med tabb, pilarna flyttar mellan dem
+    b.tabIndex = on ? 0 : -1;
+  });
 }
 
 function chooseShow(value) {
   calShow = value;
   try { localStorage.setItem(SHOW_KEY, value); } catch {}
   syncShow();
-  closeShow(true);
   renderCal();
 }
 
-ddBtn.addEventListener('click', () => (ddList.hidden ? openShow() : closeShow(false)));
-ddBtn.addEventListener('keydown', (ev) => {
-  if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
-    ev.preventDefault();
-    openShow();
-  }
-});
-ddList.addEventListener('click', (ev) => {
-  const li = ev.target.closest('li');
-  if (li) chooseShow(li.dataset.value);
-});
-ddList.addEventListener('keydown', (ev) => {
-  const i = ddOptions.indexOf(document.activeElement);
-  if (ev.key === 'ArrowDown') { ev.preventDefault(); ddOptions[Math.min(i + 1, ddOptions.length - 1)].focus(); }
-  if (ev.key === 'ArrowUp') { ev.preventDefault(); ddOptions[Math.max(i - 1, 0)].focus(); }
-  if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); if (i >= 0) chooseShow(ddOptions[i].dataset.value); }
-  if (ev.key === 'Escape') { ev.preventDefault(); closeShow(true); }
-  if (ev.key === 'Tab') closeShow(false);
-});
-document.addEventListener('pointerdown', (ev) => {
-  if (!$('show-dd').contains(ev.target)) closeShow(false);
+pills.forEach((b) => b.addEventListener('click', () => chooseShow(b.dataset.value)));
+$('cal-show').addEventListener('keydown', (ev) => {
+  const i = pills.indexOf(document.activeElement);
+  if (i === -1) return;
+  const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[ev.key];
+  if (!step) return;
+  ev.preventDefault();
+  const next = pills[(i + step + pills.length) % pills.length];
+  next.focus();
+  chooseShow(next.dataset.value);
 });
 syncShow();
 

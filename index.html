@@ -84,14 +84,10 @@
       <div class="grid" id="cal-grid"></div>
       <div class="show">
         <span id="show-label">Visa</span>
-        <div class="dropdown" id="show-dd">
-          <button type="button" class="dd-btn" id="cal-show" aria-haspopup="listbox" aria-expanded="false"
-            aria-labelledby="show-label cal-show">Inget extra</button>
-          <ul class="dd-list" id="cal-show-list" role="listbox" aria-labelledby="show-label" hidden>
-            <li role="option" tabindex="-1" data-value="">Inget extra</li>
-            <li role="option" tabindex="-1" data-value="mood">Humör</li>
-            <li role="option" tabindex="-1" data-value="weather">Väder</li>
-          </ul>
+        <div class="pills" id="cal-show" role="radiogroup" aria-labelledby="show-label">
+          <button type="button" class="pill" role="radio" data-value="">Inget</button>
+          <button type="button" class="pill" role="radio" data-value="mood">Humör</button>
+          <button type="button" class="pill" role="radio" data-value="weather">Väder</button>
         </div>
       </div>
       <div class="legend" id="legend" hidden>
