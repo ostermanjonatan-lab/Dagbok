@@ -1,33 +1,34 @@
 <title>Dagbok</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
-/* Layout: en smal skrivspalt, flikar överst, datumet är det största på dagvyn */
+/* Layout: en smal skrivspalt, meny längst ner, datumet är det största på dagvyn.
+   Färger: krämvit #F3E6D5 som papper och vinröd #800020 som accent. */
 :root {
-  --bg: #f3f3ef;
-  --surface: #fcfcfa;
-  --text: #1f2226;
-  --muted: #6d7177;
-  --line: #dcddd7;
-  --accent: #2c4f86;
-  --accent-text: #fff;
-  --danger: #a33b2b;
+  --bg: #f3e6d5;
+  --surface: #fbf5ec;
+  --text: #2a1418;
+  --muted: #6e5954;
+  --line: #e0cfbb;
+  --accent: #800020;
+  --accent-text: #f3e6d5;
+  --danger: #b3261e;
   --m1: #d2483c; --m2: #e8893c; --m3: #e2c23d; --m4: #95c65c; --m5: #3d9c5a;
-  --on-mood: #1f2226;
+  --on-mood: #2a1418;
   --nav-h: 58px;
   --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
   --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #16181c; --surface: #1f2228; --text: #e6e7ea; --muted: #959aa3;
-    --line: #2f333a; --accent: #8fb0e6; --accent-text: #16181c; --danger: #e0806f;
+    --bg: #1e1214; --surface: #2a1a1d; --text: #f3e6d5; --muted: #b09a92;
+    --line: #3d2a2d; --accent: #d98a9a; --accent-text: #1e1214; --danger: #f08a7a;
     --m1: #e0675b; --m2: #eb9a55; --m3: #e6cb58; --m4: #a5d06f; --m5: #5cb878;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #16181c; --surface: #1f2228; --text: #e6e7ea; --muted: #959aa3;
-  --line: #2f333a; --accent: #8fb0e6; --accent-text: #16181c; --danger: #e0806f;
+  --bg: #1e1214; --surface: #2a1a1d; --text: #f3e6d5; --muted: #b09a92;
+  --line: #3d2a2d; --accent: #d98a9a; --accent-text: #1e1214; --danger: #f08a7a;
     --m1: #e0675b; --m2: #eb9a55; --m3: #e6cb58; --m4: #a5d06f; --m5: #5cb878;
   color-scheme: dark;
 }

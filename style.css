@@ -1,18 +1,18 @@
 :root {
-  --bg: #f6f3ee;
-  --surface: #fffdf9;
-  --text: #24221f;
-  --muted: #77716a;
-  --line: #e2ddd5;
-  --accent: #8a4b2a;
-  --accent-text: #fff;
-  --danger: #a33b2b;
+  --bg: #f3e6d5;
+  --surface: #fbf5ec;
+  --text: #2a1418;
+  --muted: #6e5954;
+  --line: #e0cfbb;
+  --accent: #800020;
+  --accent-text: #f3e6d5;
+  --danger: #b3261e;
   --m1: #d2483c;
   --m2: #e8893c;
   --m3: #e2c23d;
   --m4: #95c65c;
   --m5: #3d9c5a;
-  --on-mood: #1f1d1a;
+  --on-mood: #2a1418;
   --nav-h: 58px;
   --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
   --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -21,14 +21,14 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #1b1a18;
-    --surface: #242220;
-    --text: #ece7df;
-    --muted: #9b948a;
-    --line: #36332f;
-    --accent: #d99a72;
-    --accent-text: #1b1a18;
-    --danger: #e0806f;
+    --bg: #1e1214;
+    --surface: #2a1a1d;
+    --text: #f3e6d5;
+    --muted: #b09a92;
+    --line: #3d2a2d;
+    --accent: #d98a9a;
+    --accent-text: #1e1214;
+    --danger: #f08a7a;
     --m1: #e0675b;
     --m2: #eb9a55;
     --m3: #e6cb58;
