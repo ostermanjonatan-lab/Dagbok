@@ -339,14 +339,12 @@ const Paper = (() => {
       if (document.activeElement === el) updateBar();
     });
 
-    // Verktygsraden följer med tangentbordet på telefonen
+    // Bottenmenyn göms när tangentbordet är uppe på telefonen
     function place() {
       const vv = window.visualViewport;
-      if (!vv || !bar) return;
+      if (!vv) return;
       const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-      const open = kb > 80;
-      document.body.classList.toggle('keyboard', open);
-      bar.style.transform = open ? `translateY(${-kb}px)` : '';
+      document.body.classList.toggle('keyboard', kb > 80);
     }
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', place);

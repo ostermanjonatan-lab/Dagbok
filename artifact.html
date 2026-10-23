@@ -566,9 +566,6 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   position: relative;
   min-height: 36vh;
   padding: 14px 16px 16px;
-  background: var(--paper);
-  border: 1px solid var(--line);
-  border-radius: 10px;
   font-family: var(--serif);
   font-size: 19px;
   line-height: 1.6;
@@ -611,33 +608,37 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   overflow-wrap: anywhere;
 }
 
-/* Formateringsrad, syns bara när man skriver */
-.fmt {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
-  z-index: 6;
-  display: none;
-  gap: 4px;
-  padding: 6px max(12px, env(safe-area-inset-right, 0px)) 6px max(12px, env(safe-area-inset-left, 0px), calc((100% - 640px) / 2 + 8px));
-  background: var(--bg);
-  border-top: 1px solid var(--line);
+/* Formateringsraden ligger överst i skrivytan och följer med när man scrollar */
+.writer {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
 }
-body.editing .fmt { display: flex; }
-body.keyboard .fmt { bottom: 0; }
+.writer:focus-within { border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+.fmt {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 3;
+  display: flex;
+  gap: 2px;
+  padding: 5px 6px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+  border-radius: 10px 10px 0 0;
+}
 body.keyboard .nav { visibility: hidden; }
 .fmt button {
-  min-width: 44px;
-  height: 36px;
-  padding: 0 12px;
+  min-width: 40px;
+  height: 34px;
+  padding: 0 10px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 7px;
   background: none;
   color: var(--muted);
   cursor: pointer;
   font-size: 15px;
 }
+.fmt button:hover { color: var(--text); }
 .fmt button b, .fmt button i { font-family: var(--serif); font-size: 17px; }
 .fmt button[aria-pressed="true"] { background: var(--accent); color: var(--accent-text); }
 
@@ -716,8 +717,16 @@ body.keyboard .nav { visibility: hidden; }
     <form id="entry" autocomplete="off">
       <div class="field">
         <span id="text-label">Vad som hänt idag</span>
-        <div id="f-text" class="paper" contenteditable="true" role="textbox" aria-multiline="true"
-          aria-labelledby="text-label" spellcheck="true"></div>
+        <div class="writer">
+          <div class="fmt" id="fmt" role="toolbar" aria-label="Formatering" aria-controls="f-text">
+            <button type="button" data-cmd="bold" aria-label="Fet"><b>B</b></button>
+            <button type="button" data-cmd="italic" aria-label="Kursiv"><i>K</i></button>
+            <button type="button" data-cmd="h2">Rubrik</button>
+            <button type="button" data-cmd="ul">Lista</button>
+          </div>
+          <div id="f-text" class="paper" contenteditable="true" role="textbox" aria-multiline="true"
+            aria-labelledby="text-label" spellcheck="true"></div>
+        </div>
       </div>
       <fieldset class="field">
         <legend>Humör</legend>
@@ -847,12 +856,6 @@ body.keyboard .nav { visibility: hidden; }
   <button type="button" class="link danger" id="weather-clear" hidden>Ta bort vädret</button>
 </dialog>
 
-<div class="fmt" id="fmt" role="toolbar" aria-label="Formatering">
-  <button type="button" data-cmd="bold" aria-label="Fet"><b>B</b></button>
-  <button type="button" data-cmd="italic" aria-label="Kursiv"><i>K</i></button>
-  <button type="button" data-cmd="h2">Rubrik</button>
-  <button type="button" data-cmd="ul">Lista</button>
-</div>
 
 <nav class="nav" aria-label="Vyer">
   <button type="button" id="tab-day" class="on">
@@ -1211,14 +1214,12 @@ const Paper = (() => {
       if (document.activeElement === el) updateBar();
     });
 
-    // Verktygsraden följer med tangentbordet på telefonen
+    // Bottenmenyn göms när tangentbordet är uppe på telefonen
     function place() {
       const vv = window.visualViewport;
-      if (!vv || !bar) return;
+      if (!vv) return;
       const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-      const open = kb > 80;
-      document.body.classList.toggle('keyboard', open);
-      bar.style.transform = open ? `translateY(${-kb}px)` : '';
+      document.body.classList.toggle('keyboard', kb > 80);
     }
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', place);

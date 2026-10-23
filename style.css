@@ -631,9 +631,6 @@ mark {
   position: relative;
   min-height: 36vh;
   padding: 14px 16px 16px;
-  background: var(--paper);
-  border: 1px solid var(--line);
-  border-radius: 10px;
   font-family: var(--serif);
   font-size: 19px;
   line-height: 1.6;
@@ -676,33 +673,37 @@ mark {
   overflow-wrap: anywhere;
 }
 
-/* Formateringsrad, syns bara när man skriver */
-.fmt {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
-  z-index: 6;
-  display: none;
-  gap: 4px;
-  padding: 6px max(12px, env(safe-area-inset-right, 0px)) 6px max(12px, env(safe-area-inset-left, 0px), calc((100% - 640px) / 2 + 8px));
-  background: var(--bg);
-  border-top: 1px solid var(--line);
+/* Formateringsraden ligger överst i skrivytan och följer med när man scrollar */
+.writer {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
 }
-body.editing .fmt { display: flex; }
-body.keyboard .fmt { bottom: 0; }
+.writer:focus-within { border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+.fmt {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 3;
+  display: flex;
+  gap: 2px;
+  padding: 5px 6px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+  border-radius: 10px 10px 0 0;
+}
 body.keyboard .nav { visibility: hidden; }
 .fmt button {
-  min-width: 44px;
-  height: 36px;
-  padding: 0 12px;
+  min-width: 40px;
+  height: 34px;
+  padding: 0 10px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 7px;
   background: none;
   color: var(--muted);
   cursor: pointer;
   font-size: 15px;
 }
+.fmt button:hover { color: var(--text); }
 .fmt button b, .fmt button i { font-family: var(--serif); font-size: 17px; }
 .fmt button[aria-pressed="true"] { background: var(--accent); color: var(--accent-text); }
 
