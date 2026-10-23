@@ -150,6 +150,77 @@ textarea {
 .sheet .chips button { background: var(--bg); }
 .sheet .chips button[aria-checked="true"] { background: var(--accent); }
 #weather-clear { margin-top: 14px; font-size: 14px; }
+
+/* Bilder */
+.photos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.photos:empty { display: none; }
+.photos button, .thumbs button {
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--line);
+  cursor: zoom-in;
+  aspect-ratio: 1;
+  max-width: 100%;
+}
+.photos img, .thumbs img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photos .uploading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: default;
+}
+.add-photo {
+  margin-top: 8px;
+  border: 1px dashed var(--muted);
+  background: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  color: var(--text);
+}
+.photos:empty + .add-photo { margin-top: 0; }
+#photo-msg:empty { display: none; }
+#photo-msg { margin: 6px 0 0; }
+.thumbs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  margin-top: 10px;
+  max-width: 420px;
+}
+
+.viewer {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  max-width: min(94vw, 900px);
+  max-height: 92vh;
+}
+.viewer::backdrop { background: rgb(0 0 0 / .82); }
+.viewer img {
+  display: block;
+  max-width: 100%;
+  max-height: calc(92vh - 56px);
+  margin: 0 auto;
+  border-radius: 6px;
+}
+.viewer-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 2px 0;
+}
+.viewer .link { color: #fff; }
+.viewer .link.danger { color: #ff9c8c; }
 .scale { display: flex; gap: 4px; }
 .scale button {
   flex: 1; height: 44px; cursor: pointer;
@@ -445,6 +516,13 @@ body.keyboard .nav { visibility: hidden; }
         <button type="button" class="pick" id="weather-btn" aria-haspopup="dialog"
           aria-describedby="weather-label">Välj väder</button>
       </div>
+      <div class="field">
+        <span>Bilder</span>
+        <div class="photos" id="photos"></div>
+        <button type="button" class="add-photo" id="add-photo" hidden>Lägg till bilder</button>
+        <input type="file" id="photo-file" accept="image/*" multiple hidden>
+        <p class="muted" id="photo-msg" aria-live="polite"></p>
+      </div>
     </form>
 
     <div class="foot">
@@ -494,6 +572,18 @@ body.keyboard .nav { visibility: hidden; }
     </div>
   </section>
 </main>
+
+<dialog class="viewer" id="photo-viewer" aria-label="Bild">
+  <img id="viewer-img" alt="">
+  <div class="viewer-foot">
+    <button type="button" class="link danger" id="photo-delete">Ta bort bilden</button>
+    <span class="confirm" id="photo-confirm" hidden>
+      <button type="button" class="link danger" id="photo-delete-yes">Ta bort</button>
+      <button type="button" class="link" id="photo-delete-no">Avbryt</button>
+    </span>
+    <button type="button" class="link" id="viewer-close">Stäng</button>
+  </div>
+</dialog>
 
 <dialog class="sheet" id="weather-sheet" aria-labelledby="sheet-title">
   <div class="sheet-head">
@@ -954,6 +1044,8 @@ let view = 'day';
 let saveTimer = null;
 let col = null;       // dagbokens samling i databasen, om den finns
 let downloads = null;
+let assets = null;      // bildlagring, bara för den som äger dagboken
+let photos = [];        // bilderna för dagen som visas
 
 /* Lokal kopia, används direkt vid start och om databasen saknas */
 
@@ -1037,6 +1129,7 @@ function clean(e) {
         time: typeof w.time === 'string' ? w.time : null,
       }
       : null,
+    photos: Array.isArray(e.photos) ? e.photos.filter((id) => /^[A-Za-z0-9_-]{8,64}$/.test(id)) : [],
     updated: typeof e.updated === 'string' ? e.updated : new Date().toISOString(),
   };
 }
@@ -1070,10 +1163,12 @@ function remoteDelete(key) {
 
 async function connect() {
   if (!window.claude || !window.claude.use) return;
-  const [db, user, dl] = await Promise.all([
-    claude.use('db'), claude.use('user'), claude.use('downloads'),
+  const [db, user, dl, as] = await Promise.all([
+    claude.use('db'), claude.use('user'), claude.use('downloads'), claude.use('assets'),
   ]);
   downloads = dl;
+  assets = as;
+  $('add-photo').hidden = !assets;
   $('export').hidden = !downloads;
   const uid = user ? await user.id() : null;
   if (!db || !uid) return;
@@ -1148,6 +1243,7 @@ function readForm() {
     text: editor.get(),
     mood: checked ? Number(checked.dataset.v) : null,
     weather: readWeather(old && old.weather),
+    photos: photos.slice(),
   };
 }
 
@@ -1187,6 +1283,9 @@ function showDay(key) {
 
   const e = entries[key];
   editor.set(e ? e.text : '');
+  photos = e ? e.photos.slice() : [];
+  renderPhotos();
+  $('photo-msg').textContent = '';
   setMood(e ? e.mood : null);
   showWeather(e);
 
@@ -1212,7 +1311,7 @@ function setStatus(text) { $('status').textContent = text; }
 function save() {
   saveTimer = null;
   const data = readForm();
-  if (!data.text && data.mood == null && !data.weather) {
+  if (!data.text && data.mood == null && !data.weather && !data.photos.length) {
     if (!entries[current]) return;
     delete entries[current];
     writeCache();
@@ -1246,6 +1345,138 @@ moodButtons.forEach((b) => {
     setMood(on ? null : Number(b.dataset.v));
     scheduleSave();
   });
+});
+
+/* Bilder */
+
+// Adressen från uppladdningen gäller i den här visningen, annars byggs den från id:t
+const photoUrls = {};
+const photoUrl = (id) => photoUrls[id] || '/_blob/' + id;
+
+function thumbs(list, cls) {
+  if (!list || !list.length) return '';
+  return `<div class="${cls}">${list.map((id) =>
+    `<button type="button" data-photo="${escapeHtml(id)}" aria-label="Visa bild">
+      <img src="${escapeHtml(photoUrl(id))}" alt="" loading="lazy"></button>`).join('')}</div>`;
+}
+
+let uploading = 0;
+
+function renderPhotos() {
+  const box = $('photos');
+  box.innerHTML = photos.map((id) =>
+    `<button type="button" data-photo="${escapeHtml(id)}" aria-label="Visa bild">
+      <img src="${escapeHtml(photoUrl(id))}" alt=""></button>`).join('') +
+    '<div class="uploading">Laddar upp</div>'.repeat(uploading);
+}
+
+// Förminskar stora foton innan de laddas upp, så att de går snabbt att visa
+async function shrink(file) {
+  const MAX = 2048;
+  try {
+    const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
+    const scale = Math.min(1, MAX / Math.max(bmp.width, bmp.height));
+    if (scale === 1 && /^image\/(jpeg|png|webp|gif)$/.test(file.type) && file.size < 3e6) return file;
+    const c = document.createElement('canvas');
+    c.width = Math.round(bmp.width * scale);
+    c.height = Math.round(bmp.height * scale);
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    const blob = await new Promise((res) => c.toBlob(res, 'image/jpeg', 0.85));
+    return blob || file;
+  } catch {
+    return file;
+  }
+}
+
+const UPLOAD_ERRORS = {
+  too_large: 'Bilden är för stor.',
+  unsupported_type: 'Den bildtypen går inte att spara. Välj en JPEG- eller PNG-bild.',
+  quota_or_state: 'Utrymmet för bilder är fullt. Ta bort några bilder och försök igen.',
+  rate_limited: 'För många uppladdningar på kort tid. Vänta en stund och försök igen.',
+};
+
+async function addPhotos(files) {
+  if (!assets || !files.length) return;
+  const key = current;
+  $('photo-msg').textContent = '';
+  uploading += files.length;
+  renderPhotos();
+  for (const file of files) {
+    try {
+      const blob = await shrink(file);
+      const res = await assets.upload(blob);
+      photoUrls[res.id] = res.url;
+      if (key === current) {
+        photos.push(res.id);
+      } else {
+        // Användaren har bytt dag under uppladdningen
+        const e = entries[key];
+        if (e) {
+          e.photos.push(res.id);
+          e.updated = new Date().toISOString();
+          writeCache();
+          remoteSet(key, e);
+        }
+      }
+    } catch (err) {
+      $('photo-msg').textContent = UPLOAD_ERRORS[err && err.code] || 'Bilden kunde inte laddas upp.';
+    }
+    uploading--;
+    if (key === current) {
+      renderPhotos();
+      scheduleSave();
+    }
+  }
+}
+
+function removeAsset(id) {
+  if (assets) assets.delete(id).catch(() => {});
+}
+
+$('add-photo').addEventListener('click', () => $('photo-file').click());
+$('photo-file').addEventListener('change', (ev) => {
+  const files = [...ev.target.files];
+  ev.target.value = '';
+  addPhotos(files);
+});
+
+const viewer = $('photo-viewer');
+let viewing = null;
+
+function openPhoto(id, editable) {
+  viewing = id;
+  $('viewer-img').src = photoUrl(id);
+  $('photo-delete').hidden = !editable || !assets;
+  $('photo-confirm').hidden = true;
+  if (viewer.showModal) viewer.showModal();
+  else viewer.setAttribute('open', '');
+}
+
+function closePhoto() {
+  if (viewer.close) viewer.close();
+  else viewer.removeAttribute('open');
+}
+
+document.addEventListener('click', (ev) => {
+  const btn = ev.target.closest('[data-photo]');
+  if (btn) openPhoto(btn.dataset.photo, !!btn.closest('#photos'));
+});
+$('viewer-close').addEventListener('click', closePhoto);
+viewer.addEventListener('click', (ev) => { if (ev.target === viewer) closePhoto(); });
+$('photo-delete').addEventListener('click', () => {
+  $('photo-delete').hidden = true;
+  $('photo-confirm').hidden = false;
+});
+$('photo-delete-no').addEventListener('click', () => {
+  $('photo-confirm').hidden = true;
+  $('photo-delete').hidden = false;
+});
+$('photo-delete-yes').addEventListener('click', () => {
+  photos = photos.filter((id) => id !== viewing);
+  removeAsset(viewing);
+  renderPhotos();
+  scheduleSave();
+  closePhoto();
 });
 
 weatherButtons.forEach((b) => {
@@ -1312,6 +1543,7 @@ $('delete-no').addEventListener('click', () => {
 $('delete-yes').addEventListener('click', () => {
   clearTimeout(saveTimer);
   saveTimer = null;
+  (entries[current] ? entries[current].photos : []).forEach(removeAsset);
   delete entries[current];
   writeCache();
   remoteDelete(current);
@@ -1364,6 +1596,7 @@ function renderList() {
         <button type="button" class="link open" data-key="${k}">Redigera</button>
       </div>
       ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
+      ${thumbs(e.photos, 'thumbs')}
       ${e.weather ? `<div class="meta">${escapeHtml(fmtWeather(e.weather))}</div>` : ''}
     </article>`;
   }
@@ -1436,6 +1669,7 @@ function renderCalEntry() {
   if (e.weather) meta.push(escapeHtml(fmtWeather(e.weather)));
   box.innerHTML = `<div class="when">${fmtDate(calSel)}</div>
     ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
+    ${thumbs(e.photos, 'thumbs')}
     ${meta.length ? `<div class="meta">${meta.join(', ')}</div>` : ''}
     <button type="button" class="link" id="cal-open">Redigera dagen</button>`;
 }
