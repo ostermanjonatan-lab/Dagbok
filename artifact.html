@@ -107,7 +107,49 @@ textarea {
 .chips button[aria-checked="true"] { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
 .temp { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 14px; color: var(--muted); }
 .temp input { width: 90px; }
-.auto { font-size: 13px; color: var(--muted); margin: 6px 0 0; }
+.auto { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+
+.pick {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+.pick.unset { color: var(--muted); }
+
+/* Väderväljaren öppnas som ett ark nerifrån */
+.sheet {
+  width: 100%;
+  max-width: 640px;
+  margin: auto auto 0;
+  border: 0;
+  border-radius: 14px 14px 0 0;
+  background: var(--surface);
+  color: var(--text);
+  padding: 14px max(16px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  box-shadow: 0 -4px 24px rgb(0 0 0 / .18);
+}
+.sheet::backdrop { background: rgb(0 0 0 / .35); }
+.sheet[open] { animation: rise .18s ease-out; }
+@keyframes rise { from { transform: translateY(24px); opacity: .6; } }
+@media (prefers-reduced-motion: reduce) { .sheet[open] { animation: none; } }
+@media (min-width: 700px) {
+  .sheet { margin: auto; border-radius: 14px; max-width: 460px; padding-bottom: 20px; }
+}
+.sheet-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 12px;
+}
+.sheet-head h2 { font-size: 16px; margin: 0; }
+.sheet .chips button { background: var(--bg); }
+.sheet .chips button[aria-checked="true"] { background: var(--accent); }
+#weather-clear { margin-top: 14px; font-size: 14px; }
 .scale { display: flex; gap: 4px; }
 .scale button {
   flex: 1; height: 44px; cursor: pointer;
@@ -398,23 +440,11 @@ body.keyboard .nav { visibility: hidden; }
         </div>
         <div class="ends"><span>Tungt</span><span>Bra</span></div>
       </fieldset>
-      <fieldset class="field">
-        <legend>Väder</legend>
-        <div class="chips" id="f-weather" role="radiogroup">
-          <button type="button" role="radio" data-code="0">Sol</button>
-          <button type="button" role="radio" data-code="2">Halvklart</button>
-          <button type="button" role="radio" data-code="3">Mulet</button>
-          <button type="button" role="radio" data-code="63">Regn</button>
-          <button type="button" role="radio" data-code="73">Snö</button>
-          <button type="button" role="radio" data-code="95">Åska</button>
-          <button type="button" role="radio" data-code="45">Dimma</button>
-        </div>
-        <label class="temp">
-          <input id="f-temp" inputmode="decimal" placeholder="12" aria-label="Temperatur i grader">
-          <span>°C</span>
-        </label>
-        <p class="auto" id="weather-auto" hidden></p>
-      </fieldset>
+      <div class="field">
+        <span id="weather-label">Väder</span>
+        <button type="button" class="pick" id="weather-btn" aria-haspopup="dialog"
+          aria-describedby="weather-label">Välj väder</button>
+      </div>
     </form>
 
     <div class="foot">
@@ -464,6 +494,28 @@ body.keyboard .nav { visibility: hidden; }
     </div>
   </section>
 </main>
+
+<dialog class="sheet" id="weather-sheet" aria-labelledby="sheet-title">
+  <div class="sheet-head">
+    <h2 id="sheet-title">Väder</h2>
+    <button type="button" class="link" id="sheet-done">Klar</button>
+  </div>
+  <div class="chips" id="f-weather" role="radiogroup" aria-labelledby="sheet-title">
+    <button type="button" role="radio" data-code="0">Sol</button>
+    <button type="button" role="radio" data-code="2">Halvklart</button>
+    <button type="button" role="radio" data-code="3">Mulet</button>
+    <button type="button" role="radio" data-code="63">Regn</button>
+    <button type="button" role="radio" data-code="73">Snö</button>
+    <button type="button" role="radio" data-code="95">Åska</button>
+    <button type="button" role="radio" data-code="45">Dimma</button>
+  </div>
+  <label class="temp">
+    <input id="f-temp" inputmode="decimal" placeholder="12" aria-label="Temperatur i grader">
+    <span>°C</span>
+  </label>
+  <p class="auto" id="weather-auto" hidden></p>
+  <button type="button" class="link danger" id="weather-clear" hidden>Ta bort vädret</button>
+</dialog>
 
 <div class="fmt" id="fmt" role="toolbar" aria-label="Formatering">
   <button type="button" data-cmd="bold" aria-label="Fet"><b>B</b></button>
@@ -1115,6 +1167,16 @@ function showWeather(e) {
   const auto = w && w.time;
   $('weather-auto').hidden = !auto;
   $('weather-auto').textContent = auto ? `Hämtat: ${fmtWeather(w)}` : '';
+  updateWeatherBtn();
+}
+
+function updateWeatherBtn() {
+  const old = entries[current];
+  const w = readWeather(old && old.weather);
+  const btn = $('weather-btn');
+  btn.textContent = w ? fmtWeather(w) : 'Välj väder';
+  btn.classList.toggle('unset', !w);
+  $('weather-clear').hidden = !w;
 }
 
 function showDay(key) {
@@ -1190,11 +1252,45 @@ weatherButtons.forEach((b) => {
   b.addEventListener('click', () => {
     const on = b.getAttribute('aria-checked') === 'true';
     setWeatherChip(on ? null : Number(b.dataset.code));
+    updateWeatherBtn();
     scheduleSave();
   });
 });
 
-tempField.addEventListener('input', scheduleSave);
+tempField.addEventListener('input', () => {
+  updateWeatherBtn();
+  scheduleSave();
+});
+
+const sheet = $('weather-sheet');
+$('weather-btn').addEventListener('click', () => {
+  if (sheet.showModal) sheet.showModal();
+  else sheet.setAttribute('open', '');
+});
+function closeSheet() {
+  tempField.blur();
+  if (sheet.close) sheet.close();
+  else sheet.removeAttribute('open');
+}
+$('sheet-done').addEventListener('click', closeSheet);
+// Ett tryck utanför arket stänger det
+sheet.addEventListener('click', (ev) => {
+  if (ev.target !== sheet) return;
+  const r = sheet.getBoundingClientRect();
+  const inside = ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom;
+  if (!inside) closeSheet();
+});
+sheet.addEventListener('close', () => {
+  flushSave();
+  updateWeatherBtn();
+});
+$('weather-clear').addEventListener('click', () => {
+  setWeatherChip(null);
+  tempField.value = '';
+  updateWeatherBtn();
+  scheduleSave();
+  closeSheet();
+});
 tempField.addEventListener('blur', () => {
   const n = parseTemp(tempField.value);
   tempField.value = n != null ? String(Math.round(n)).replace('-', '\u2212') : '';
