@@ -622,6 +622,7 @@ mark {
   background: var(--bg);
 }
 .lock-inner { width: 100%; max-width: 320px; text-align: center; }
+.lock-logo { display: block; width: 72px; height: 72px; margin: 0 auto 10px; }
 .lock-app {
   margin: 0 0 22px;
   font-family: var(--serif);

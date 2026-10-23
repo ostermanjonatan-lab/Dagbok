@@ -1468,7 +1468,7 @@ $('export').addEventListener('click', async () => {
     { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `dagbok-${todayKey()}.json`;
+  a.download = `daysake-${todayKey()}.json`;
   document.body.appendChild(a);
   a.click();
   a.remove();

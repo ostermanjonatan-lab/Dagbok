@@ -1,4 +1,4 @@
-# Dagbok
+# Daysake
 
 En liten dagboksapp för telefonen. Skriv vad som hänt och välj humör på en färgskala för varje dag. I kalendern bläddrar du bakåt per månad och läser tidigare dagar, och Visa humör färgar varje dag efter humöret. Vädret sparas automatiskt: vädret kl 12 den dagen, eller vädret när du sparar om du skriver dagens inlägg före kl 12. Allt sparas automatiskt i webbläsaren på enheten och appen fungerar utan nät.
 
