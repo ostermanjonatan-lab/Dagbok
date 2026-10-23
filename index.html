@@ -94,7 +94,18 @@
           <span>Bra</span>
         </div>
       </div>
-      <section class="stats" id="month-stats" aria-labelledby="month-stats-title" hidden>
+      <div class="seg" role="tablist" aria-label="Under kalendern">
+        <button type="button" role="tab" id="seg-feed" aria-controls="feed-panel" aria-selected="true">Flöde</button>
+        <button type="button" role="tab" id="seg-stats" aria-controls="month-stats" aria-selected="false">Statistik</button>
+      </div>
+      <div class="feed" id="feed-panel" role="tabpanel" aria-labelledby="seg-feed">
+        <input type="search" id="search" placeholder="Sök i dagboken" aria-label="Sök">
+        <div id="list"></div>
+
+      </div>
+      <section class="stats" id="month-stats" role="tabpanel" aria-labelledby="seg-stats" hidden>
+        <p class="empty" id="stats-empty" hidden></p>
+        <div id="stats-body">
         <h2 id="month-stats-title"></h2>
         <dl class="facts" id="facts"></dl>
         <div class="distr" id="distr" role="img">
@@ -104,12 +115,8 @@
         <h3>Snitthumör, senaste 12 månaderna</h3>
         <div class="trend" id="trend"></div>
         <p class="trend-read" id="trend-read" aria-live="polite"></p>
+        </div>
       </section>
-      <div class="feed">
-        <input type="search" id="search" placeholder="Sök i dagboken" aria-label="Sök">
-        <div id="list"></div>
-
-      </div>
     </section>
 
     <section id="view-set" hidden>

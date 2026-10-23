@@ -934,9 +934,12 @@ const avg = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
 function renderStats() {
   const ym = calMonth;
   const keys = Object.keys(entries).filter((k) => k.slice(0, 7) === ym).sort();
-  const box = $('month-stats');
-  box.hidden = !keys.length;
-  if (!keys.length) return;
+  $('stats-body').hidden = !keys.length;
+  $('stats-empty').hidden = !!keys.length;
+  if (!keys.length) {
+    $('stats-empty').textContent = `Ingen statistik, inget skrivet i ${monthFmt.format(parseKey(ym + '-01'))}.`;
+    return;
+  }
 
   const first = parseKey(ym + '-01');
   const name = monthOnlyFmt.format(first);
@@ -1093,6 +1096,38 @@ $('trend').addEventListener('keydown', (ev) => {
     r.dispatchEvent(new MouseEvent('click', { bubbles: true }));
   }
 });
+
+/* Flöde eller statistik under kalendern */
+
+const PANEL_KEY = 'dagbok.kalenderpanel';
+let calPanel = 'feed';
+try { if (localStorage.getItem(PANEL_KEY) === 'stats') calPanel = 'stats'; } catch {}
+
+function syncPanel() {
+  const stats = calPanel === 'stats';
+  $('seg-feed').setAttribute('aria-selected', String(!stats));
+  $('seg-stats').setAttribute('aria-selected', String(stats));
+  $('seg-feed').tabIndex = stats ? -1 : 0;
+  $('seg-stats').tabIndex = stats ? 0 : -1;
+  $('feed-panel').hidden = stats;
+  $('month-stats').hidden = !stats;
+}
+
+function choosePanel(p) {
+  calPanel = p;
+  try { localStorage.setItem(PANEL_KEY, p); } catch {}
+  syncPanel();
+}
+
+$('seg-feed').addEventListener('click', () => choosePanel('feed'));
+$('seg-stats').addEventListener('click', () => choosePanel('stats'));
+document.querySelector('.seg').addEventListener('keydown', (ev) => {
+  if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') return;
+  ev.preventDefault();
+  choosePanel(calPanel === 'stats' ? 'feed' : 'stats');
+  $(calPanel === 'stats' ? 'seg-stats' : 'seg-feed').focus();
+});
+syncPanel();
 
 function shiftMonth(n) {
   const [y, m] = calMonth.split('-').map(Number);

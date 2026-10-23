@@ -391,12 +391,33 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
 }
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--m); margin-right: 8px; }
 
-/* Statistik för månaden under kalendern */
-.stats {
+/* Växlare mellan flöde och statistik under kalendern */
+.seg {
+  display: flex;
   margin-top: 24px;
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
+  padding: 3px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
 }
+.seg button {
+  flex: 1;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--muted);
+  font-size: 15px;
+  cursor: pointer;
+}
+.seg button[aria-selected="true"] {
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 500;
+}
+
+/* Statistik för månaden under kalendern */
+.stats { margin-top: 18px; }
 .stats h2 {
   margin: 0 0 10px;
   font-size: 14px;
@@ -459,10 +480,7 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
 }
 
 /* Månadens inlägg under kalendern */
-.feed {
-  margin-top: 24px;
-  border-top: 1px solid var(--line);
-}
+.feed { margin-top: 2px; }
 
 /* Inställningar */
 .page-title {
@@ -895,7 +913,18 @@ body.keyboard .nav { visibility: hidden; }
         <span>Bra</span>
       </div>
     </div>
-    <section class="stats" id="month-stats" aria-labelledby="month-stats-title" hidden>
+    <div class="seg" role="tablist" aria-label="Under kalendern">
+      <button type="button" role="tab" id="seg-feed" aria-controls="feed-panel" aria-selected="true">Flöde</button>
+      <button type="button" role="tab" id="seg-stats" aria-controls="month-stats" aria-selected="false">Statistik</button>
+    </div>
+    <div class="feed" id="feed-panel" role="tabpanel" aria-labelledby="seg-feed">
+      <input type="search" id="search" placeholder="Sök i dagboken" aria-label="Sök">
+      <div id="list"></div>
+
+    </div>
+    <section class="stats" id="month-stats" role="tabpanel" aria-labelledby="seg-stats" hidden>
+      <p class="empty" id="stats-empty" hidden></p>
+      <div id="stats-body">
       <h2 id="month-stats-title"></h2>
       <dl class="facts" id="facts"></dl>
       <div class="distr" id="distr" role="img">
@@ -905,12 +934,8 @@ body.keyboard .nav { visibility: hidden; }
       <h3>Snitthumör, senaste 12 månaderna</h3>
       <div class="trend" id="trend"></div>
       <p class="trend-read" id="trend-read" aria-live="polite"></p>
+      </div>
     </section>
-    <div class="feed">
-      <input type="search" id="search" placeholder="Sök i dagboken" aria-label="Sök">
-      <div id="list"></div>
-
-    </div>
   </section>
 
   <section id="view-set" hidden>
@@ -2367,9 +2392,12 @@ const avg = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
 function renderStats() {
   const ym = calMonth;
   const keys = Object.keys(entries).filter((k) => k.slice(0, 7) === ym).sort();
-  const box = $('month-stats');
-  box.hidden = !keys.length;
-  if (!keys.length) return;
+  $('stats-body').hidden = !keys.length;
+  $('stats-empty').hidden = !!keys.length;
+  if (!keys.length) {
+    $('stats-empty').textContent = `Ingen statistik, inget skrivet i ${monthFmt.format(parseKey(ym + '-01'))}.`;
+    return;
+  }
 
   const first = parseKey(ym + '-01');
   const name = monthOnlyFmt.format(first);
@@ -2526,6 +2554,38 @@ $('trend').addEventListener('keydown', (ev) => {
     r.dispatchEvent(new MouseEvent('click', { bubbles: true }));
   }
 });
+
+/* Flöde eller statistik under kalendern */
+
+const PANEL_KEY = 'dagbok.kalenderpanel';
+let calPanel = 'feed';
+try { if (localStorage.getItem(PANEL_KEY) === 'stats') calPanel = 'stats'; } catch {}
+
+function syncPanel() {
+  const stats = calPanel === 'stats';
+  $('seg-feed').setAttribute('aria-selected', String(!stats));
+  $('seg-stats').setAttribute('aria-selected', String(stats));
+  $('seg-feed').tabIndex = stats ? -1 : 0;
+  $('seg-stats').tabIndex = stats ? 0 : -1;
+  $('feed-panel').hidden = stats;
+  $('month-stats').hidden = !stats;
+}
+
+function choosePanel(p) {
+  calPanel = p;
+  try { localStorage.setItem(PANEL_KEY, p); } catch {}
+  syncPanel();
+}
+
+$('seg-feed').addEventListener('click', () => choosePanel('feed'));
+$('seg-stats').addEventListener('click', () => choosePanel('stats'));
+document.querySelector('.seg').addEventListener('keydown', (ev) => {
+  if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') return;
+  ev.preventDefault();
+  choosePanel(calPanel === 'stats' ? 'feed' : 'stats');
+  $(calPanel === 'stats' ? 'seg-stats' : 'seg-feed').focus();
+});
+syncPanel();
 
 function shiftMonth(n) {
   const [y, m] = calMonth.split('-').map(Number);

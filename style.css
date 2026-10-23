@@ -450,12 +450,33 @@ mark {
   border-radius: 50%;
   background: var(--m);
 }
-/* Statistik för månaden under kalendern */
-.stats {
+/* Växlare mellan flöde och statistik under kalendern */
+.seg {
+  display: flex;
   margin-top: 24px;
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
+  padding: 3px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
 }
+.seg button {
+  flex: 1;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--muted);
+  font-size: 15px;
+  cursor: pointer;
+}
+.seg button[aria-selected="true"] {
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 500;
+}
+
+/* Statistik för månaden under kalendern */
+.stats { margin-top: 18px; }
 .stats h2 {
   margin: 0 0 10px;
   font-size: 14px;
@@ -518,10 +539,7 @@ mark {
 }
 
 /* Månadens inlägg under kalendern */
-.feed {
-  margin-top: 24px;
-  border-top: 1px solid var(--line);
-}
+.feed { margin-top: 2px; }
 
 /* Inställningar */
 .page-title {
