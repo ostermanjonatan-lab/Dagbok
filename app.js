@@ -686,49 +686,39 @@ function weatherCell(w) {
 let calMonth = todayKey().slice(0, 7);
 let calSel = todayKey();
 
-// Vad kalendern visar utöver skrivna dagar: '' (inget), 'mood' eller 'weather'
-let calShow = '';
+// Vad kalendern visar utöver skrivna dagar. Humör och väder kan visas samtidigt.
+const calShow = { mood: false, weather: false };
 try {
-  // Tidigare fanns två kryssrutor, de blir ett val här
-  let show = localStorage.getItem(SHOW_KEY);
-  if (show == null) {
-    show = localStorage.getItem('dagbok.humorfilter') === '1' ? 'mood'
-      : localStorage.getItem('dagbok.vaderfilter') === '1' ? 'weather' : '';
+  const saved = localStorage.getItem(SHOW_KEY);
+  if (saved == null) {
+    // Från de allra första kryssrutorna
+    calShow.mood = localStorage.getItem('dagbok.humorfilter') === '1';
+    calShow.weather = localStorage.getItem('dagbok.vaderfilter') === '1';
+  } else if (saved.startsWith('{')) {
+    const v = JSON.parse(saved);
+    calShow.mood = !!v.mood;
+    calShow.weather = !!v.weather;
+  } else {
+    // Från tiden då man bara kunde välja en: '', 'mood' eller 'weather'
+    calShow.mood = saved === 'mood';
+    calShow.weather = saved === 'weather';
   }
-  calShow = ['', 'mood', 'weather'].includes(show) ? show : '';
 } catch {}
 
-/* Tabletterna för vad kalendern visar */
+/* Tabletterna för vad kalendern visar. Ett tryck slår på, ett till slår av. */
 
 const pills = [...$('cal-show').querySelectorAll('.pill')];
 
 function syncShow() {
-  pills.forEach((b) => {
-    const on = b.dataset.value === calShow;
-    b.setAttribute('aria-checked', String(on));
-    // Bara den valda tabletten går att nå med tabb, pilarna flyttar mellan dem
-    b.tabIndex = on ? 0 : -1;
-  });
+  pills.forEach((b) => b.setAttribute('aria-pressed', String(calShow[b.dataset.value])));
 }
 
-function chooseShow(value) {
-  calShow = value;
-  try { localStorage.setItem(SHOW_KEY, value); } catch {}
+pills.forEach((b) => b.addEventListener('click', () => {
+  calShow[b.dataset.value] = !calShow[b.dataset.value];
+  try { localStorage.setItem(SHOW_KEY, JSON.stringify(calShow)); } catch {}
   syncShow();
   renderCal();
-}
-
-pills.forEach((b) => b.addEventListener('click', () => chooseShow(b.dataset.value)));
-$('cal-show').addEventListener('keydown', (ev) => {
-  const i = pills.indexOf(document.activeElement);
-  if (i === -1) return;
-  const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[ev.key];
-  if (!step) return;
-  ev.preventDefault();
-  const next = pills[(i + step + pills.length) % pills.length];
-  next.focus();
-  chooseShow(next.dataset.value);
-});
+}));
 syncShow();
 
 function renderCal() {
@@ -736,8 +726,8 @@ function renderCal() {
   const first = new Date(y, m - 1, 1);
   const days = new Date(y, m, 0).getDate();
   const today = todayKey();
-  const moods = calShow === 'mood';
-  const weathers = calShow === 'weather';
+  const moods = calShow.mood;
+  const weathers = calShow.weather;
 
   $('cal-title').textContent = monthFmt.format(first);
   $('cal-next').disabled = calMonth >= today.slice(0, 7);

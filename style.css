@@ -362,15 +362,8 @@ mark {
   cursor: pointer;
   font-variant-numeric: tabular-nums;
 }
-.show {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 14px;
-  font-size: 14px;
-}
 /* Tabletter för vad kalendern visar, en åt gången */
-.pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
 .pill {
   padding: 7px 15px;
   font-size: 15px;
@@ -381,7 +374,7 @@ mark {
   cursor: pointer;
 }
 .pill:hover { border-color: var(--accent); }
-.pill[aria-checked="true"] {
+.pill[aria-pressed="true"] {
   color: var(--accent-text);
   background: var(--accent);
   border-color: var(--accent);

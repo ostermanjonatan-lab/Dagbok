@@ -82,13 +82,9 @@
         <button type="button" class="icon" id="cal-next" aria-label="Nästa månad">&#8250;</button>
       </div>
       <div class="grid" id="cal-grid"></div>
-      <div class="show">
-        <span id="show-label">Visa</span>
-        <div class="pills" id="cal-show" role="radiogroup" aria-labelledby="show-label">
-          <button type="button" class="pill" role="radio" data-value="">Inget</button>
-          <button type="button" class="pill" role="radio" data-value="mood">Humör</button>
-          <button type="button" class="pill" role="radio" data-value="weather">Väder</button>
-        </div>
+      <div class="pills" id="cal-show" role="group" aria-label="Visa i kalendern">
+        <button type="button" class="pill" aria-pressed="false" data-value="mood">Humör</button>
+        <button type="button" class="pill" aria-pressed="false" data-value="weather">Väder</button>
       </div>
       <div class="legend" id="legend" hidden>
         <span><i style="--m: var(--m1)"></i>1 tungt</span>
