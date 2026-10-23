@@ -858,7 +858,7 @@ body.keyboard .nav { visibility: hidden; }
   place-items: center;
   width: 60px;
   height: 60px;
-  margin-top: -26px;
+  margin-top: -14px;
   border-radius: 50%;
   background: var(--brand-text);
   color: var(--brand);
