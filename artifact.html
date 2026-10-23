@@ -11,6 +11,9 @@
   --line: #e0cfbb;
   --accent: #800020;
   --accent-text: #f3e6d5;
+  --brand: #800020;
+  --brand-text: #f3e6d5;
+  --paper: #ffffff;
   --danger: #b3261e;
   --m1: #d2483c; --m2: #e8893c; --m3: #e2c23d; --m4: #95c65c; --m5: #3d9c5a;
   --on-mood: #2a1418;
@@ -22,6 +25,7 @@
   :root:not([data-theme="light"]) {
     --bg: #1e1214; --surface: #2a1a1d; --text: #f3e6d5; --muted: #b09a92;
     --line: #3d2a2d; --accent: #d98a9a; --accent-text: #1e1214; --danger: #f08a7a;
+    --paper: #2a1a1d;
     --m1: #e0675b; --m2: #eb9a55; --m3: #e6cb58; --m4: #a5d06f; --m5: #5cb878;
     color-scheme: dark;
   }
@@ -29,6 +33,7 @@
 :root[data-theme="dark"] {
   --bg: #1e1214; --surface: #2a1a1d; --text: #f3e6d5; --muted: #b09a92;
   --line: #3d2a2d; --accent: #d98a9a; --accent-text: #1e1214; --danger: #f08a7a;
+    --paper: #2a1a1d;
     --m1: #e0675b; --m2: #eb9a55; --m3: #e6cb58; --m4: #a5d06f; --m5: #5cb878;
   color-scheme: dark;
 }
@@ -65,6 +70,7 @@ button, input, textarea { font: inherit; color: inherit; }
 .date { position: relative; flex: 1; min-width: 0; }
 #date-label {
   display: block;
+  color: var(--accent);
   font-family: var(--serif);
   font-size: 22px; font-weight: 600; line-height: 1.25;
 }
@@ -82,8 +88,8 @@ button, input, textarea { font: inherit; color: inherit; }
 form { margin-top: 16px; }
 .field { display: block; margin: 0 0 18px; padding: 0; border: 0; min-width: 0; }
 .field > span, .field > legend {
-  display: block; padding: 0; margin-bottom: 4px;
-  font-size: 14px; color: var(--muted);
+  display: block; padding: 0; margin-bottom: 6px;
+  font-size: 14px; font-weight: 500; color: var(--accent);
 }
 input:not([type]), input[type="search"], textarea {
   width: 100%;
@@ -181,12 +187,12 @@ textarea {
 }
 .add-photo {
   margin-top: 8px;
-  border: 1px dashed var(--muted);
+  border: 1px dashed var(--accent);
   background: none;
   border-radius: 8px;
   padding: 10px 14px;
   cursor: pointer;
-  color: var(--text);
+  color: var(--accent);
 }
 .photos:empty + .add-photo { margin-top: 0; }
 #photo-msg:empty { display: none; }
@@ -241,7 +247,7 @@ textarea {
 
 #search { margin: 16px 0 4px; }
 .month {
-  font-size: 14px; font-weight: 400; color: var(--muted);
+  font-size: 14px; font-weight: 400; color: var(--accent);
   margin: 24px 0 0; padding-bottom: 6px;
   border-bottom: 1px solid var(--line);
 }
@@ -269,6 +275,7 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
 #cal-title {
   flex: 1;
   margin: 0;
+  color: var(--accent);
   font-family: var(--serif);
   font-size: 22px;
   font-weight: 600;
@@ -306,7 +313,7 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   font-variant-numeric: tabular-nums;
 }
 .day:disabled { opacity: .35; cursor: default; }
-.day.has { background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+.day.has { background: var(--surface); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent); }
 .day.has::after {
   content: "";
   position: absolute;
@@ -316,11 +323,11 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   height: 5px;
   margin-left: -2.5px;
   border-radius: 50%;
-  background: var(--muted);
+  background: var(--accent);
 }
 .moods .day.has[style]::after { display: none; }
 .moods .day.has[style] { background: var(--m); color: var(--on-mood); box-shadow: none; }
-.day.today { font-weight: 700; }
+.day.today { font-weight: 700; color: var(--accent); }
 .day.sel { box-shadow: inset 0 0 0 2px var(--text); }
 .moods .day.has[style].sel { box-shadow: inset 0 0 0 2px var(--text); }
 .legend {
@@ -374,6 +381,7 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   flex: 1;
   min-width: 0;
   margin: 0;
+  color: var(--accent);
   font-family: var(--serif);
   font-size: 19px;
   font-weight: 600;
@@ -404,11 +412,14 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
 .reader .meta { font-size: 14px; color: var(--muted); margin: 14px 0 0; }
 .reader .empty { margin: 0; }
 .reader-foot { margin-top: 18px; }
-/* Skrivytan: ingen ram, bara text på sidan */
+/* Skrivytan: ett vitt blad utan verktygsfält */
 .paper {
   position: relative;
-  min-height: 40vh;
-  padding: 2px 0 8px;
+  min-height: 36vh;
+  padding: 14px 16px 16px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
   font-family: var(--serif);
   font-size: 19px;
   line-height: 1.6;
@@ -420,8 +431,8 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
 .paper.empty::before {
   content: "Skriv om dagen";
   position: absolute;
-  top: 2px;
-  left: 0;
+  top: 14px;
+  left: 16px;
   color: var(--muted);
   opacity: .7;
   pointer-events: none;
@@ -479,7 +490,7 @@ body.keyboard .nav { visibility: hidden; }
   font-size: 15px;
 }
 .fmt button b, .fmt button i { font-family: var(--serif); font-size: 17px; }
-.fmt button[aria-pressed="true"] { background: var(--line); color: var(--text); }
+.fmt button[aria-pressed="true"] { background: var(--accent); color: var(--accent-text); }
 
 /* Bottenmeny */
 .nav {
@@ -490,8 +501,7 @@ body.keyboard .nav { visibility: hidden; }
   z-index: 5;
   display: flex;
   justify-content: center;
-  background: var(--bg);
-  border-top: 1px solid var(--line);
+  background: var(--brand);
   padding: 0 max(8px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(8px, env(safe-area-inset-left, 0px));
 }
 .nav a, .nav button {
@@ -505,7 +515,7 @@ body.keyboard .nav { visibility: hidden; }
   gap: 2px;
   border: 0;
   background: none;
-  color: var(--muted);
+  color: color-mix(in srgb, var(--brand-text) 70%, transparent);
   text-decoration: none;
   font-size: 12px;
   cursor: pointer;
@@ -519,7 +529,8 @@ body.keyboard .nav { visibility: hidden; }
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.nav .on { color: var(--accent); }
+.nav .on { color: var(--brand-text); font-weight: 600; }
+.nav .on svg { stroke-width: 2.2; }
 
 /* Flöde */
 .post {
@@ -533,7 +544,8 @@ body.keyboard .nav { visibility: hidden; }
   gap: 12px;
   margin-bottom: 6px;
 }
-.post .when { font-size: 14px; color: var(--muted); }
+.post .when { font-size: 14px; color: var(--accent); }
+.post.today .when { font-weight: 600; }
 .post.today .when { color: var(--accent); }
 .post .open { font-size: 14px; flex: none; }
 .post .meta { font-size: 13px; color: var(--muted); margin-top: 8px; }
