@@ -405,29 +405,35 @@ function renderCal() {
       aria-label="${label}"${key > today ? ' disabled' : ''}>${d}</button>`;
   }
   $('cal-grid').innerHTML = html;
-  renderCalEntry();
 }
 
-function renderCalEntry() {
-  const e = entries[calSel];
-  const box = $('cal-entry');
-  if (calSel.slice(0, 7) !== calMonth) {
-    box.innerHTML = '';
-    return;
-  }
+// Visar dagen i en egen ruta ovanpå kalendern
+function openReader(key) {
+  const e = entries[key];
+  $('reader-title').textContent = fmtDate(key);
   if (!e) {
-    box.innerHTML = `<div class="when">${fmtDate(calSel)}</div>
-      <p class="meta">Inget skrivet den här dagen.</p>
-      <button type="button" class="link" id="cal-open">Skriv för den här dagen</button>`;
-    return;
-  }
-  const meta = [];
-  if (e.mood) meta.push(`<span class="dot" style="--m: var(--m${e.mood})"></span>Humör ${e.mood}`);
-  if (e.weather) meta.push(escapeHtml(fmtWeather(e.weather)));
-  box.innerHTML = `<div class="when">${fmtDate(calSel)}</div>
+    $('reader-body').innerHTML = `<p class="empty">Inget skrivet den här dagen.</p>
+      <div class="reader-foot"><button type="button" class="link" id="reader-edit">Skriv för den här dagen</button></div>`;
+  } else {
+    const meta = [];
+    if (e.mood) meta.push(`<span class="dot" style="--m: var(--m${e.mood})"></span>Humör ${e.mood}`);
+    if (e.weather) meta.push(escapeHtml(fmtWeather(e.weather)));
+    $('reader-body').innerHTML = `
     ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
     ${meta.length ? `<div class="meta">${meta.join(', ')}</div>` : ''}
-    <button type="button" class="link" id="cal-open">Redigera dagen</button>`;
+    <div class="reader-foot"><button type="button" class="link" id="reader-edit">Redigera dagen</button></div>`;
+  }
+  const reader = $('reader');
+  if (reader.showModal) { if (!reader.open) reader.showModal(); }
+  else reader.setAttribute('open', '');
+  $('reader-body').scrollTop = 0;
+  reader.scrollTop = 0;
+}
+
+function closeReader() {
+  const reader = $('reader');
+  if (reader.close) reader.close();
+  else reader.removeAttribute('open');
 }
 
 function shiftMonth(n) {
@@ -448,9 +454,19 @@ $('cal-grid').addEventListener('click', (ev) => {
   if (!btn || btn.disabled) return;
   calSel = btn.dataset.key;
   renderCal();
+  openReader(calSel);
 });
-$('cal-entry').addEventListener('click', (ev) => {
-  if (ev.target.id === 'cal-open') openDay(calSel);
+$('reader-close').addEventListener('click', closeReader);
+$('reader').addEventListener('click', (ev) => {
+  if (ev.target.id === 'reader-edit') {
+    closeReader();
+    openDay(calSel);
+    return;
+  }
+  // Ett tryck utanför rutan stänger den
+  if (ev.target !== $('reader')) return;
+  const r = $('reader').getBoundingClientRect();
+  if (ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom) closeReader();
 });
 
 function openDay(key) { go(`#/dag/${key}`); }

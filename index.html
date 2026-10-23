@@ -74,7 +74,6 @@
         <span><i style="--m: var(--m4)"></i>4</span>
         <span><i style="--m: var(--m5)"></i>5 bra</span>
       </div>
-      <div class="read" id="cal-entry"></div>
     </section>
 
     <section id="view-all" hidden>
@@ -92,6 +91,14 @@
       </div>
     </section>
   </main>
+
+  <dialog class="reader" id="reader" aria-labelledby="reader-title">
+    <div class="reader-head">
+      <h2 id="reader-title"></h2>
+      <button type="button" class="link" id="reader-close">Stäng</button>
+    </div>
+    <div class="reader-body" id="reader-body"></div>
+  </dialog>
 
   <div class="fmt" id="fmt" role="toolbar" aria-label="Formatering">
     <button type="button" data-cmd="bold" aria-label="Fet"><b>B</b></button>

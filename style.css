@@ -333,14 +333,50 @@ mark {
   background: var(--m);
   margin-right: 5px;
 }
-.read {
-  margin-top: 20px;
-  padding-top: 14px;
-  border-top: 1px solid var(--line);
+/* Läsrutan som öppnas från kalendern */
+.reader {
+  width: 100%;
+  max-width: 640px;
+  max-height: 88vh;
+  margin: auto auto 0;
+  padding: 0;
+  border: 0;
+  border-radius: 14px 14px 0 0;
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 -4px 24px rgb(0 0 0 / .18);
 }
-.read .when { font-size: 14px; color: var(--muted); }
-.read .prose { margin: 6px 0 10px; font-size: 18px; }
-.read .meta { font-size: 14px; color: var(--muted); margin-bottom: 10px; }
+.reader::backdrop { background: rgb(0 0 0 / .35); }
+.reader[open] { animation: rise .18s ease-out; }
+@keyframes rise { from { transform: translateY(24px); opacity: .6; } }
+@media (prefers-reduced-motion: reduce) { .reader[open] { animation: none; } }
+@media (min-width: 700px) {
+  .reader { margin: auto; border-radius: 14px; max-height: 80vh; }
+}
+.reader-head {
+  position: sticky;
+  top: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding: 16px max(16px, env(safe-area-inset-right, 0px)) 12px max(16px, env(safe-area-inset-left, 0px));
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+.reader-head h2 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 600;
+}
+.reader-body {
+  padding: 16px max(16px, env(safe-area-inset-right, 0px)) calc(24px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+}
+.reader .prose { font-size: 18px; }
+.reader .meta { font-size: 14px; color: var(--muted); margin: 14px 0 0; }
+.reader .empty { margin: 0; }
+.reader-foot { margin-top: 18px; }
 
 /* Skrivytan: ingen ram, bara text på sidan */
 .paper {
