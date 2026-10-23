@@ -450,6 +450,73 @@ mark {
   border-radius: 50%;
   background: var(--m);
 }
+/* Statistik för månaden under kalendern */
+.stats {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.stats h2 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--accent);
+}
+.stats h2::first-letter { text-transform: uppercase; }
+.stats h3 {
+  margin: 20px 0 4px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted);
+}
+.facts {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 16px;
+  margin: 0;
+  font-size: 15px;
+}
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; font-variant-numeric: tabular-nums; }
+.distr { margin-top: 16px; }
+.distr[hidden] { display: none; }
+.distr-bar { display: flex; gap: 2px; height: 24px; }
+.distr-bar span {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--m);
+  color: var(--on-mood);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.distr-ends {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.trend svg { display: block; width: 100%; height: auto; overflow: visible; }
+.trend .gl { stroke: var(--line); stroke-width: 1; }
+.trend .lbl { fill: var(--muted); font-size: 10px; font-family: var(--sans); }
+.trend .lbl.cur { fill: var(--accent); font-weight: 600; }
+.trend .ln { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.trend .pt { fill: var(--accent); stroke: var(--bg); stroke-width: 2; }
+.trend .pt.cur { fill: var(--accent); stroke: var(--bg); stroke-width: 2.5; }
+.trend .hit { fill: transparent; cursor: pointer; outline: none; }
+.trend .hit:hover, .trend .hit:focus-visible { fill: color-mix(in srgb, var(--accent) 8%, transparent); }
+.trend-read { margin: 4px 0 0; font-size: 13px; color: var(--muted); min-height: 1.4em; }
+
+/* Svit i dagvyn */
+.streak {
+  margin: 0 0 0 44px;
+  font-size: 14px;
+  color: var(--accent);
+}
+
 /* Månadens inlägg under kalendern */
 .feed {
   margin-top: 24px;

@@ -308,6 +308,7 @@ function showDay(key) {
   $('delete').hidden = !e;
   setStatus(e ? savedText(e.updated) : '');
   renderMemories(key);
+  renderStreak();
 }
 
 function savedText(iso) {
@@ -328,6 +329,7 @@ function save() {
     showWeather(null);
     setStatus('');
     $('delete').hidden = true;
+    renderStreak();
     return;
   }
   const old = entries[current];
@@ -344,6 +346,7 @@ function save() {
   }
   $('delete').hidden = false;
   updateWeather(current);
+  renderStreak();
 }
 
 function scheduleSave() {
@@ -771,6 +774,7 @@ function renderCal() {
   }
   $('cal-grid').innerHTML = html;
   renderList();
+  renderStats();
 }
 
 // Visar dagen i ett fönster ovanpå kalendern. Man bläddrar mellan dagar man skrivit,
@@ -862,6 +866,233 @@ function closeReader() {
   if (reader.close) reader.close();
   else reader.removeAttribute('open');
 }
+
+/* Svit och statistik */
+
+// Svit: dagar i rad med inlägg. Nuvarande räknas från idag, eller från igår
+// om dagens inlägg inte är skrivet än, så att sviten inte bryts på morgonen.
+function streaks() {
+  const keys = Object.keys(entries).sort();
+  let longest = 0;
+  let longestEnd = null;
+  let run = 0;
+  let prev = null;
+  for (const k of keys) {
+    run = prev && shiftKey(prev, 1) === k ? run + 1 : 1;
+    if (run > longest) {
+      longest = run;
+      longestEnd = k;
+    }
+    prev = k;
+  }
+  const today = todayKey();
+  let d = entries[today] ? today : shiftKey(today, -1);
+  let current = 0;
+  while (entries[d]) {
+    current++;
+    d = shiftKey(d, -1);
+  }
+  return { current, longest, longestEnd, todayDone: !!entries[today] };
+}
+
+const dagar = (n) => `${n} ${n === 1 ? 'dag' : 'dagar'}`;
+
+function renderStreak() {
+  const s = streaks();
+  const el = $('streak');
+  if (current !== todayKey() || s.current < 2) {
+    el.hidden = true;
+    return;
+  }
+  el.hidden = false;
+  el.textContent = s.todayDone
+    ? `${s.current} dagar i rad`
+    : `${s.current} dagar i rad. Skriv idag för att hålla sviten.`;
+}
+
+const fmtDec = (n) => (Math.round(n * 10) / 10).toFixed(1).replace('.', ',');
+const monthOnlyFmt = new Intl.DateTimeFormat('sv-SE', { month: 'long' });
+const monthShortFmt = new Intl.DateTimeFormat('sv-SE', { month: 'short' });
+const weekdayFmt = new Intl.DateTimeFormat('sv-SE', { weekday: 'long' });
+const WEATHER_NAMES = {
+  0: 'sol', 2: 'halvklart', 3: 'mulet', 63: 'regn', 73: 'snö', 95: 'åska', 45: 'dimma', 1000: 'storm',
+};
+
+function shiftYm(ym, n) {
+  const [y, m] = ym.split('-').map(Number);
+  const d = new Date(y, m - 1 + n, 1);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+}
+
+function monthMoods(ym) {
+  return Object.keys(entries).filter((k) => k.slice(0, 7) === ym && entries[k].mood)
+    .map((k) => entries[k].mood);
+}
+
+const avg = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
+
+function renderStats() {
+  const ym = calMonth;
+  const keys = Object.keys(entries).filter((k) => k.slice(0, 7) === ym).sort();
+  const box = $('month-stats');
+  box.hidden = !keys.length;
+  if (!keys.length) return;
+
+  const first = parseKey(ym + '-01');
+  const name = monthOnlyFmt.format(first);
+  $('month-stats-title').textContent = `Statistik för ${monthFmt.format(first)}`;
+
+  // Dagar som har passerat, så att en pågående månad inte ser halvtom ut
+  const today = todayKey();
+  const total = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
+  const passed = ym === today.slice(0, 7) ? Number(today.slice(8)) : total;
+
+  const facts = [['Skrivna dagar', `${keys.length} av ${passed}`]];
+
+  const moods = keys.map((k) => entries[k].mood).filter(Boolean);
+  if (moods.length) {
+    const a = avg(moods);
+    const prevYm = shiftYm(ym, -1);
+    const prev = monthMoods(prevYm);
+    let cmp = '';
+    if (prev.length) {
+      const diff = Math.round((a - avg(prev)) * 10) / 10;
+      const prevName = monthOnlyFmt.format(parseKey(prevYm + '-01'));
+      cmp = diff > 0 ? `, upp ${fmtDec(diff)} från ${prevName}`
+        : diff < 0 ? `, ner ${fmtDec(-diff)} från ${prevName}`
+          : `, samma som ${prevName}`;
+    }
+    facts.push(['Snitthumör', `${fmtDec(a)}${cmp}`]);
+
+    // Bästa veckodag, bara dagar med minst två inlägg räknas
+    const byDay = {};
+    for (const k of keys) {
+      const e = entries[k];
+      if (!e.mood) continue;
+      const wd = parseKey(k).getDay();
+      (byDay[wd] = byDay[wd] || []).push(e.mood);
+    }
+    const best = Object.entries(byDay).filter(([, v]) => v.length >= 2)
+      .map(([wd, v]) => [Number(wd), avg(v)]).sort((x, y) => y[1] - x[1])[0];
+    if (best) {
+      const sample = new Date(2026, 0, 4 + best[0]);
+      facts.push(['Bästa veckodag', `${weekdayFmt.format(sample)}, ${fmtDec(best[1])}`]);
+    }
+
+    // Humör per väder, väder med minst två dagar
+    const byWx = {};
+    for (const k of keys) {
+      const e = entries[k];
+      const g = e.weather ? weatherGroup(e.weather.code) : null;
+      if (!e.mood || g == null) continue;
+      (byWx[g] = byWx[g] || []).push(e.mood);
+    }
+    const wx = Object.entries(byWx).filter(([, v]) => v.length >= 2)
+      .map(([g, v]) => [WEATHER_NAMES[g], avg(v)]).sort((x, y) => y[1] - x[1]).slice(0, 4);
+    if (wx.length >= 2) {
+      const list = wx.map(([n, v]) => `${n} ${fmtDec(v)}`).join(', ');
+      facts.push(['Humör per väder', list.charAt(0).toUpperCase() + list.slice(1)]);
+    }
+  }
+
+  const s = streaks();
+  if (s.longest >= 2) {
+    facts.push(['Svit', `${dagar(s.current)} nu, längsta ${dagar(s.longest)}`]);
+  }
+
+  $('facts').innerHTML = facts.map(([k, v]) => `<dt>${k}</dt><dd>${escapeHtml(v)}</dd>`).join('');
+
+  // Fördelning av humöret, en stapel med fem delar
+  const counts = [1, 2, 3, 4, 5].map((v) => moods.filter((x) => x === v).length);
+  $('distr').hidden = !moods.length;
+  $('distr-bar').innerHTML = counts.map((c, i) => (c
+    ? `<span style="--m: var(--m${i + 1}); flex-grow: ${c}" title="Humör ${i + 1}: ${dagar(c)}">${c}</span>`
+    : '')).join('');
+  $('distr').setAttribute('aria-label', `Humör i ${name}: ` +
+    counts.map((c, i) => `${c} med ${i + 1}`).join(', '));
+
+  renderTrend();
+}
+
+// Snitthumör per månad, de tolv månaderna fram till den som visas
+function renderTrend() {
+  const months = [];
+  for (let i = 11; i >= 0; i--) months.push(shiftYm(calMonth, -i));
+  const data = months.map((ym) => {
+    const ms = monthMoods(ym);
+    return { ym, avg: ms.length ? avg(ms) : null, n: ms.length };
+  });
+  const W = 340;
+  const H = 128;
+  const x0 = 22;
+  const x1 = W - 8;
+  const yOf = (v) => 12 + (5 - v) * 22; // 5 överst, 1 nederst
+  const xOf = (i) => x0 + (i * (x1 - x0)) / 11;
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Snitthumör per månad">`;
+  for (const v of [1, 3, 5]) {
+    svg += `<line class="gl" x1="${x0}" x2="${x1}" y1="${yOf(v)}" y2="${yOf(v)}"/>`;
+    svg += `<text class="lbl" x="${x0 - 8}" y="${yOf(v) + 3.5}" text-anchor="end">${v}</text>`;
+  }
+  // Linjen bryts där en månad saknar humör
+  let path = '';
+  let pen = false;
+  data.forEach((d, i) => {
+    if (d.avg == null) {
+      pen = false;
+      return;
+    }
+    path += `${pen ? 'L' : 'M'}${xOf(i).toFixed(1)} ${yOf(d.avg).toFixed(1)}`;
+    pen = true;
+  });
+  if (path) svg += `<path class="ln" d="${path}"/>`;
+  data.forEach((d, i) => {
+    const cur = d.ym === calMonth;
+    if (d.avg != null) {
+      svg += `<circle class="pt${cur ? ' cur' : ''}" cx="${xOf(i)}" cy="${yOf(d.avg)}" r="${cur ? 5.5 : 4}"/>`;
+    }
+    const label = monthShortFmt.format(parseKey(d.ym + '-01')).replace('.', '').slice(0, 3);
+    svg += `<text class="lbl${cur ? ' cur' : ''}" x="${xOf(i)}" y="${H - 4}" text-anchor="middle">${label}</text>`;
+    // Träffyta större än punkten, för tryck och hovring
+    const w = (x1 - x0) / 11;
+    svg += `<rect class="hit" x="${xOf(i) - w / 2}" y="0" width="${w}" height="${H}" data-ym="${d.ym}" tabindex="0" role="button" aria-label="${monthFmt.format(parseKey(d.ym + '-01'))}${d.avg != null ? `, snitthumör ${fmtDec(d.avg)}` : ', inget humör'}"/>`;
+  });
+  svg += '</svg>';
+  $('trend').innerHTML = svg;
+  trendRead(calMonth);
+}
+
+function trendRead(ym) {
+  const ms = monthMoods(ym);
+  const m = monthFmt.format(parseKey(ym + '-01'));
+  $('trend-read').textContent = ms.length
+    ? `${m.charAt(0).toUpperCase() + m.slice(1)}: snitt ${fmtDec(avg(ms))}, ${dagar(ms.length)} med humör`
+    : `${m.charAt(0).toUpperCase() + m.slice(1)}: inget humör`;
+}
+
+$('trend').addEventListener('pointerover', (ev) => {
+  const r = ev.target.closest('.hit');
+  if (r) trendRead(r.dataset.ym);
+});
+$('trend').addEventListener('pointerleave', () => trendRead(calMonth));
+$('trend').addEventListener('focusin', (ev) => {
+  const r = ev.target.closest('.hit');
+  if (r) trendRead(r.dataset.ym);
+});
+// Ett tryck på en månad visar den i kalendern
+$('trend').addEventListener('click', (ev) => {
+  const r = ev.target.closest('.hit');
+  if (!r || r.dataset.ym > todayKey().slice(0, 7)) return;
+  calMonth = r.dataset.ym;
+  renderCal();
+});
+$('trend').addEventListener('keydown', (ev) => {
+  const r = ev.target.closest('.hit');
+  if (r && (ev.key === 'Enter' || ev.key === ' ')) {
+    ev.preventDefault();
+    r.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  }
+});
 
 function shiftMonth(n) {
   const [y, m] = calMonth.split('-').map(Number);

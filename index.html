@@ -27,6 +27,7 @@
         <button type="button" class="icon" id="next" aria-label="Nästa dag">&#8250;</button>
       </div>
       <button type="button" class="link" id="to-today" hidden>Gå till idag</button>
+      <p class="streak" id="streak" hidden></p>
 
       <p class="weather" id="weather"></p>
 
@@ -93,6 +94,17 @@
           <span>Bra</span>
         </div>
       </div>
+      <section class="stats" id="month-stats" aria-labelledby="month-stats-title" hidden>
+        <h2 id="month-stats-title"></h2>
+        <dl class="facts" id="facts"></dl>
+        <div class="distr" id="distr" role="img">
+          <div class="distr-bar" id="distr-bar"></div>
+          <div class="distr-ends"><span>Tungt</span><span>Bra</span></div>
+        </div>
+        <h3>Snitthumör, senaste 12 månaderna</h3>
+        <div class="trend" id="trend"></div>
+        <p class="trend-read" id="trend-read" aria-live="polite"></p>
+      </section>
       <div class="feed">
         <input type="search" id="search" placeholder="Sök i dagboken" aria-label="Sök">
         <div id="list"></div>
