@@ -253,7 +253,7 @@ const Paper = (() => {
     }
 
     function markEmpty() {
-      el.classList.toggle('empty', !el.textContent.replace(/​/g, '').trim() &&
+      el.classList.toggle('is-empty', !el.textContent.replace(/​/g, '').trim() &&
         !el.querySelector('li, h2, h3'));
     }
 

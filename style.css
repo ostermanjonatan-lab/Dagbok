@@ -704,11 +704,14 @@ mark {
   -webkit-user-select: text;
   user-select: text;
 }
-.paper.empty::before {
+/* Platshållaren sitter på första raden så att den står exakt där texten börjar */
+.paper.is-empty > :first-child { position: relative; }
+.paper.is-empty > :first-child::before {
   content: "Skriv om dagen";
   position: absolute;
-  top: 14px;
-  left: 16px;
+  top: 0;
+  left: 0;
+  white-space: nowrap;
   color: var(--muted);
   opacity: .7;
   pointer-events: none;
