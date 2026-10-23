@@ -298,3 +298,98 @@ mark {
   cursor: pointer;
 }
 .buttons button:active { background: var(--line); }
+
+/* Kalender */
+.cal-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 12px 0 4px;
+}
+#cal-title {
+  flex: 1;
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 600;
+  text-align: center;
+}
+#cal-title::first-letter { text-transform: uppercase; }
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  margin: 4px 0 12px;
+  cursor: pointer;
+}
+.toggle input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+.wd {
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+  padding-bottom: 2px;
+}
+.day {
+  position: relative;
+  aspect-ratio: 1;
+  max-height: 64px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+.day:disabled { opacity: .35; cursor: default; }
+.day.has { background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+.day.has::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  width: 5px;
+  height: 5px;
+  margin-left: -2.5px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.moods .day.has[style]::after { display: none; }
+.moods .day.has[style] { background: var(--m); color: var(--on-mood); box-shadow: none; }
+.day.today { font-weight: 700; }
+.day.sel { box-shadow: inset 0 0 0 2px var(--text); }
+.moods .day.has[style].sel { box-shadow: inset 0 0 0 2px var(--text); }
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 10px;
+}
+.legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--m);
+  margin-right: 5px;
+}
+.read {
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.read .when { font-size: 14px; color: var(--muted); }
+.read .text {
+  font-family: var(--serif);
+  font-size: 18px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  margin: 6px 0 10px;
+}
+.read .meta { font-size: 14px; color: var(--muted); margin-bottom: 10px; }

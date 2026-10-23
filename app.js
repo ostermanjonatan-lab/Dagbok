@@ -379,6 +379,94 @@ function renderList() {
 
 $('search').addEventListener('input', renderList);
 
+/* Kalender */
+
+const FILTER_KEY = 'dagbok.humorfilter';
+let calMonth = todayKey().slice(0, 7);
+let calSel = todayKey();
+
+try { $('mood-filter').checked = localStorage.getItem(FILTER_KEY) === '1'; } catch {}
+
+function renderCal() {
+  const [y, m] = calMonth.split('-').map(Number);
+  const first = new Date(y, m - 1, 1);
+  const days = new Date(y, m, 0).getDate();
+  const today = todayKey();
+  const moods = $('mood-filter').checked;
+
+  $('cal-title').textContent = monthFmt.format(first);
+  $('cal-next').disabled = calMonth >= today.slice(0, 7);
+  $('cal-grid').classList.toggle('moods', moods);
+  $('legend').hidden = !moods;
+
+  let html = ['mån', 'tis', 'ons', 'tor', 'fre', 'lör', 'sön']
+    .map((d) => `<div class="wd">${d}</div>`).join('');
+  // Veckan börjar på måndag
+  const offset = (first.getDay() + 6) % 7;
+  html += '<div></div>'.repeat(offset);
+  for (let d = 1; d <= days; d++) {
+    const key = `${calMonth}-${pad(d)}`;
+    const e = entries[key];
+    const cls = ['day'];
+    if (e) cls.push('has');
+    if (key === today) cls.push('today');
+    if (key === calSel) cls.push('sel');
+    const style = e && e.mood ? ` style="--m: var(--m${e.mood})"` : '';
+    const label = fmtDate(key) + (e && e.mood ? `, humör ${e.mood}` : e ? ', skrivet' : '');
+    html += `<button type="button" class="${cls.join(' ')}" data-key="${key}"${style}
+      aria-label="${label}"${key > today ? ' disabled' : ''}>${d}</button>`;
+  }
+  $('cal-grid').innerHTML = html;
+  renderCalEntry();
+}
+
+function renderCalEntry() {
+  const e = entries[calSel];
+  const box = $('cal-entry');
+  if (calSel.slice(0, 7) !== calMonth) {
+    box.innerHTML = '';
+    return;
+  }
+  if (!e) {
+    box.innerHTML = `<div class="when">${fmtDate(calSel)}</div>
+      <p class="meta">Inget skrivet den här dagen.</p>
+      <button type="button" class="link" id="cal-open">Skriv för den här dagen</button>`;
+    return;
+  }
+  const meta = [];
+  if (e.mood) meta.push(`<span class="dot" style="--m: var(--m${e.mood})"></span>Humör ${e.mood}`);
+  if (e.weather) meta.push(escapeHtml(fmtWeather(e.weather)));
+  box.innerHTML = `<div class="when">${fmtDate(calSel)}</div>
+    ${e.text ? `<div class="text">${escapeHtml(e.text)}</div>` : ''}
+    ${meta.length ? `<div class="meta">${meta.join(', ')}</div>` : ''}
+    <button type="button" class="link" id="cal-open">Redigera dagen</button>`;
+}
+
+function shiftMonth(n) {
+  const [y, m] = calMonth.split('-').map(Number);
+  const d = new Date(y, m - 1 + n, 1);
+  calMonth = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+  renderCal();
+}
+
+$('cal-prev').addEventListener('click', () => shiftMonth(-1));
+$('cal-next').addEventListener('click', () => shiftMonth(1));
+$('mood-filter').addEventListener('change', () => {
+  try { localStorage.setItem(FILTER_KEY, $('mood-filter').checked ? '1' : '0'); } catch {}
+  renderCal();
+});
+$('cal-grid').addEventListener('click', (ev) => {
+  const btn = ev.target.closest('.day');
+  if (!btn || btn.disabled) return;
+  calSel = btn.dataset.key;
+  renderCal();
+});
+$('cal-entry').addEventListener('click', (ev) => {
+  if (ev.target.id === 'cal-open') openDay(calSel);
+});
+
+function openDay(key) { go(`#/dag/${key}`); }
+
 /* Säkerhetskopia */
 
 $('export').addEventListener('click', () => {
@@ -432,15 +520,20 @@ function go(hash) {
 
 function route() {
   const hash = location.hash || '#/dag';
-  const isAll = hash.startsWith('#/alla');
-  $('view-day').hidden = isAll;
-  $('view-all').hidden = !isAll;
-  $('tab-day').classList.toggle('on', !isAll);
-  $('tab-all').classList.toggle('on', isAll);
+  const view = hash.startsWith('#/alla') ? 'all' : hash.startsWith('#/kalender') ? 'cal' : 'day';
+  if (view !== 'day') flushSave();
+  for (const v of ['day', 'cal', 'all']) {
+    $(`view-${v}`).hidden = v !== view;
+    $(`tab-${v}`).classList.toggle('on', v === view);
+  }
 
-  if (isAll) {
-    flushSave();
+  if (view === 'all') {
     renderList();
+  } else if (view === 'cal') {
+    // Kalendern öppnar på dagen som senast visades
+    calSel = current;
+    calMonth = current.slice(0, 7);
+    renderCal();
   } else {
     const m = hash.match(/^#\/dag\/(\d{4}-\d{2}-\d{2})$/);
     showDay(m ? m[1] : todayKey());

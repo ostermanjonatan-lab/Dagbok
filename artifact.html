@@ -166,11 +166,106 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
 }
 .buttons button:active { background: var(--line); }
 #backup-msg { margin: 10px 0 0; }
+/* Kalender */
+.cal-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 12px 0 4px;
+}
+#cal-title {
+  flex: 1;
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 600;
+  text-align: center;
+}
+#cal-title::first-letter { text-transform: uppercase; }
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  margin: 4px 0 12px;
+  cursor: pointer;
+}
+.toggle input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+.wd {
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+  padding-bottom: 2px;
+}
+.day {
+  position: relative;
+  aspect-ratio: 1;
+  max-height: 64px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+.day:disabled { opacity: .35; cursor: default; }
+.day.has { background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+.day.has::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  width: 5px;
+  height: 5px;
+  margin-left: -2.5px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.moods .day.has[style]::after { display: none; }
+.moods .day.has[style] { background: var(--m); color: var(--on-mood); box-shadow: none; }
+.day.today { font-weight: 700; }
+.day.sel { box-shadow: inset 0 0 0 2px var(--text); }
+.moods .day.has[style].sel { box-shadow: inset 0 0 0 2px var(--text); }
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 10px;
+}
+.legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--m);
+  margin-right: 5px;
+}
+.read {
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.read .when { font-size: 14px; color: var(--muted); }
+.read .text {
+  font-family: var(--serif);
+  font-size: 18px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  margin: 6px 0 10px;
+}
+.read .meta { font-size: 14px; color: var(--muted); margin-bottom: 10px; }
 </style>
 
 <header class="bar">
   <nav class="tabs wrap" aria-label="Vyer">
     <button type="button" id="tab-day" class="on">Dag</button>
+    <button type="button" id="tab-cal">Kalender</button>
     <button type="button" id="tab-all">Alla dagar</button>
   </nav>
 </header>
@@ -215,6 +310,27 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
         <button type="button" class="link" id="delete-no">Avbryt</button>
       </span>
     </div>
+  </section>
+
+  <section id="view-cal" hidden>
+    <div class="cal-head">
+      <button type="button" class="icon" id="cal-prev" aria-label="Föregående månad">&#8249;</button>
+      <h2 id="cal-title"></h2>
+      <button type="button" class="icon" id="cal-next" aria-label="Nästa månad">&#8250;</button>
+    </div>
+    <label class="toggle">
+      <input type="checkbox" id="mood-filter">
+      <span>Visa humör</span>
+    </label>
+    <div class="grid" id="cal-grid"></div>
+    <div class="legend" id="legend" hidden>
+      <span><i style="--m: var(--m1)"></i>1 tungt</span>
+      <span><i style="--m: var(--m2)"></i>2</span>
+      <span><i style="--m: var(--m3)"></i>3</span>
+      <span><i style="--m: var(--m4)"></i>4</span>
+      <span><i style="--m: var(--m5)"></i>5 bra</span>
+    </div>
+    <div class="read" id="cal-entry"></div>
   </section>
 
   <section id="view-all" hidden>
@@ -394,6 +510,7 @@ async function connect() {
     if (!touched) return;
     writeCache();
     if (view === 'all') renderList();
+    else if (view === 'cal') renderCal();
     else if (!saveTimer && !$('entry').contains(document.activeElement)) showDay(current);
   }, () => {
     col = null;
@@ -589,6 +706,94 @@ $('list').addEventListener('click', (ev) => {
   if (item) { setView('day'); showDay(item.dataset.key); }
 });
 
+/* Kalender */
+
+const FILTER_KEY = 'dagbok.humorfilter';
+let calMonth = todayKey().slice(0, 7);
+let calSel = todayKey();
+
+try { $('mood-filter').checked = localStorage.getItem(FILTER_KEY) === '1'; } catch {}
+
+function renderCal() {
+  const [y, m] = calMonth.split('-').map(Number);
+  const first = new Date(y, m - 1, 1);
+  const days = new Date(y, m, 0).getDate();
+  const today = todayKey();
+  const moods = $('mood-filter').checked;
+
+  $('cal-title').textContent = monthFmt.format(first);
+  $('cal-next').disabled = calMonth >= today.slice(0, 7);
+  $('cal-grid').classList.toggle('moods', moods);
+  $('legend').hidden = !moods;
+
+  let html = ['mån', 'tis', 'ons', 'tor', 'fre', 'lör', 'sön']
+    .map((d) => `<div class="wd">${d}</div>`).join('');
+  // Veckan börjar på måndag
+  const offset = (first.getDay() + 6) % 7;
+  html += '<div></div>'.repeat(offset);
+  for (let d = 1; d <= days; d++) {
+    const key = `${calMonth}-${pad(d)}`;
+    const e = entries[key];
+    const cls = ['day'];
+    if (e) cls.push('has');
+    if (key === today) cls.push('today');
+    if (key === calSel) cls.push('sel');
+    const style = e && e.mood ? ` style="--m: var(--m${e.mood})"` : '';
+    const label = fmtDate(key) + (e && e.mood ? `, humör ${e.mood}` : e ? ', skrivet' : '');
+    html += `<button type="button" class="${cls.join(' ')}" data-key="${key}"${style}
+      aria-label="${label}"${key > today ? ' disabled' : ''}>${d}</button>`;
+  }
+  $('cal-grid').innerHTML = html;
+  renderCalEntry();
+}
+
+function renderCalEntry() {
+  const e = entries[calSel];
+  const box = $('cal-entry');
+  if (calSel.slice(0, 7) !== calMonth) {
+    box.innerHTML = '';
+    return;
+  }
+  if (!e) {
+    box.innerHTML = `<div class="when">${fmtDate(calSel)}</div>
+      <p class="meta">Inget skrivet den här dagen.</p>
+      <button type="button" class="link" id="cal-open">Skriv för den här dagen</button>`;
+    return;
+  }
+  const meta = [];
+  if (e.mood) meta.push(`<span class="dot" style="--m: var(--m${e.mood})"></span>Humör ${e.mood}`);
+  if (e.weather) meta.push(escapeHtml(fmtWeather(e.weather)));
+  box.innerHTML = `<div class="when">${fmtDate(calSel)}</div>
+    ${e.text ? `<div class="text">${escapeHtml(e.text)}</div>` : ''}
+    ${meta.length ? `<div class="meta">${meta.join(', ')}</div>` : ''}
+    <button type="button" class="link" id="cal-open">Redigera dagen</button>`;
+}
+
+function shiftMonth(n) {
+  const [y, m] = calMonth.split('-').map(Number);
+  const d = new Date(y, m - 1 + n, 1);
+  calMonth = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+  renderCal();
+}
+
+$('cal-prev').addEventListener('click', () => shiftMonth(-1));
+$('cal-next').addEventListener('click', () => shiftMonth(1));
+$('mood-filter').addEventListener('change', () => {
+  try { localStorage.setItem(FILTER_KEY, $('mood-filter').checked ? '1' : '0'); } catch {}
+  renderCal();
+});
+$('cal-grid').addEventListener('click', (ev) => {
+  const btn = ev.target.closest('.day');
+  if (!btn || btn.disabled) return;
+  calSel = btn.dataset.key;
+  renderCal();
+});
+$('cal-entry').addEventListener('click', (ev) => {
+  if (ev.target.id === 'cal-open') openDay(calSel);
+});
+
+function openDay(key) { setView('day'); showDay(key); }
+
 /* Säkerhetskopia */
 
 function backupMsg(text) { $('backup-msg').textContent = text; }
@@ -643,18 +848,26 @@ $('import-file').addEventListener('change', async (ev) => {
 function setView(v) {
   flushSave();
   view = v;
-  $('view-day').hidden = v !== 'day';
-  $('view-all').hidden = v !== 'all';
-  $('tab-day').classList.toggle('on', v === 'day');
-  $('tab-all').classList.toggle('on', v === 'all');
+  for (const name of ['day', 'cal', 'all']) {
+    $(`view-${name}`).hidden = name !== v;
+    $(`tab-${name}`).classList.toggle('on', name === v);
+  }
   if (v === 'all') renderList();
+  if (v === 'cal') {
+    // Kalendern öppnar på dagen som senast visades
+    calSel = current;
+    calMonth = current.slice(0, 7);
+    renderCal();
+  }
   window.scrollTo(0, 0);
 }
 
 $('tab-day').addEventListener('click', () => { setView('day'); showDay(todayKey()); });
+$('tab-cal').addEventListener('click', () => setView('cal'));
 $('tab-all').addEventListener('click', () => setView('all'));
 
 if (location.hash === '#alla') setView('all');
+if (location.hash === '#kalender') setView('cal');
 showDay(current);
 connect();
 </script>

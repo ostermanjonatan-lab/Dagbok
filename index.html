@@ -18,6 +18,7 @@
   <header class="bar">
     <nav class="tabs" aria-label="Vyer">
       <a href="#/dag" id="tab-day">Dag</a>
+      <a href="#/kalender" id="tab-cal">Kalender</a>
       <a href="#/alla" id="tab-all">Alla dagar</a>
     </nav>
   </header>
@@ -59,6 +60,27 @@
         <span id="status" aria-live="polite"></span>
         <button type="button" class="link danger" id="delete" hidden>Ta bort dagen</button>
       </div>
+    </section>
+
+    <section id="view-cal" hidden>
+      <div class="cal-head">
+        <button type="button" class="icon" id="cal-prev" aria-label="Föregående månad">&#8249;</button>
+        <h2 id="cal-title"></h2>
+        <button type="button" class="icon" id="cal-next" aria-label="Nästa månad">&#8250;</button>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="mood-filter">
+        <span>Visa humör</span>
+      </label>
+      <div class="grid" id="cal-grid"></div>
+      <div class="legend" id="legend" hidden>
+        <span><i style="--m: var(--m1)"></i>1 tungt</span>
+        <span><i style="--m: var(--m2)"></i>2</span>
+        <span><i style="--m: var(--m3)"></i>3</span>
+        <span><i style="--m: var(--m4)"></i>4</span>
+        <span><i style="--m: var(--m5)"></i>5 bra</span>
+      </div>
+      <div class="read" id="cal-entry"></div>
     </section>
 
     <section id="view-all" hidden>
