@@ -17,6 +17,10 @@ Skrivytan förstår Markdown medan du skriver: `# ` ger en rubrik, `## ` en mind
 
 Vädret hämtas från Open-Meteo med telefonens position, som avrundas till ungefär en kilometer. Första gången frågar telefonen om appen får använda platsen. Artifact-versionen (`artifact.html`) kan inte hämta väder, eftersom claude.ai stoppar anrop till andra webbplatser, men den visar väder som följer med vid import.
 
+## Bilder
+
+Telefonappen sparar bilderna i webbläsarens databas (IndexedDB) på telefonen. Exportfilen har bilderna med sig, så de följer med till en annan telefon eller till artifact-versionen. Artifact-versionen sparar bilderna i artifactens fillagring.
+
 ## Data
 
 Inläggen ligger i `localStorage` på den enhet du skriver på och skickas ingenstans. Använd Exportera fil under Flöde för en säkerhetskopia, och Importera fil för att flytta till en annan enhet. Vid import behålls den senast ändrade versionen av varje dag.

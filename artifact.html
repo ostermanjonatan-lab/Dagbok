@@ -310,25 +310,24 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   margin-top: 14px;
   font-size: 14px;
 }
-.select { position: relative; display: inline-block; }
-.select select {
-  appearance: none;
-  -webkit-appearance: none;
-  font: inherit;
+/* Egen rullgardinsmeny i appens stil */
+.dropdown { position: relative; }
+.dd-btn {
+  position: relative;
+  min-width: 150px;
+  text-align: left;
   font-size: 16px;
   color: var(--text);
   background: var(--surface);
   border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
   border-radius: 8px;
-  padding: 8px 36px 8px 12px;
+  padding: 8px 38px 8px 12px;
   cursor: pointer;
 }
-.select select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-/* Pil som visar att listan fälls ut */
-.select::after {
+.dd-btn::after {
   content: "";
   position: absolute;
-  right: 14px;
+  right: 15px;
   top: 50%;
   width: 7px;
   height: 7px;
@@ -336,7 +335,52 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   border-right: 2px solid var(--accent);
   border-bottom: 2px solid var(--accent);
   transform: rotate(45deg);
-  pointer-events: none;
+  transition: transform .15s;
+}
+.dd-btn[aria-expanded="true"]::after { transform: translateY(3px) rotate(-135deg); }
+.dd-list {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  z-index: 20;
+  min-width: 100%;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 10px 28px rgb(0 0 0 / .16);
+  transform-origin: top;
+  animation: drop .14s ease-out;
+}
+.dd-list.up { top: auto; bottom: calc(100% + 6px); transform-origin: bottom; }
+@keyframes drop { from { opacity: 0; transform: scaleY(.85); } }
+@media (prefers-reduced-motion: reduce) { .dd-list { animation: none; } .dd-btn::after { transition: none; } }
+.dd-list li {
+  position: relative;
+  padding: 10px 14px 10px 34px;
+  border-radius: 7px;
+  font-size: 16px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.dd-list li:hover, .dd-list li:focus {
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  outline: none;
+}
+.dd-list li[aria-selected="true"] { color: var(--accent); font-weight: 500; }
+.dd-list li[aria-selected="true"]::before {
+  content: "";
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  width: 10px;
+  height: 5px;
+  margin-top: -5px;
+  border-left: 2px solid var(--accent);
+  border-bottom: 2px solid var(--accent);
+  transform: rotate(-45deg);
 }
 .day {
   display: flex;
@@ -664,16 +708,18 @@ body.keyboard .nav { visibility: hidden; }
       <button type="button" class="icon" id="cal-next" aria-label="Nästa månad">&#8250;</button>
     </div>
     <div class="grid" id="cal-grid"></div>
-    <label class="show">
-      <span>Visa</span>
-      <span class="select">
-        <select id="cal-show">
-          <option value="">Inget extra</option>
-          <option value="mood">Humör</option>
-          <option value="weather">Väder</option>
-        </select>
-      </span>
-    </label>
+    <div class="show">
+      <span id="show-label">Visa</span>
+      <div class="dropdown" id="show-dd">
+        <button type="button" class="dd-btn" id="cal-show" aria-haspopup="listbox" aria-expanded="false"
+          aria-labelledby="show-label cal-show">Inget extra</button>
+        <ul class="dd-list" id="cal-show-list" role="listbox" aria-labelledby="show-label" hidden>
+          <li role="option" tabindex="-1" data-value="">Inget extra</li>
+          <li role="option" tabindex="-1" data-value="mood">Humör</li>
+          <li role="option" tabindex="-1" data-value="weather">Väder</li>
+        </ul>
+      </div>
+    </div>
     <div class="legend" id="legend" hidden>
       <span><i style="--m: var(--m1)"></i>1 tungt</span>
       <span><i style="--m: var(--m2)"></i>2</span>
@@ -1785,6 +1831,8 @@ function weatherCell(w) {
 let calMonth = todayKey().slice(0, 7);
 let calSel = todayKey();
 
+// Vad kalendern visar utöver skrivna dagar: '' (inget), 'mood' eller 'weather'
+let calShow = '';
 try {
   // Tidigare fanns två kryssrutor, de blir ett val här
   let show = localStorage.getItem(SHOW_KEY);
@@ -1792,16 +1840,78 @@ try {
     show = localStorage.getItem('dagbok.humorfilter') === '1' ? 'mood'
       : localStorage.getItem('dagbok.vaderfilter') === '1' ? 'weather' : '';
   }
-  $('cal-show').value = show;
+  calShow = ['', 'mood', 'weather'].includes(show) ? show : '';
 } catch {}
+
+/* Rullgardinsmenyn för vad kalendern visar */
+
+const ddBtn = $('cal-show');
+const ddList = $('cal-show-list');
+const ddOptions = [...ddList.querySelectorAll('li')];
+
+function syncShow() {
+  const opt = ddOptions.find((o) => o.dataset.value === calShow) || ddOptions[0];
+  ddBtn.textContent = opt.textContent;
+  ddOptions.forEach((o) => o.setAttribute('aria-selected', String(o === opt)));
+}
+
+function openShow() {
+  ddList.hidden = false;
+  ddBtn.setAttribute('aria-expanded', 'true');
+  // Fäll uppåt om listan inte får plats ovanför bottenmenyn
+  ddList.classList.remove('up');
+  const nav = document.querySelector('.nav');
+  const limit = window.innerHeight - (nav ? nav.offsetHeight : 0) - 8;
+  if (ddList.getBoundingClientRect().bottom > limit) ddList.classList.add('up');
+  (ddOptions.find((o) => o.getAttribute('aria-selected') === 'true') || ddOptions[0]).focus();
+}
+
+function closeShow(focusButton) {
+  if (ddList.hidden) return;
+  ddList.hidden = true;
+  ddBtn.setAttribute('aria-expanded', 'false');
+  if (focusButton) ddBtn.focus();
+}
+
+function chooseShow(value) {
+  calShow = value;
+  try { localStorage.setItem(SHOW_KEY, value); } catch {}
+  syncShow();
+  closeShow(true);
+  renderCal();
+}
+
+ddBtn.addEventListener('click', () => (ddList.hidden ? openShow() : closeShow(false)));
+ddBtn.addEventListener('keydown', (ev) => {
+  if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+    ev.preventDefault();
+    openShow();
+  }
+});
+ddList.addEventListener('click', (ev) => {
+  const li = ev.target.closest('li');
+  if (li) chooseShow(li.dataset.value);
+});
+ddList.addEventListener('keydown', (ev) => {
+  const i = ddOptions.indexOf(document.activeElement);
+  if (ev.key === 'ArrowDown') { ev.preventDefault(); ddOptions[Math.min(i + 1, ddOptions.length - 1)].focus(); }
+  if (ev.key === 'ArrowUp') { ev.preventDefault(); ddOptions[Math.max(i - 1, 0)].focus(); }
+  if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); if (i >= 0) chooseShow(ddOptions[i].dataset.value); }
+  if (ev.key === 'Escape') { ev.preventDefault(); closeShow(true); }
+  if (ev.key === 'Tab') closeShow(false);
+});
+document.addEventListener('pointerdown', (ev) => {
+  if (!$('show-dd').contains(ev.target)) closeShow(false);
+});
+syncShow();
 
 function renderCal() {
   const [y, m] = calMonth.split('-').map(Number);
   const first = new Date(y, m - 1, 1);
   const days = new Date(y, m, 0).getDate();
   const today = todayKey();
-  const moods = $('cal-show').value === 'mood';
-  const weathers = $('cal-show').value === 'weather';
+  const moods = calShow === 'mood';
+  const weathers = calShow === 'weather';
 
   $('cal-title').textContent = monthFmt.format(first);
   $('cal-next').disabled = calMonth >= today.slice(0, 7);
@@ -1931,10 +2041,6 @@ function shiftMonth(n) {
 
 $('cal-prev').addEventListener('click', () => shiftMonth(-1));
 $('cal-next').addEventListener('click', () => shiftMonth(1));
-$('cal-show').addEventListener('change', () => {
-  try { localStorage.setItem(SHOW_KEY, $('cal-show').value); } catch {}
-  renderCal();
-});
 $('cal-grid').addEventListener('click', (ev) => {
   const btn = ev.target.closest('.day');
   if (!btn || btn.disabled) return;
@@ -1986,19 +2092,31 @@ $('export').addEventListener('click', async () => {
 
 $('import').addEventListener('click', () => $('import-file').click());
 
+function dataUrlToBlob(url) {
+  const [head, body] = url.split(',');
+  const type = (head.match(/^data:([^;]+)/) || [])[1] || 'image/jpeg';
+  const bin = atob(body);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new Blob([bytes], { type });
+}
+
 $('import-file').addEventListener('change', async (ev) => {
   const file = ev.target.files[0];
   ev.target.value = '';
   if (!file) return;
   let incoming;
+  let images = null;
   try {
     const data = JSON.parse(await file.text());
     incoming = data.entries || data;
+    if (data.images && typeof data.images === 'object') images = data.images;
     if (!incoming || typeof incoming !== 'object') throw new Error();
   } catch {
     backupMsg('Filen gick inte att läsa. Välj en fil som exporterats från dagboken.');
     return;
   }
+  if (images) backupMsg('Importerar bilder…');
   let added = 0;
   let replaced = 0;
   for (const [k, raw] of Object.entries(incoming)) {
@@ -2008,6 +2126,19 @@ $('import-file').addEventListener('change', async (ev) => {
     if (!old) added++;
     else if (e.updated > old.updated) replaced++;
     else continue;
+    // En fil från telefonappen har bilderna med sig. De laddas upp här och får nya id:n.
+    if (images) {
+      const kept = [];
+      for (const id of e.photos) {
+        if (!assets || typeof images[id] !== 'string' || !images[id].startsWith('data:image/')) continue;
+        try {
+          const res = await assets.upload(dataUrlToBlob(images[id]));
+          photoUrls[res.id] = res.url;
+          kept.push(res.id);
+        } catch {}
+      }
+      e.photos = kept;
+    }
     entries[k] = e;
     remoteSet(k, e);
   }

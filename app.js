@@ -11,6 +11,7 @@ const moodButtons = [...$('f-mood').querySelectorAll('button')];
 let entries = normalizeAll(load());
 let current = todayKey();
 let saveTimer = null;
+let photos = [];        // bilderna för dagen som visas
 
 /* Lagring */
 
@@ -49,6 +50,7 @@ function normalize(e) {
         time: typeof w.time === 'string' ? w.time : null,
       }
       : null,
+    photos: Array.isArray(e.photos) ? e.photos.filter((id) => /^[A-Za-z0-9_-]{8,64}$/.test(id)) : [],
     updated: typeof e.updated === 'string' ? e.updated : new Date().toISOString(),
   };
 }
@@ -208,6 +210,7 @@ function readForm() {
   return {
     text: editor.get(),
     mood: checked ? Number(checked.dataset.v) : null,
+    photos: photos.slice(),
   };
 }
 
@@ -225,6 +228,9 @@ function showDay(key) {
 
   const e = entries[key];
   editor.set(e ? e.text : '');
+  photos = e ? e.photos.slice() : [];
+  renderPhotos();
+  $('photo-msg').textContent = '';
   setMood(e ? e.mood : null);
   showWeather(e);
 
@@ -249,7 +255,7 @@ function setStatus(text) { $('status').textContent = text; }
 function save() {
   saveTimer = null;
   const data = readForm();
-  if (!data.text && data.mood == null) {
+  if (!data.text && data.mood == null && !data.photos.length) {
     if (!entries[current]) return;
     delete entries[current];
     persist();
@@ -305,6 +311,7 @@ $('delete').addEventListener('click', () => {
   if (!confirm(`Ta bort allt du skrivit för ${fmtDate(current)}?`)) return;
   clearTimeout(saveTimer);
   saveTimer = null;
+  (entries[current] ? entries[current].photos : []).forEach(removeAsset);
   delete entries[current];
   persist();
   showDay(current);
@@ -314,6 +321,190 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') flushSave();
 });
 window.addEventListener('pagehide', flushSave);
+
+/* Bilder, sparade i webbläsarens databas på den här enheten */
+
+const photoUrls = {};
+// Genomskinlig bild tills bilden har lästs in från databasen
+const BLANK = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
+const photoUrl = (id) => photoUrls[id] || BLANK;
+
+let photoDb = null;
+function openPhotoDb() {
+  if (!photoDb) {
+    photoDb = new Promise((resolve, reject) => {
+      const req = indexedDB.open('dagbok-bilder', 1);
+      req.onupgradeneeded = () => req.result.createObjectStore('bilder');
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  return photoDb;
+}
+
+async function photoTx(mode, fn) {
+  const db = await openPhotoDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('bilder', mode);
+    const req = fn(tx.objectStore('bilder'));
+    tx.oncomplete = () => resolve(req ? req.result : undefined);
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error);
+  });
+}
+
+const photoStore = {
+  async upload(blob) {
+    const id = [...crypto.getRandomValues(new Uint8Array(16))]
+      .map((b) => b.toString(16).padStart(2, '0')).join('');
+    await photoTx('readwrite', (st) => st.put(blob, id));
+    photoUrls[id] = URL.createObjectURL(blob);
+    return { id, url: photoUrls[id] };
+  },
+  delete(id) {
+    if (photoUrls[id]) URL.revokeObjectURL(photoUrls[id]);
+    delete photoUrls[id];
+    return photoTx('readwrite', (st) => st.delete(id));
+  },
+  get: (id) => photoTx('readonly', (st) => st.get(id)),
+};
+
+// Läser in alla bilder en gång och fyller i de bilder som redan visas
+async function loadPhotos() {
+  const db = await openPhotoDb();
+  await new Promise((resolve, reject) => {
+    const tx = db.transaction('bilder');
+    const req = tx.objectStore('bilder').openCursor();
+    req.onsuccess = () => {
+      const c = req.result;
+      if (!c) return;
+      if (!photoUrls[c.key]) photoUrls[c.key] = URL.createObjectURL(c.value);
+      c.continue();
+    };
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
+  document.querySelectorAll('img[data-id]').forEach((img) => { img.src = photoUrl(img.dataset.id); });
+}
+
+function thumbs(list, cls) {
+  if (!list || !list.length) return '';
+  return `<div class="${cls}">${list.map((id) =>
+    `<button type="button" data-photo="${escapeHtml(id)}" aria-label="Visa bild">
+      <img src="${escapeHtml(photoUrl(id))}" data-id="${escapeHtml(id)}" alt="" loading="lazy"></button>`).join('')}</div>`;
+}
+
+let uploading = 0;
+
+function renderPhotos() {
+  const box = $('photos');
+  box.innerHTML = photos.map((id) =>
+    `<button type="button" data-photo="${escapeHtml(id)}" aria-label="Visa bild">
+      <img src="${escapeHtml(photoUrl(id))}" data-id="${escapeHtml(id)}" alt=""></button>`).join('') +
+    '<div class="uploading">Sparar</div>'.repeat(uploading);
+}
+
+// Förminskar stora foton innan de laddas upp, så att de går snabbt att visa
+async function shrink(file) {
+  const MAX = 2048;
+  try {
+    const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
+    const scale = Math.min(1, MAX / Math.max(bmp.width, bmp.height));
+    if (scale === 1 && /^image\/(jpeg|png|webp|gif)$/.test(file.type) && file.size < 3e6) return file;
+    const c = document.createElement('canvas');
+    c.width = Math.round(bmp.width * scale);
+    c.height = Math.round(bmp.height * scale);
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    const blob = await new Promise((res) => c.toBlob(res, 'image/jpeg', 0.85));
+    return blob || file;
+  } catch {
+    return file;
+  }
+}
+
+async function addPhotos(files) {
+  if (!files.length) return;
+  const key = current;
+  $('photo-msg').textContent = '';
+  uploading += files.length;
+  renderPhotos();
+  for (const file of files) {
+    try {
+      const blob = await shrink(file);
+      const res = await photoStore.upload(blob);
+      if (key === current) {
+        photos.push(res.id);
+      } else {
+        // Användaren har bytt dag under uppladdningen
+        const e = entries[key];
+        if (e) {
+          e.photos.push(res.id);
+          e.updated = new Date().toISOString();
+          persist();
+        }
+      }
+    } catch (err) {
+      $('photo-msg').textContent = err && err.name === 'QuotaExceededError'
+        ? 'Det finns inte plats för fler bilder på enheten. Ta bort några och försök igen.'
+        : 'Bilden kunde inte sparas.';
+    }
+    uploading--;
+    if (key === current) {
+      renderPhotos();
+      scheduleSave();
+    }
+  }
+}
+
+function removeAsset(id) {
+  photoStore.delete(id).catch(() => {});
+}
+
+$('add-photo').addEventListener('click', () => $('photo-file').click());
+$('photo-file').addEventListener('change', (ev) => {
+  const files = [...ev.target.files];
+  ev.target.value = '';
+  addPhotos(files);
+});
+
+const viewer = $('photo-viewer');
+let viewing = null;
+
+function openPhoto(id, editable) {
+  viewing = id;
+  $('viewer-img').src = photoUrl(id);
+  $('photo-delete').hidden = !editable;
+  $('photo-confirm').hidden = true;
+  if (viewer.showModal) viewer.showModal();
+  else viewer.setAttribute('open', '');
+}
+
+function closePhoto() {
+  if (viewer.close) viewer.close();
+  else viewer.removeAttribute('open');
+}
+
+document.addEventListener('click', (ev) => {
+  const btn = ev.target.closest('[data-photo]');
+  if (btn) openPhoto(btn.dataset.photo, !!btn.closest('#photos'));
+});
+$('viewer-close').addEventListener('click', closePhoto);
+viewer.addEventListener('click', (ev) => { if (ev.target === viewer) closePhoto(); });
+$('photo-delete').addEventListener('click', () => {
+  $('photo-delete').hidden = true;
+  $('photo-confirm').hidden = false;
+});
+$('photo-delete-no').addEventListener('click', () => {
+  $('photo-confirm').hidden = true;
+  $('photo-delete').hidden = false;
+});
+$('photo-delete-yes').addEventListener('click', () => {
+  photos = photos.filter((id) => id !== viewing);
+  removeAsset(viewing);
+  renderPhotos();
+  scheduleSave();
+  closePhoto();
+});
 
 /* Flöde */
 
@@ -358,6 +549,7 @@ function renderList() {
         <a class="link open" href="#/dag/${k}">Redigera</a>
       </div>
       ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
+      ${thumbs(e.photos, 'thumbs')}
       ${e.weather ? `<div class="meta">${escapeHtml(fmtWeather(e.weather))}</div>` : ''}
     </article>`;
   }
@@ -405,6 +597,8 @@ function weatherCell(w) {
 let calMonth = todayKey().slice(0, 7);
 let calSel = todayKey();
 
+// Vad kalendern visar utöver skrivna dagar: '' (inget), 'mood' eller 'weather'
+let calShow = '';
 try {
   // Tidigare fanns två kryssrutor, de blir ett val här
   let show = localStorage.getItem(SHOW_KEY);
@@ -412,16 +606,78 @@ try {
     show = localStorage.getItem('dagbok.humorfilter') === '1' ? 'mood'
       : localStorage.getItem('dagbok.vaderfilter') === '1' ? 'weather' : '';
   }
-  $('cal-show').value = show;
+  calShow = ['', 'mood', 'weather'].includes(show) ? show : '';
 } catch {}
+
+/* Rullgardinsmenyn för vad kalendern visar */
+
+const ddBtn = $('cal-show');
+const ddList = $('cal-show-list');
+const ddOptions = [...ddList.querySelectorAll('li')];
+
+function syncShow() {
+  const opt = ddOptions.find((o) => o.dataset.value === calShow) || ddOptions[0];
+  ddBtn.textContent = opt.textContent;
+  ddOptions.forEach((o) => o.setAttribute('aria-selected', String(o === opt)));
+}
+
+function openShow() {
+  ddList.hidden = false;
+  ddBtn.setAttribute('aria-expanded', 'true');
+  // Fäll uppåt om listan inte får plats ovanför bottenmenyn
+  ddList.classList.remove('up');
+  const nav = document.querySelector('.nav');
+  const limit = window.innerHeight - (nav ? nav.offsetHeight : 0) - 8;
+  if (ddList.getBoundingClientRect().bottom > limit) ddList.classList.add('up');
+  (ddOptions.find((o) => o.getAttribute('aria-selected') === 'true') || ddOptions[0]).focus();
+}
+
+function closeShow(focusButton) {
+  if (ddList.hidden) return;
+  ddList.hidden = true;
+  ddBtn.setAttribute('aria-expanded', 'false');
+  if (focusButton) ddBtn.focus();
+}
+
+function chooseShow(value) {
+  calShow = value;
+  try { localStorage.setItem(SHOW_KEY, value); } catch {}
+  syncShow();
+  closeShow(true);
+  renderCal();
+}
+
+ddBtn.addEventListener('click', () => (ddList.hidden ? openShow() : closeShow(false)));
+ddBtn.addEventListener('keydown', (ev) => {
+  if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+    ev.preventDefault();
+    openShow();
+  }
+});
+ddList.addEventListener('click', (ev) => {
+  const li = ev.target.closest('li');
+  if (li) chooseShow(li.dataset.value);
+});
+ddList.addEventListener('keydown', (ev) => {
+  const i = ddOptions.indexOf(document.activeElement);
+  if (ev.key === 'ArrowDown') { ev.preventDefault(); ddOptions[Math.min(i + 1, ddOptions.length - 1)].focus(); }
+  if (ev.key === 'ArrowUp') { ev.preventDefault(); ddOptions[Math.max(i - 1, 0)].focus(); }
+  if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); if (i >= 0) chooseShow(ddOptions[i].dataset.value); }
+  if (ev.key === 'Escape') { ev.preventDefault(); closeShow(true); }
+  if (ev.key === 'Tab') closeShow(false);
+});
+document.addEventListener('pointerdown', (ev) => {
+  if (!$('show-dd').contains(ev.target)) closeShow(false);
+});
+syncShow();
 
 function renderCal() {
   const [y, m] = calMonth.split('-').map(Number);
   const first = new Date(y, m - 1, 1);
   const days = new Date(y, m, 0).getDate();
   const today = todayKey();
-  const moods = $('cal-show').value === 'mood';
-  const weathers = $('cal-show').value === 'weather';
+  const moods = calShow === 'mood';
+  const weathers = calShow === 'weather';
 
   $('cal-title').textContent = monthFmt.format(first);
   $('cal-next').disabled = calMonth >= today.slice(0, 7);
@@ -478,6 +734,7 @@ function readerPane(key) {
   if (e.weather) meta.push(escapeHtml(fmtWeather(e.weather)));
   return `<div class="reader-pane" data-key="${key}">
     ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
+    ${thumbs(e.photos, 'thumbs')}
     ${meta.length ? `<div class="meta">${meta.join(', ')}</div>` : ''}
     <div class="reader-foot"><button type="button" class="link reader-edit" data-key="${key}">Redigera dagen</button></div>
   </div>`;
@@ -550,10 +807,6 @@ function shiftMonth(n) {
 
 $('cal-prev').addEventListener('click', () => shiftMonth(-1));
 $('cal-next').addEventListener('click', () => shiftMonth(1));
-$('cal-show').addEventListener('change', () => {
-  try { localStorage.setItem(SHOW_KEY, $('cal-show').value); } catch {}
-  renderCal();
-});
 $('cal-grid').addEventListener('click', (ev) => {
   const btn = ev.target.closest('.day');
   if (!btn || btn.disabled) return;
@@ -588,9 +841,28 @@ function openDay(key) { go(`#/dag/${key}`); }
 
 /* Säkerhetskopia */
 
-$('export').addEventListener('click', () => {
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(blob);
+  });
+}
+
+// Bilderna följer med i filen, annars försvinner de om telefonen byts
+$('export').addEventListener('click', async () => {
   flushSave();
-  const blob = new Blob([JSON.stringify({ app: 'dagbok', version: 2, entries }, null, 2)],
+  const images = {};
+  for (const e of Object.values(entries)) {
+    for (const id of e.photos) {
+      try {
+        const b = await photoStore.get(id);
+        if (b) images[id] = await blobToDataUrl(b);
+      } catch {}
+    }
+  }
+  const blob = new Blob([JSON.stringify({ app: 'dagbok', version: 3, entries, images }, null, 2)],
     { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -608,9 +880,11 @@ $('import-file').addEventListener('change', async (ev) => {
   ev.target.value = '';
   if (!file) return;
   let incoming;
+  let images = {};
   try {
     const data = JSON.parse(await file.text());
     incoming = data.entries || data;
+    if (data.images && typeof data.images === 'object') images = data.images;
     if (!incoming || typeof incoming !== 'object') throw new Error();
   } catch {
     alert('Filen gick inte att läsa. Välj en fil som exporterats från dagboken.');
@@ -623,6 +897,17 @@ $('import-file').addEventListener('change', async (ev) => {
     if (!old) added++;
     else if (e.updated > old.updated) replaced++;
     else continue;
+    // Bilder från filen sparas här på nytt, bilder som saknas i filen tas bort ur inlägget
+    const kept = [];
+    for (const id of e.photos) {
+      if (photoUrls[id]) { kept.push(id); continue; }
+      if (typeof images[id] !== 'string' || !images[id].startsWith('data:image/')) continue;
+      try {
+        const res = await photoStore.upload(await (await fetch(images[id])).blob());
+        kept.push(res.id);
+      } catch {}
+    }
+    e.photos = kept;
     entries[k] = e;
   }
   persist();
@@ -662,6 +947,7 @@ function route() {
 
 window.addEventListener('hashchange', route);
 route();
+loadPhotos().catch(() => {});
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});

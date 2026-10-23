@@ -48,6 +48,13 @@
           </div>
           <div class="ends"><span>Tungt</span><span>Bra</span></div>
         </fieldset>
+        <div class="field">
+          <span>Bilder</span>
+          <div class="photos" id="photos"></div>
+          <button type="button" class="add-photo" id="add-photo">Lägg till bilder</button>
+          <input type="file" id="photo-file" accept="image/*" multiple hidden>
+          <p class="muted" id="photo-msg" aria-live="polite"></p>
+        </div>
       </form>
 
       <div class="foot">
@@ -63,16 +70,18 @@
         <button type="button" class="icon" id="cal-next" aria-label="Nästa månad">&#8250;</button>
       </div>
       <div class="grid" id="cal-grid"></div>
-      <label class="show">
-        <span>Visa</span>
-        <span class="select">
-          <select id="cal-show">
-            <option value="">Inget extra</option>
-            <option value="mood">Humör</option>
-            <option value="weather">Väder</option>
-          </select>
-        </span>
-      </label>
+      <div class="show">
+        <span id="show-label">Visa</span>
+        <div class="dropdown" id="show-dd">
+          <button type="button" class="dd-btn" id="cal-show" aria-haspopup="listbox" aria-expanded="false"
+            aria-labelledby="show-label cal-show">Inget extra</button>
+          <ul class="dd-list" id="cal-show-list" role="listbox" aria-labelledby="show-label" hidden>
+            <li role="option" tabindex="-1" data-value="">Inget extra</li>
+            <li role="option" tabindex="-1" data-value="mood">Humör</li>
+            <li role="option" tabindex="-1" data-value="weather">Väder</li>
+          </ul>
+        </div>
+      </div>
       <div class="legend" id="legend" hidden>
         <span><i style="--m: var(--m1)"></i>1 tungt</span>
         <span><i style="--m: var(--m2)"></i>2</span>
@@ -97,6 +106,18 @@
       </div>
     </section>
   </main>
+
+  <dialog class="viewer" id="photo-viewer" aria-label="Bild">
+    <img id="viewer-img" alt="">
+    <div class="viewer-foot">
+      <button type="button" class="link danger" id="photo-delete">Ta bort bilden</button>
+      <span class="confirm" id="photo-confirm" hidden>
+        <button type="button" class="link danger" id="photo-delete-yes">Ta bort</button>
+        <button type="button" class="link" id="photo-delete-no">Avbryt</button>
+      </span>
+      <button type="button" class="link" id="viewer-close">Stäng</button>
+    </div>
+  </dialog>
 
   <dialog class="reader" id="reader" aria-labelledby="reader-title">
     <div class="reader-head">
