@@ -369,8 +369,7 @@ $('search').addEventListener('input', renderList);
 
 /* Kalender */
 
-const FILTER_KEY = 'dagbok.humorfilter';
-const WEATHER_FILTER_KEY = 'dagbok.vaderfilter';
+const SHOW_KEY = 'dagbok.kalendervisning';
 // Små väderikoner för kalendern, ritade med samma linjer som menyikonerna
 const CLOUD = '<path d="M7 15h10a3.5 3.5 0 0 0 .4-6.98A5 5 0 0 0 7.6 9.1 3 3 0 0 0 7 15z"/>';
 const WEATHER_ICONS = {
@@ -407,8 +406,13 @@ let calMonth = todayKey().slice(0, 7);
 let calSel = todayKey();
 
 try {
-  $('mood-filter').checked = localStorage.getItem(FILTER_KEY) === '1';
-  $('weather-filter').checked = localStorage.getItem(WEATHER_FILTER_KEY) === '1';
+  // Tidigare fanns två kryssrutor, de blir ett val här
+  let show = localStorage.getItem(SHOW_KEY);
+  if (show == null) {
+    show = localStorage.getItem('dagbok.humorfilter') === '1' ? 'mood'
+      : localStorage.getItem('dagbok.vaderfilter') === '1' ? 'weather' : '';
+  }
+  $('cal-show').value = show;
 } catch {}
 
 function renderCal() {
@@ -416,8 +420,8 @@ function renderCal() {
   const first = new Date(y, m - 1, 1);
   const days = new Date(y, m, 0).getDate();
   const today = todayKey();
-  const moods = $('mood-filter').checked;
-  const weathers = $('weather-filter').checked;
+  const moods = $('cal-show').value === 'mood';
+  const weathers = $('cal-show').value === 'weather';
 
   $('cal-title').textContent = monthFmt.format(first);
   $('cal-next').disabled = calMonth >= today.slice(0, 7);
@@ -546,12 +550,8 @@ function shiftMonth(n) {
 
 $('cal-prev').addEventListener('click', () => shiftMonth(-1));
 $('cal-next').addEventListener('click', () => shiftMonth(1));
-$('weather-filter').addEventListener('change', () => {
-  try { localStorage.setItem(WEATHER_FILTER_KEY, $('weather-filter').checked ? '1' : '0'); } catch {}
-  renderCal();
-});
-$('mood-filter').addEventListener('change', () => {
-  try { localStorage.setItem(FILTER_KEY, $('mood-filter').checked ? '1' : '0'); } catch {}
+$('cal-show').addEventListener('change', () => {
+  try { localStorage.setItem(SHOW_KEY, $('cal-show').value); } catch {}
   renderCal();
 });
 $('cal-grid').addEventListener('click', (ev) => {

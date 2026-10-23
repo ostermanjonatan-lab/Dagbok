@@ -63,16 +63,16 @@
         <button type="button" class="icon" id="cal-next" aria-label="Nästa månad">&#8250;</button>
       </div>
       <div class="grid" id="cal-grid"></div>
-      <div class="toggles">
-        <label class="toggle">
-          <input type="checkbox" id="mood-filter">
-          <span>Visa humör</span>
-        </label>
-        <label class="toggle">
-          <input type="checkbox" id="weather-filter">
-          <span>Visa väder</span>
-        </label>
-      </div>
+      <label class="show">
+        <span>Visa</span>
+        <span class="select">
+          <select id="cal-show">
+            <option value="">Inget extra</option>
+            <option value="mood">Humör</option>
+            <option value="weather">Väder</option>
+          </select>
+        </span>
+      </label>
       <div class="legend" id="legend" hidden>
         <span><i style="--m: var(--m1)"></i>1 tungt</span>
         <span><i style="--m: var(--m2)"></i>2</span>
