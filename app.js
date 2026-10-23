@@ -407,27 +407,87 @@ function renderCal() {
   $('cal-grid').innerHTML = html;
 }
 
-// Visar dagen i en egen ruta ovanpå kalendern
-function openReader(key) {
+// Visar dagen i ett fönster ovanpå kalendern. Man bläddrar mellan dagar man skrivit,
+// med pilarna eller genom att svepa i sidled.
+function writtenNeighbors(key) {
+  const keys = Object.keys(entries).sort();
+  let prev = null;
+  let next = null;
+  for (const k of keys) {
+    if (k < key) prev = k;
+    else if (k > key && !next) next = k;
+  }
+  return { prev, next };
+}
+
+function readerPane(key) {
   const e = entries[key];
-  $('reader-title').textContent = fmtDate(key);
   if (!e) {
-    $('reader-body').innerHTML = `<p class="empty">Inget skrivet den här dagen.</p>
-      <div class="reader-foot"><button type="button" class="link" id="reader-edit">Skriv för den här dagen</button></div>`;
-  } else {
-    const meta = [];
-    if (e.mood) meta.push(`<span class="dot" style="--m: var(--m${e.mood})"></span>Humör ${e.mood}`);
-    if (e.weather) meta.push(escapeHtml(fmtWeather(e.weather)));
-    $('reader-body').innerHTML = `
+    return `<div class="reader-pane" data-key="${key}">
+      <p class="empty">Inget skrivet den här dagen.</p>
+      <div class="reader-foot"><button type="button" class="link reader-edit" data-key="${key}">Skriv för den här dagen</button></div>
+    </div>`;
+  }
+  const meta = [];
+  if (e.mood) meta.push(`<span class="dot" style="--m: var(--m${e.mood})"></span>Humör ${e.mood}`);
+  if (e.weather) meta.push(escapeHtml(fmtWeather(e.weather)));
+  return `<div class="reader-pane" data-key="${key}">
     ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
     ${meta.length ? `<div class="meta">${meta.join(', ')}</div>` : ''}
-    <div class="reader-foot"><button type="button" class="link" id="reader-edit">Redigera dagen</button></div>`;
-  }
+    <div class="reader-foot"><button type="button" class="link reader-edit" data-key="${key}">Redigera dagen</button></div>
+  </div>`;
+}
+
+let readerKey = null;
+
+function showReaderDay(key) {
+  readerKey = key;
+  const { prev, next } = writtenNeighbors(key);
+  const keys = [prev, key, next].filter(Boolean);
+  const track = $('reader-track');
+  track.innerHTML = keys.map(readerPane).join('');
+  // Panelen för dagen läggs i mitten så att man kan svepa åt båda hållen
+  track.scrollLeft = keys.indexOf(key) * track.clientWidth;
+  $('reader-title').textContent = fmtDate(key);
+  $('reader-prev').disabled = !prev;
+  $('reader-next').disabled = !next;
+
+  calSel = key;
+  if (key.slice(0, 7) !== calMonth) calMonth = key.slice(0, 7);
+  renderCal();
+}
+
+function openReader(key) {
   const reader = $('reader');
   if (reader.showModal) { if (!reader.open) reader.showModal(); }
   else reader.setAttribute('open', '');
-  $('reader-body').scrollTop = 0;
-  reader.scrollTop = 0;
+  showReaderDay(key);
+}
+
+function stepReader(dir) {
+  const { prev, next } = writtenNeighbors(readerKey);
+  const target = dir < 0 ? prev : next;
+  if (!target) return;
+  const pane = $('reader-track').querySelector(`[data-key="${target}"]`);
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (pane && !reduce) {
+    $('reader-track').scrollTo({ left: pane.offsetLeft, behavior: 'smooth' });
+  } else {
+    showReaderDay(target);
+  }
+}
+
+// När svepningen har stannat byts dagen om den hamnat på en annan panel
+let snapTimer = null;
+function onReaderScroll() {
+  clearTimeout(snapTimer);
+  snapTimer = setTimeout(() => {
+    const track = $('reader-track');
+    const w = track.clientWidth;
+    if (!w) return;
+    const pane = track.children[Math.round(track.scrollLeft / w)];
+    if (pane && pane.dataset.key !== readerKey) showReaderDay(pane.dataset.key);
+  }, 120);
 }
 
 function closeReader() {
@@ -452,15 +512,25 @@ $('mood-filter').addEventListener('change', () => {
 $('cal-grid').addEventListener('click', (ev) => {
   const btn = ev.target.closest('.day');
   if (!btn || btn.disabled) return;
-  calSel = btn.dataset.key;
-  renderCal();
-  openReader(calSel);
+  openReader(btn.dataset.key);
 });
 $('reader-close').addEventListener('click', closeReader);
+$('reader-prev').addEventListener('click', () => stepReader(-1));
+$('reader-next').addEventListener('click', () => stepReader(1));
+$('reader-track').addEventListener('scroll', onReaderScroll);
+document.addEventListener('keydown', (ev) => {
+  if (!$('reader').open) return;
+  if (ev.key === 'ArrowLeft') stepReader(-1);
+  if (ev.key === 'ArrowRight') stepReader(1);
+});
+window.addEventListener('resize', () => {
+  if ($('reader').open) showReaderDay(readerKey);
+});
 $('reader').addEventListener('click', (ev) => {
-  if (ev.target.id === 'reader-edit') {
+  const edit = ev.target.closest('.reader-edit');
+  if (edit) {
     closeReader();
-    openDay(calSel);
+    openDay(edit.dataset.key);
     return;
   }
   // Ett tryck utanför rutan stänger den

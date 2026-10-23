@@ -350,24 +350,46 @@ mark {
 .reader[open] { animation: pop .15s ease-out; }
 @keyframes pop { from { transform: scale(.96); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .reader[open] { animation: none; } }
-.reader-head {
-  position: sticky;
-  top: 0;
+.reader[open] {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 16px;
-  padding: 16px 18px 12px;
+  flex-direction: column;
+}
+.reader-head {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 14px 10px 6px;
   background: var(--bg);
   border-bottom: 1px solid var(--line);
 }
 .reader-head h2 {
+  flex: 1;
+  min-width: 0;
   margin: 0;
   font-family: var(--serif);
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 600;
+  text-align: center;
 }
-.reader-body {
+.reader-head .link { margin-left: 8px; }
+/* Dagarna ligger bredvid varandra och snäpper fast när man sveper */
+.reader-track {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.reader-track::-webkit-scrollbar { display: none; }
+.reader-pane {
+  flex: 0 0 100%;
+  min-width: 0;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  overflow-y: auto;
   padding: 16px 18px 22px;
 }
 .reader .prose { font-size: 18px; }
