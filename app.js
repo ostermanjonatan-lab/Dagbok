@@ -914,9 +914,6 @@ const fmtDec = (n) => (Math.round(n * 10) / 10).toFixed(1).replace('.', ',');
 const monthOnlyFmt = new Intl.DateTimeFormat('sv-SE', { month: 'long' });
 const monthShortFmt = new Intl.DateTimeFormat('sv-SE', { month: 'short' });
 const weekdayFmt = new Intl.DateTimeFormat('sv-SE', { weekday: 'long' });
-const WEATHER_NAMES = {
-  0: 'sol', 2: 'halvklart', 3: 'mulet', 63: 'regn', 73: 'snö', 95: 'åska', 45: 'dimma', 1000: 'storm',
-};
 
 function shiftYm(ym, n) {
   const [y, m] = ym.split('-').map(Number);
@@ -1042,19 +1039,6 @@ function renderStats() {
       facts.push(['Bästa veckodag', `${weekdayFmt.format(sample)}, ${fmtDec(bestDay[1])}`]);
     }
 
-    // Humör per väder, väder med minst två dagar
-    const byWx = {};
-    for (const k of keys) {
-      const e = entries[k];
-      const g = e.weather ? weatherGroup(e.weather.code) : null;
-      if (!e.mood || g == null) continue;
-      (byWx[g] = byWx[g] || []).push(e.mood);
-    }
-    const wx = Object.entries(byWx).filter(([, v]) => v.length >= 2)
-      .map(([g, v]) => [WEATHER_NAMES[g], avg(v)]).sort((x, y) => y[1] - x[1]).slice(0, 4);
-    if (wx.length >= 2) {
-      facts.push(['Humör per väder', cap(wx.map(([n, v]) => `${n} ${fmtDec(v)}`).join(', '))]);
-    }
   }
 
   const s = streaks();
