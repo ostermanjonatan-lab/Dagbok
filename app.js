@@ -233,6 +233,8 @@ function renderSettings() {
     ? `${keys.length} ${keys.length === 1 ? 'dag' : 'dagar'} och ${pics} ${pics === 1 ? 'bild' : 'bilder'}, sedan ${fmtDate(keys[0])}.`
     : 'Inget skrivet ännu.';
   $('wipe').hidden = !keys.length;
+  $('set-lock').checked = !!lockData;
+  $('change-code').hidden = !lockData;
   $('wipe-confirm').hidden = true;
 }
 
@@ -267,6 +269,187 @@ $('wipe-yes').addEventListener('click', async () => {
   renderSettings();
   $('wipe-msg').textContent = `Tog bort ${keys.length} dagar.`;
 });
+
+/* Kodlås */
+
+// Koden sparas inte, bara en hash av den. Det skyddar mot den som lånar
+// telefonen, men själva dagboken krypteras inte.
+const LOCK_KEY = 'dagbok.kodlas';
+let lockData = null;
+try { lockData = JSON.parse(localStorage.getItem(LOCK_KEY) || 'null'); } catch {}
+
+async function hashCode(code, salt) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', enc.encode(code), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt: enc.encode(salt), iterations: 100000, hash: 'SHA-256' }, key, 256);
+  return [...new Uint8Array(bits)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+const LOCK_TITLES = {
+  unlock: 'Skriv din kod',
+  new: 'Välj en kod med fyra siffror',
+  confirm: 'Skriv koden igen',
+  'verify-off': 'Skriv din kod för att stänga av låset',
+  'verify-change': 'Skriv din nuvarande kod',
+};
+let lockMode = null;
+let entered = '';
+let firstCode = '';
+let fails = 0;
+let waitUntil = 0;
+let busy = false;
+
+function renderDots() {
+  [...$('lock-dots').children].forEach((d, i) => d.classList.toggle('on', i < entered.length));
+}
+
+function setLockMode(mode) {
+  lockMode = mode;
+  entered = '';
+  $('lock-title').textContent = LOCK_TITLES[mode];
+  $('lock-cancel').hidden = mode === 'unlock';
+  $('lock-help').hidden = mode !== 'unlock';
+  $('lock-help-text').hidden = true;
+  renderDots();
+}
+
+function showLock(mode) {
+  flushSave();
+  document.querySelectorAll('dialog[open]').forEach((d) => d.close());
+  if (document.activeElement) document.activeElement.blur();
+  setLockMode(mode);
+  $('lock-msg').textContent = '';
+  $('lock').hidden = false;
+}
+
+function hideLock() {
+  $('lock').hidden = true;
+  lockMode = null;
+  entered = '';
+}
+
+function lockError(text) {
+  $('lock-msg').textContent = text;
+  const dots = $('lock-dots');
+  dots.classList.remove('shake');
+  void dots.offsetWidth;
+  dots.classList.add('shake');
+  setTimeout(() => {
+    entered = '';
+    renderDots();
+  }, 320);
+}
+
+async function submitCode() {
+  const code = entered;
+  if (lockMode === 'new') {
+    firstCode = code;
+    setLockMode('confirm');
+    $('lock-msg').textContent = '';
+    return;
+  }
+  if (lockMode === 'confirm') {
+    if (code !== firstCode) {
+      setLockMode('new');
+      lockError('Koderna var olika. Välj en kod igen.');
+      return;
+    }
+    const salt = [...crypto.getRandomValues(new Uint8Array(16))]
+      .map((b) => b.toString(16).padStart(2, '0')).join('');
+    lockData = { salt, hash: await hashCode(code, salt) };
+    try { localStorage.setItem(LOCK_KEY, JSON.stringify(lockData)); } catch {}
+    hideLock();
+    renderSettings();
+    return;
+  }
+  const ok = lockData && (await hashCode(code, lockData.salt)) === lockData.hash;
+  if (!ok) {
+    fails++;
+    if (fails >= 5) {
+      fails = 0;
+      waitUntil = Date.now() + 30000;
+      lockError('Fel kod fem gånger. Vänta 30 sekunder.');
+    } else {
+      lockError('Fel kod.');
+    }
+    return;
+  }
+  fails = 0;
+  if (lockMode === 'unlock') {
+    hideLock();
+  } else if (lockMode === 'verify-off') {
+    lockData = null;
+    try { localStorage.removeItem(LOCK_KEY); } catch {}
+    hideLock();
+    renderSettings();
+  } else if (lockMode === 'verify-change') {
+    setLockMode('new');
+    $('lock-msg').textContent = '';
+  }
+}
+
+async function pressDigit(d) {
+  if (busy || entered.length >= 4) return;
+  if (Date.now() < waitUntil) {
+    $('lock-msg').textContent = `Vänta ${Math.ceil((waitUntil - Date.now()) / 1000)} sekunder.`;
+    return;
+  }
+  entered += d;
+  renderDots();
+  if (entered.length === 4) {
+    busy = true;
+    try { await submitCode(); } finally { busy = false; }
+  }
+}
+
+function cancelLock() {
+  if (lockMode === 'unlock') return;
+  hideLock();
+  renderSettings();
+}
+
+$('keypad').addEventListener('click', (ev) => {
+  const b = ev.target.closest('button');
+  if (!b) return;
+  if (b.dataset.d) pressDigit(b.dataset.d);
+  else if (b.id === 'lock-back') {
+    entered = entered.slice(0, -1);
+    renderDots();
+  } else if (b.id === 'lock-cancel') cancelLock();
+});
+$('lock-help').addEventListener('click', () => {
+  $('lock-help-text').hidden = !$('lock-help-text').hidden;
+});
+document.addEventListener('keydown', (ev) => {
+  if ($('lock').hidden) return;
+  if (/^[0-9]$/.test(ev.key)) pressDigit(ev.key);
+  else if (ev.key === 'Backspace') {
+    entered = entered.slice(0, -1);
+    renderDots();
+  } else if (ev.key === 'Escape') cancelLock();
+  else return;
+  ev.preventDefault();
+  ev.stopImmediatePropagation();
+}, true);
+
+$('set-lock').addEventListener('change', (ev) => {
+  if (ev.target.checked) showLock('new');
+  else if (lockData) showLock('verify-off');
+});
+$('change-code').addEventListener('click', () => showLock('verify-change'));
+
+// Låser igen om appen har legat i bakgrunden mer än en minut
+let hiddenAt = 0;
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    hiddenAt = Date.now();
+  } else if (lockData && $('lock').hidden && Date.now() - hiddenAt > 60000) {
+    showLock('unlock');
+  }
+});
+
+if (lockData) showLock('unlock');
 
 /* Dagvy */
 

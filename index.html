@@ -140,6 +140,15 @@
       </div>
 
       <div class="group">
+        <h2>Kodlås</h2>
+        <label class="switch-row">
+          <span>Lås med kod<small>Fyra siffror när appen öppnas.</small></span>
+          <input type="checkbox" role="switch" id="set-lock">
+        </label>
+        <button type="button" class="link" id="change-code" hidden>Byt kod</button>
+      </div>
+
+      <div class="group">
         <h2>Säkerhetskopia</h2>
         <p class="muted">Allt sparas bara på den här enheten. Exportera då och då.</p>
         <div class="buttons">
@@ -188,6 +197,33 @@
     <div class="reader-track" id="reader-track"></div>
   </dialog>
 
+
+  <div class="lock" id="lock" role="dialog" aria-modal="true" aria-labelledby="lock-title" hidden>
+    <div class="lock-inner">
+      <p class="lock-app">Dagbok</p>
+      <h2 id="lock-title">Skriv din kod</h2>
+      <div class="dots" id="lock-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <p class="lock-msg" id="lock-msg" aria-live="assertive"></p>
+      <div class="keypad" id="keypad">
+        <button type="button" data-d="1">1</button>
+        <button type="button" data-d="2">2</button>
+        <button type="button" data-d="3">3</button>
+        <button type="button" data-d="4">4</button>
+        <button type="button" data-d="5">5</button>
+        <button type="button" data-d="6">6</button>
+        <button type="button" data-d="7">7</button>
+        <button type="button" data-d="8">8</button>
+        <button type="button" data-d="9">9</button>
+        <button type="button" class="plain" id="lock-cancel">Avbryt</button>
+        <button type="button" data-d="0">0</button>
+        <button type="button" class="plain" id="lock-back" aria-label="Radera">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11v12H9l-5-6z"/><path d="M12.5 9.5l5 5M17.5 9.5l-5 5"/></svg>
+        </button>
+      </div>
+      <button type="button" class="link" id="lock-help">Glömt koden?</button>
+      <p class="muted" id="lock-help-text" hidden>Koden går inte att återställa. Du kan rensa appens data i webbläsarens inställningar, men då försvinner dagboken om du inte har en säkerhetskopia.</p>
+    </div>
+  </div>
 
   <nav class="nav" aria-label="Vyer">
     <a id="tab-cal" href="#/kalender">

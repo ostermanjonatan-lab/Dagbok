@@ -610,6 +610,75 @@ mark {
 #wipe-msg:empty { display: none; }
 #wipe-msg { margin-top: 10px; }
 
+/* Kodlås: täcker hela appen tills rätt kod är inslagen */
+.lock {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: env(safe-area-inset-top, 0px) 16px env(safe-area-inset-bottom, 0px);
+  background: var(--bg);
+}
+.lock-inner { width: 100%; max-width: 320px; text-align: center; }
+.lock-app {
+  margin: 0 0 22px;
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--accent);
+}
+#lock-title { margin: 0 0 18px; font-size: 16px; font-weight: 500; }
+.dots { display: flex; justify-content: center; gap: 18px; }
+.dots i {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+}
+.dots i.on { background: var(--accent); }
+.dots.shake { animation: shake .32s; }
+@keyframes shake {
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+@media (prefers-reduced-motion: reduce) { .dots.shake { animation: none; } }
+.lock-msg { min-height: 1.5em; margin: 14px 0 10px; font-size: 14px; color: var(--danger); }
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 72px);
+  justify-content: center;
+  gap: 14px 24px;
+  margin-bottom: 22px;
+}
+.keypad button {
+  width: 72px;
+  height: 72px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 26px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.keypad button:active { background: var(--line); }
+.keypad .plain { border: 0; background: none; font-size: 15px; color: var(--accent); }
+.keypad .plain[hidden] { display: block !important; visibility: hidden; }
+.keypad svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+#lock-help { font-size: 14px; }
+#lock-help-text { margin-top: 10px; text-align: left; }
+#change-code { margin-top: 6px; }
+
 /* Den här dagen tidigare år */
 .memories {
   margin-top: 28px;
@@ -858,7 +927,7 @@ body.keyboard .nav { visibility: hidden; }
   place-items: center;
   width: 60px;
   height: 60px;
-  margin-top: -14px;
+  margin-top: -24px;
   border-radius: 50%;
   background: var(--brand-text);
   color: var(--brand);

@@ -551,6 +551,75 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
 #wipe-msg:empty { display: none; }
 #wipe-msg { margin-top: 10px; }
 
+/* Kodlås: täcker hela appen tills rätt kod är inslagen */
+.lock {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: env(safe-area-inset-top, 0px) 16px env(safe-area-inset-bottom, 0px);
+  background: var(--bg);
+}
+.lock-inner { width: 100%; max-width: 320px; text-align: center; }
+.lock-app {
+  margin: 0 0 22px;
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--accent);
+}
+#lock-title { margin: 0 0 18px; font-size: 16px; font-weight: 500; }
+.dots { display: flex; justify-content: center; gap: 18px; }
+.dots i {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+}
+.dots i.on { background: var(--accent); }
+.dots.shake { animation: shake .32s; }
+@keyframes shake {
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+@media (prefers-reduced-motion: reduce) { .dots.shake { animation: none; } }
+.lock-msg { min-height: 1.5em; margin: 14px 0 10px; font-size: 14px; color: var(--danger); }
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 72px);
+  justify-content: center;
+  gap: 14px 24px;
+  margin-bottom: 22px;
+}
+.keypad button {
+  width: 72px;
+  height: 72px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 26px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.keypad button:active { background: var(--line); }
+.keypad .plain { border: 0; background: none; font-size: 15px; color: var(--accent); }
+.keypad .plain[hidden] { display: block !important; visibility: hidden; }
+.keypad svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+#lock-help { font-size: 14px; }
+#lock-help-text { margin-top: 10px; text-align: left; }
+#change-code { margin-top: 6px; }
+
 /* Den här dagen tidigare år */
 .memories {
   margin-top: 28px;
@@ -798,7 +867,7 @@ body.keyboard .nav { visibility: hidden; }
   place-items: center;
   width: 60px;
   height: 60px;
-  margin-top: -14px;
+  margin-top: -24px;
   border-radius: 50%;
   background: var(--brand-text);
   color: var(--brand);
@@ -958,6 +1027,15 @@ body.keyboard .nav { visibility: hidden; }
     </div>
 
     <div class="group">
+      <h2>Kodlås</h2>
+      <label class="switch-row">
+        <span>Lås med kod<small>Fyra siffror när appen öppnas.</small></span>
+        <input type="checkbox" role="switch" id="set-lock">
+      </label>
+      <button type="button" class="link" id="change-code" hidden>Byt kod</button>
+    </div>
+
+    <div class="group">
       <h2>Säkerhetskopia</h2>
       <p class="muted" id="where">Sparas i den här webbläsaren.</p>
       <div class="buttons">
@@ -1030,6 +1108,33 @@ body.keyboard .nav { visibility: hidden; }
   <button type="button" class="link danger" id="weather-clear" hidden>Ta bort vädret</button>
 </dialog>
 
+
+<div class="lock" id="lock" role="dialog" aria-modal="true" aria-labelledby="lock-title" hidden>
+  <div class="lock-inner">
+    <p class="lock-app">Dagbok</p>
+    <h2 id="lock-title">Skriv din kod</h2>
+    <div class="dots" id="lock-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <p class="lock-msg" id="lock-msg" aria-live="assertive"></p>
+    <div class="keypad" id="keypad">
+      <button type="button" data-d="1">1</button>
+      <button type="button" data-d="2">2</button>
+      <button type="button" data-d="3">3</button>
+      <button type="button" data-d="4">4</button>
+      <button type="button" data-d="5">5</button>
+      <button type="button" data-d="6">6</button>
+      <button type="button" data-d="7">7</button>
+      <button type="button" data-d="8">8</button>
+      <button type="button" data-d="9">9</button>
+      <button type="button" class="plain" id="lock-cancel">Avbryt</button>
+      <button type="button" data-d="0">0</button>
+      <button type="button" class="plain" id="lock-back" aria-label="Radera">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11v12H9l-5-6z"/><path d="M12.5 9.5l5 5M17.5 9.5l-5 5"/></svg>
+      </button>
+    </div>
+    <button type="button" class="link" id="lock-help">Glömt koden?</button>
+    <p class="muted" id="lock-help-text" hidden>Koden sparas bara i den här webbläsaren. Rensa webbplatsdata för sidan i webbläsarens inställningar så försvinner låset. Dagboken finns kvar på ditt konto.</p>
+  </div>
+</div>
 
 <nav class="nav" aria-label="Vyer">
   <button type="button" id="tab-cal">
@@ -1650,6 +1755,8 @@ function renderSettings() {
     ? `${keys.length} ${keys.length === 1 ? 'dag' : 'dagar'} och ${pics} ${pics === 1 ? 'bild' : 'bilder'}, sedan ${fmtDate(keys[0])}.`
     : 'Inget skrivet ännu.';
   $('wipe').hidden = !keys.length;
+  $('set-lock').checked = !!lockData;
+  $('change-code').hidden = !lockData;
   $('wipe-confirm').hidden = true;
 }
 
@@ -1694,6 +1801,187 @@ $('wipe-yes').addEventListener('click', async () => {
   renderSettings();
   $('wipe-msg').textContent = `Tog bort ${keys.length} dagar.`;
 });
+
+/* Kodlås */
+
+// Koden sparas inte, bara en hash av den. Det skyddar mot den som lånar
+// telefonen, men själva dagboken krypteras inte.
+const LOCK_KEY = 'dagbok.kodlas';
+let lockData = null;
+try { lockData = JSON.parse(localStorage.getItem(LOCK_KEY) || 'null'); } catch {}
+
+async function hashCode(code, salt) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', enc.encode(code), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt: enc.encode(salt), iterations: 100000, hash: 'SHA-256' }, key, 256);
+  return [...new Uint8Array(bits)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+const LOCK_TITLES = {
+  unlock: 'Skriv din kod',
+  new: 'Välj en kod med fyra siffror',
+  confirm: 'Skriv koden igen',
+  'verify-off': 'Skriv din kod för att stänga av låset',
+  'verify-change': 'Skriv din nuvarande kod',
+};
+let lockMode = null;
+let entered = '';
+let firstCode = '';
+let fails = 0;
+let waitUntil = 0;
+let busy = false;
+
+function renderDots() {
+  [...$('lock-dots').children].forEach((d, i) => d.classList.toggle('on', i < entered.length));
+}
+
+function setLockMode(mode) {
+  lockMode = mode;
+  entered = '';
+  $('lock-title').textContent = LOCK_TITLES[mode];
+  $('lock-cancel').hidden = mode === 'unlock';
+  $('lock-help').hidden = mode !== 'unlock';
+  $('lock-help-text').hidden = true;
+  renderDots();
+}
+
+function showLock(mode) {
+  flushSave();
+  document.querySelectorAll('dialog[open]').forEach((d) => d.close());
+  if (document.activeElement) document.activeElement.blur();
+  setLockMode(mode);
+  $('lock-msg').textContent = '';
+  $('lock').hidden = false;
+}
+
+function hideLock() {
+  $('lock').hidden = true;
+  lockMode = null;
+  entered = '';
+}
+
+function lockError(text) {
+  $('lock-msg').textContent = text;
+  const dots = $('lock-dots');
+  dots.classList.remove('shake');
+  void dots.offsetWidth;
+  dots.classList.add('shake');
+  setTimeout(() => {
+    entered = '';
+    renderDots();
+  }, 320);
+}
+
+async function submitCode() {
+  const code = entered;
+  if (lockMode === 'new') {
+    firstCode = code;
+    setLockMode('confirm');
+    $('lock-msg').textContent = '';
+    return;
+  }
+  if (lockMode === 'confirm') {
+    if (code !== firstCode) {
+      setLockMode('new');
+      lockError('Koderna var olika. Välj en kod igen.');
+      return;
+    }
+    const salt = [...crypto.getRandomValues(new Uint8Array(16))]
+      .map((b) => b.toString(16).padStart(2, '0')).join('');
+    lockData = { salt, hash: await hashCode(code, salt) };
+    try { localStorage.setItem(LOCK_KEY, JSON.stringify(lockData)); } catch {}
+    hideLock();
+    renderSettings();
+    return;
+  }
+  const ok = lockData && (await hashCode(code, lockData.salt)) === lockData.hash;
+  if (!ok) {
+    fails++;
+    if (fails >= 5) {
+      fails = 0;
+      waitUntil = Date.now() + 30000;
+      lockError('Fel kod fem gånger. Vänta 30 sekunder.');
+    } else {
+      lockError('Fel kod.');
+    }
+    return;
+  }
+  fails = 0;
+  if (lockMode === 'unlock') {
+    hideLock();
+  } else if (lockMode === 'verify-off') {
+    lockData = null;
+    try { localStorage.removeItem(LOCK_KEY); } catch {}
+    hideLock();
+    renderSettings();
+  } else if (lockMode === 'verify-change') {
+    setLockMode('new');
+    $('lock-msg').textContent = '';
+  }
+}
+
+async function pressDigit(d) {
+  if (busy || entered.length >= 4) return;
+  if (Date.now() < waitUntil) {
+    $('lock-msg').textContent = `Vänta ${Math.ceil((waitUntil - Date.now()) / 1000)} sekunder.`;
+    return;
+  }
+  entered += d;
+  renderDots();
+  if (entered.length === 4) {
+    busy = true;
+    try { await submitCode(); } finally { busy = false; }
+  }
+}
+
+function cancelLock() {
+  if (lockMode === 'unlock') return;
+  hideLock();
+  renderSettings();
+}
+
+$('keypad').addEventListener('click', (ev) => {
+  const b = ev.target.closest('button');
+  if (!b) return;
+  if (b.dataset.d) pressDigit(b.dataset.d);
+  else if (b.id === 'lock-back') {
+    entered = entered.slice(0, -1);
+    renderDots();
+  } else if (b.id === 'lock-cancel') cancelLock();
+});
+$('lock-help').addEventListener('click', () => {
+  $('lock-help-text').hidden = !$('lock-help-text').hidden;
+});
+document.addEventListener('keydown', (ev) => {
+  if ($('lock').hidden) return;
+  if (/^[0-9]$/.test(ev.key)) pressDigit(ev.key);
+  else if (ev.key === 'Backspace') {
+    entered = entered.slice(0, -1);
+    renderDots();
+  } else if (ev.key === 'Escape') cancelLock();
+  else return;
+  ev.preventDefault();
+  ev.stopImmediatePropagation();
+}, true);
+
+$('set-lock').addEventListener('change', (ev) => {
+  if (ev.target.checked) showLock('new');
+  else if (lockData) showLock('verify-off');
+});
+$('change-code').addEventListener('click', () => showLock('verify-change'));
+
+// Låser igen om appen har legat i bakgrunden mer än en minut
+let hiddenAt = 0;
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    hiddenAt = Date.now();
+  } else if (lockData && $('lock').hidden && Date.now() - hiddenAt > 60000) {
+    showLock('unlock');
+  }
+});
+
+if (lockData) showLock('unlock');
 
 /* Dagvy */
 
