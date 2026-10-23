@@ -312,6 +312,39 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   cursor: pointer;
   font-variant-numeric: tabular-nums;
 }
+.toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  margin-top: 14px;
+}
+.toggles .toggle { margin: 0; }
+.day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  line-height: 1.1;
+}
+.wx {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.wx svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.moods .day.has[style] .wx { color: var(--on-mood); }
+.weathers .day.has.has-wx::after { display: none; }
 .day:disabled { opacity: .35; cursor: default; }
 .day.has { background: var(--surface); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent); }
 .day.has::after {
@@ -611,11 +644,17 @@ body.keyboard .nav { visibility: hidden; }
       <h2 id="cal-title"></h2>
       <button type="button" class="icon" id="cal-next" aria-label="Nästa månad">&#8250;</button>
     </div>
-    <label class="toggle">
-      <input type="checkbox" id="mood-filter">
-      <span>Visa humör</span>
-    </label>
     <div class="grid" id="cal-grid"></div>
+    <div class="toggles">
+      <label class="toggle">
+        <input type="checkbox" id="mood-filter">
+        <span>Visa humör</span>
+      </label>
+      <label class="toggle">
+        <input type="checkbox" id="weather-filter">
+        <span>Visa väder</span>
+      </label>
+    </div>
     <div class="legend" id="legend" hidden>
       <span><i style="--m: var(--m1)"></i>1 tungt</span>
       <span><i style="--m: var(--m2)"></i>2</span>
@@ -1692,10 +1731,46 @@ $('list').addEventListener('click', (ev) => {
 /* Kalender */
 
 const FILTER_KEY = 'dagbok.humorfilter';
+const WEATHER_FILTER_KEY = 'dagbok.vaderfilter';
+// Små väderikoner för kalendern, ritade med samma linjer som menyikonerna
+const CLOUD = '<path d="M7 15h10a3.5 3.5 0 0 0 .4-6.98A5 5 0 0 0 7.6 9.1 3 3 0 0 0 7 15z"/>';
+const WEATHER_ICONS = {
+  0: '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/>',
+  2: '<path d="M8.5 4v1.5M3.5 9H5M4.9 5.4 6 6.5M12.1 5.4 11 6.5"/><path d="M5.6 11.2A3.5 3.5 0 1 1 11.6 7.6"/><path d="M8.5 19h9a3 3 0 0 0 .3-5.98A4.3 4.3 0 0 0 9.4 13.7 2.7 2.7 0 0 0 8.5 19z"/>',
+  3: '<path d="M7 18h10a4 4 0 0 0 .4-7.98A5.6 5.6 0 0 0 6.6 11.1 3.5 3.5 0 0 0 7 18z"/>',
+  63: CLOUD + '<path d="M8.5 18l-1 2.5M12.5 18l-1 2.5M16.5 18l-1 2.5"/>',
+  73: CLOUD + '<path d="M8.5 18v2.4M7.3 19.2h2.4M12 19.2v2.4M10.8 20.4h2.4M15.5 18v2.4M14.3 19.2h2.4"/>',
+  95: CLOUD + '<path d="M12.5 15.5 10.5 19h3l-2 3.5"/>',
+  45: '<path d="M4 9h16M6 13h12M4 17h16"/>',
+};
+
+// Samma grupper som väderknapparna: klart, halvklart, mulet, regn, snö, åska, dimma
+function weatherGroup(code) {
+  if (code == null) return null;
+  if (code <= 1) return 0;
+  if (code === 2 || code === 3) return code;
+  if (code === 45 || code === 48) return 45;
+  if (code >= 95) return 95;
+  if ((code >= 71 && code <= 77) || code === 85 || code === 86) return 73;
+  return 63;
+}
+
+function weatherCell(w) {
+  if (!w) return '';
+  const g = weatherGroup(w.code);
+  const icon = g != null
+    ? `<svg viewBox="0 0 24 24" aria-hidden="true">${WEATHER_ICONS[g]}</svg>` : '';
+  const temp = w.temp != null ? `${String(Math.round(w.temp)).replace('-', '−')}°` : '';
+  return icon || temp ? `<span class="wx">${icon}${temp}</span>` : '';
+}
+
 let calMonth = todayKey().slice(0, 7);
 let calSel = todayKey();
 
-try { $('mood-filter').checked = localStorage.getItem(FILTER_KEY) === '1'; } catch {}
+try {
+  $('mood-filter').checked = localStorage.getItem(FILTER_KEY) === '1';
+  $('weather-filter').checked = localStorage.getItem(WEATHER_FILTER_KEY) === '1';
+} catch {}
 
 function renderCal() {
   const [y, m] = calMonth.split('-').map(Number);
@@ -1703,10 +1778,12 @@ function renderCal() {
   const days = new Date(y, m, 0).getDate();
   const today = todayKey();
   const moods = $('mood-filter').checked;
+  const weathers = $('weather-filter').checked;
 
   $('cal-title').textContent = monthFmt.format(first);
   $('cal-next').disabled = calMonth >= today.slice(0, 7);
   $('cal-grid').classList.toggle('moods', moods);
+  $('cal-grid').classList.toggle('weathers', weathers);
   $('legend').hidden = !moods;
 
   let html = ['mån', 'tis', 'ons', 'tor', 'fre', 'lör', 'sön']
@@ -1721,10 +1798,13 @@ function renderCal() {
     if (e) cls.push('has');
     if (key === today) cls.push('today');
     if (key === calSel) cls.push('sel');
+    const wx = weathers && e ? weatherCell(e.weather) : '';
+    if (wx) cls.push('has-wx');
     const style = e && e.mood ? ` style="--m: var(--m${e.mood})"` : '';
-    const label = fmtDate(key) + (e && e.mood ? `, humör ${e.mood}` : e ? ', skrivet' : '');
+    let label = fmtDate(key) + (e && e.mood ? `, humör ${e.mood}` : e ? ', skrivet' : '');
+    if (e && e.weather) label += `, ${fmtWeather(e.weather)}`;
     html += `<button type="button" class="${cls.join(' ')}" data-key="${key}"${style}
-      aria-label="${label}"${key > today ? ' disabled' : ''}>${d}</button>`;
+      aria-label="${escapeHtml(label)}"${key > today ? ' disabled' : ''}><span>${d}</span>${wx}</button>`;
   }
   $('cal-grid').innerHTML = html;
 }
@@ -1828,6 +1908,10 @@ function shiftMonth(n) {
 
 $('cal-prev').addEventListener('click', () => shiftMonth(-1));
 $('cal-next').addEventListener('click', () => shiftMonth(1));
+$('weather-filter').addEventListener('change', () => {
+  try { localStorage.setItem(WEATHER_FILTER_KEY, $('weather-filter').checked ? '1' : '0'); } catch {}
+  renderCal();
+});
 $('mood-filter').addEventListener('change', () => {
   try { localStorage.setItem(FILTER_KEY, $('mood-filter').checked ? '1' : '0'); } catch {}
   renderCal();

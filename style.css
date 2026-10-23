@@ -306,6 +306,39 @@ mark {
   cursor: pointer;
   font-variant-numeric: tabular-nums;
 }
+.toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  margin-top: 14px;
+}
+.toggles .toggle { margin: 0; }
+.day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  line-height: 1.1;
+}
+.wx {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.wx svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.moods .day.has[style] .wx { color: var(--on-mood); }
+.weathers .day.has.has-wx::after { display: none; }
 .day:disabled { opacity: .35; cursor: default; }
 .day.has { background: var(--surface); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent); }
 .day.has::after {
