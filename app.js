@@ -549,8 +549,9 @@ function escapeHtml(s) {
 function renderList() {
   const q = $('search').value.trim();
   const lq = q.toLowerCase();
+  // Utan sökning visas månaden i kalendern, med sökning hela dagboken
   const keys = Object.keys(entries).sort().reverse().filter((k) => {
-    if (!lq) return true;
+    if (!lq) return k.slice(0, 7) === calMonth;
     const e = entries[k];
     return [Paper.mdToText(e.text), fmtDate(k), e.weather ? fmtWeather(e.weather) : '']
       .some((t) => t.toLowerCase().includes(lq));
@@ -559,7 +560,7 @@ function renderList() {
   const list = $('list');
   if (!keys.length) {
     list.innerHTML = `<p class="empty">${
-      q ? 'Inga dagar matchar sökningen.' : 'Inget skrivet ännu.'
+      q ? 'Inga dagar matchar sökningen.' : `Inget skrivet i ${monthFmt.format(parseKey(calMonth + '-01'))}.`
     }</p>`;
     return;
   }
@@ -570,7 +571,7 @@ function renderList() {
   for (const k of keys) {
     const e = entries[k];
     const m = monthFmt.format(parseKey(k));
-    if (m !== month) {
+    if (q && m !== month) {
       month = m;
       html += `<h2 class="month">${m}</h2>`;
     }
@@ -738,6 +739,7 @@ function renderCal() {
       aria-label="${escapeHtml(label)}"${key > today ? ' disabled' : ''}><span>${d}</span>${wx}</button>`;
   }
   $('cal-grid').innerHTML = html;
+  renderList();
 }
 
 // Visar dagen i ett fönster ovanpå kalendern. Man bläddrar mellan dagar man skrivit,
@@ -956,16 +958,15 @@ function go(hash) {
 
 function route() {
   const hash = location.hash || '#/dag';
-  const view = hash.startsWith('#/flode') || hash.startsWith('#/alla') ? 'all' : hash.startsWith('#/kalender') ? 'cal' : 'day';
+  // Flödet ligger numera under kalendern, så gamla länkar dit öppnar kalendern
+  const view = /^#\/(kalender|flode|alla)/.test(hash) ? 'cal' : 'day';
   if (view !== 'day') flushSave();
-  for (const v of ['day', 'cal', 'all']) {
+  for (const v of ['day', 'cal']) {
     $(`view-${v}`).hidden = v !== view;
     $(`tab-${v}`).classList.toggle('on', v === view);
   }
 
-  if (view === 'all') {
-    renderList();
-  } else if (view === 'cal') {
+  if (view === 'cal') {
     // Kalendern öppnar på dagen som senast visades
     calSel = current;
     calMonth = current.slice(0, 7);

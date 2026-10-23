@@ -508,6 +508,13 @@ mark {
   background: var(--m);
   margin-right: 5px;
 }
+/* Månadens inlägg under kalendern */
+.feed {
+  margin-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.nav-gap { flex: 1; max-width: 160px; }
+
 /* Den här dagen tidigare år */
 .memories {
   margin-top: 28px;

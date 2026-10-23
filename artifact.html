@@ -444,6 +444,13 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
 }
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--m); margin-right: 8px; }
 
+/* Månadens inlägg under kalendern */
+.feed {
+  margin-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.nav-gap { flex: 1; max-width: 160px; }
+
 /* Den här dagen tidigare år */
 .memories {
   margin-top: 28px;
@@ -813,23 +820,23 @@ body.keyboard .nav { visibility: hidden; }
       <span><i style="--m: var(--m4)"></i>4</span>
       <span><i style="--m: var(--m5)"></i>5 bra</span>
     </div>
-  </section>
+    <div class="feed">
+      <input type="search" id="search" placeholder="Sök i dagboken" aria-label="Sök">
+      <div id="list"></div>
 
-  <section id="view-all" hidden>
-    <input type="search" id="search" placeholder="Sök i dagboken" aria-label="Sök">
-    <div id="list"></div>
-
-    <div class="backup">
-      <h2>Säkerhetskopia</h2>
-      <p class="muted" id="where">Sparas i den här webbläsaren.</p>
-      <div class="buttons">
-        <button type="button" id="export" hidden>Exportera fil</button>
-        <button type="button" id="import">Importera fil</button>
-        <input type="file" id="import-file" accept="application/json,.json" hidden>
+      <div class="backup">
+        <h2>Säkerhetskopia</h2>
+        <p class="muted" id="where">Sparas i den här webbläsaren.</p>
+        <div class="buttons">
+          <button type="button" id="export" hidden>Exportera fil</button>
+          <button type="button" id="import">Importera fil</button>
+          <input type="file" id="import-file" accept="application/json,.json" hidden>
+        </div>
+        <p class="muted" id="backup-msg" aria-live="polite"></p>
       </div>
-      <p class="muted" id="backup-msg" aria-live="polite"></p>
     </div>
   </section>
+
 </main>
 
 <dialog class="reader" id="reader" aria-labelledby="reader-title">
@@ -886,10 +893,7 @@ body.keyboard .nav { visibility: hidden; }
     <span class="bubble"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13 7l4 4"/></svg></span>
     <span>Dag</span>
   </button>
-  <button type="button" id="tab-all">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5h14M5 12h14M5 17.5h9"/></svg>
-    <span>Flöde</span>
-  </button>
+  <span class="nav-gap" aria-hidden="true"></span>
 </nav>
 
 <script>
@@ -1468,8 +1472,7 @@ async function connect() {
     }
     if (!touched) return;
     writeCache();
-    if (view === 'all') renderList();
-    else if (view === 'cal') renderCal();
+    if (view === 'cal') renderCal();
     else if (!saveTimer && !$('entry').contains(document.activeElement)) showDay(current);
   }, () => {
     col = null;
@@ -1857,8 +1860,9 @@ function escapeHtml(s) {
 function renderList() {
   const q = $('search').value.trim();
   const lq = q.toLowerCase();
+  // Utan sökning visas månaden i kalendern, med sökning hela dagboken
   const keys = Object.keys(entries).sort().reverse().filter((k) => {
-    if (!lq) return true;
+    if (!lq) return k.slice(0, 7) === calMonth;
     const e = entries[k];
     return [Paper.mdToText(e.text), fmtDate(k), e.weather ? fmtWeather(e.weather) : '']
       .some((t) => t.toLowerCase().includes(lq));
@@ -1867,7 +1871,7 @@ function renderList() {
   const list = $('list');
   if (!keys.length) {
     list.innerHTML = `<p class="empty">${
-      q ? 'Inga dagar matchar sökningen.' : 'Inget skrivet ännu.'
+      q ? 'Inga dagar matchar sökningen.' : `Inget skrivet i ${monthFmt.format(parseKey(calMonth + '-01'))}.`
     }</p>`;
     return;
   }
@@ -1878,7 +1882,7 @@ function renderList() {
   for (const k of keys) {
     const e = entries[k];
     const m = monthFmt.format(parseKey(k));
-    if (m !== month) {
+    if (q && m !== month) {
       month = m;
       html += `<h2 class="month">${m}</h2>`;
     }
@@ -2050,6 +2054,7 @@ function renderCal() {
       aria-label="${escapeHtml(label)}"${key > today ? ' disabled' : ''}><span>${d}</span>${wx}</button>`;
   }
   $('cal-grid').innerHTML = html;
+  renderList();
 }
 
 // Visar dagen i ett fönster ovanpå kalendern. Man bläddrar mellan dagar man skrivit,
@@ -2262,11 +2267,10 @@ $('import-file').addEventListener('change', async (ev) => {
 function setView(v) {
   flushSave();
   view = v;
-  for (const name of ['day', 'cal', 'all']) {
+  for (const name of ['day', 'cal']) {
     $(`view-${name}`).hidden = name !== v;
     $(`tab-${name}`).classList.toggle('on', name === v);
   }
-  if (v === 'all') renderList();
   if (v === 'cal') {
     // Kalendern öppnar på dagen som senast visades
     calSel = current;
@@ -2278,10 +2282,8 @@ function setView(v) {
 
 $('tab-day').addEventListener('click', () => { setView('day'); showDay(todayKey()); });
 $('tab-cal').addEventListener('click', () => setView('cal'));
-$('tab-all').addEventListener('click', () => setView('all'));
 
-if (location.hash === '#flode' || location.hash === '#alla') setView('all');
-if (location.hash === '#kalender') setView('cal');
+if (['#kalender', '#flode', '#alla'].includes(location.hash)) setView('cal');
 showDay(current);
 connect();
 </script>

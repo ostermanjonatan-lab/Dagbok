@@ -101,22 +101,22 @@
         <span><i style="--m: var(--m4)"></i>4</span>
         <span><i style="--m: var(--m5)"></i>5 bra</span>
       </div>
-    </section>
+      <div class="feed">
+        <input type="search" id="search" placeholder="Sök i dagboken" aria-label="Sök">
+        <div id="list"></div>
 
-    <section id="view-all" hidden>
-      <input type="search" id="search" placeholder="Sök i dagboken" aria-label="Sök">
-      <div id="list"></div>
-
-      <div class="backup">
-        <h2>Säkerhetskopia</h2>
-        <p class="muted">Allt sparas bara på den här enheten. Exportera då och då.</p>
-        <div class="buttons">
-          <button type="button" id="export">Exportera fil</button>
-          <button type="button" id="import">Importera fil</button>
-          <input type="file" id="import-file" accept="application/json,.json" hidden>
+        <div class="backup">
+          <h2>Säkerhetskopia</h2>
+          <p class="muted">Allt sparas bara på den här enheten. Exportera då och då.</p>
+          <div class="buttons">
+            <button type="button" id="export">Exportera fil</button>
+            <button type="button" id="import">Importera fil</button>
+            <input type="file" id="import-file" accept="application/json,.json" hidden>
+          </div>
         </div>
       </div>
     </section>
+
   </main>
 
   <dialog class="viewer" id="photo-viewer" aria-label="Bild">
@@ -151,10 +151,7 @@
       <span class="bubble"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13 7l4 4"/></svg></span>
       <span>Dag</span>
     </a>
-    <a id="tab-all" href="#/flode">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5h14M5 12h14M5 17.5h9"/></svg>
-      <span>Flöde</span>
-    </a>
+    <span class="nav-gap" aria-hidden="true"></span>
   </nav>
 
   <script src="editor.js"></script>
