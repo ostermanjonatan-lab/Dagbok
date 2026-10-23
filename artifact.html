@@ -681,6 +681,26 @@ body.keyboard .nav { visibility: hidden; }
 }
 .nav .on { color: var(--brand-text); font-weight: 600; }
 .nav .on svg { stroke-width: 2.2; }
+/* Dag är huvudknappen: en större rund knapp i mitten som sticker upp ur menyn */
+.nav .main { position: relative; }
+.nav .main .bubble {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  margin-top: -26px;
+  border-radius: 50%;
+  background: var(--brand-text);
+  color: var(--brand);
+  border: 3px solid var(--brand);
+  box-shadow: 0 4px 14px rgb(0 0 0 / .22);
+  transition: transform .12s;
+}
+.nav .main svg { width: 28px; height: 28px; stroke-width: 1.9; }
+.nav .main:active .bubble { transform: scale(.95); }
+.nav .main:focus-visible { outline: none; }
+.nav .main:focus-visible .bubble { outline: 2px solid var(--brand-text); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .nav .main .bubble { transition: none; } }
 
 /* Flöde */
 .post {
@@ -858,13 +878,13 @@ body.keyboard .nav { visibility: hidden; }
 
 
 <nav class="nav" aria-label="Vyer">
-  <button type="button" id="tab-day" class="on">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13 7l4 4"/></svg>
-    <span>Dag</span>
-  </button>
   <button type="button" id="tab-cal">
     <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
     <span>Kalender</span>
+  </button>
+  <button type="button" id="tab-day" class="main on">
+    <span class="bubble"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13 7l4 4"/></svg></span>
+    <span>Dag</span>
   </button>
   <button type="button" id="tab-all">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5h14M5 12h14M5 17.5h9"/></svg>
