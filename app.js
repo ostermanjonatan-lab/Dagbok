@@ -1,19 +1,14 @@
 'use strict';
 
 const STORE_KEY = 'dagbok.v1';
+const POS_KEY = 'dagbok.plats';
 
 const $ = (id) => document.getElementById(id);
 
-const fields = {
-  highlight: $('f-highlight'),
-  notes: $('f-notes'),
-  grateful: $('f-grateful'),
-  sleep: $('f-sleep'),
-  tags: $('f-tags'),
-};
+const textField = $('f-text');
 const moodButtons = [...$('f-mood').querySelectorAll('button')];
 
-let entries = load();
+let entries = normalizeAll(load());
 let current = todayKey();
 let saveTimer = null;
 
@@ -36,6 +31,30 @@ function persist() {
   } catch {
     return false;
   }
+}
+
+// Gör om ett inlägg till dagens format. Äldre inlägg hade två textfält.
+function normalize(e) {
+  const text = typeof e.text === 'string'
+    ? e.text
+    : [e.highlight, e.notes].filter(Boolean).map(String).join('\n\n');
+  const w = e.weather;
+  return {
+    text,
+    mood: Number.isInteger(e.mood) && e.mood >= 1 && e.mood <= 5 ? e.mood : null,
+    weather: w && typeof w.code === 'number' && typeof w.temp === 'number' && typeof w.time === 'string'
+      ? { code: w.code, temp: w.temp, time: w.time }
+      : null,
+    updated: typeof e.updated === 'string' ? e.updated : new Date().toISOString(),
+  };
+}
+
+function normalizeAll(data) {
+  const out = {};
+  for (const [k, e] of Object.entries(data)) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(k) && e && typeof e === 'object') out[k] = normalize(e);
+  }
+  return out;
 }
 
 // Be webbläsaren att inte rensa datan när det blir ont om utrymme.
@@ -72,32 +91,114 @@ const timeFmt = new Intl.DateTimeFormat('sv-SE', { hour: '2-digit', minute: '2-d
 
 function fmtDate(key) { return dateFmt.format(parseKey(key)); }
 
-function fmtNumber(n) {
-  return String(Math.round(n * 10) / 10).replace('.', ',');
+/* Väder från Open-Meteo, utan konto eller nyckel */
+
+const WEATHER_TEXT = {
+  0: 'Klart', 1: 'Mest klart', 2: 'Halvklart', 3: 'Mulet',
+  45: 'Dimma', 48: 'Dimma med rimfrost',
+  51: 'Lätt duggregn', 53: 'Duggregn', 55: 'Kraftigt duggregn',
+  56: 'Underkylt duggregn', 57: 'Underkylt duggregn',
+  61: 'Lätt regn', 63: 'Regn', 65: 'Kraftigt regn',
+  66: 'Underkylt regn', 67: 'Underkylt regn',
+  71: 'Lätt snöfall', 73: 'Snöfall', 75: 'Kraftigt snöfall', 77: 'Snökorn',
+  80: 'Lätta regnskurar', 81: 'Regnskurar', 82: 'Kraftiga regnskurar',
+  85: 'Snöbyar', 86: 'Kraftiga snöbyar',
+  95: 'Åska', 96: 'Åska med hagel', 99: 'Åska med hagel',
+};
+
+function fmtWeather(w) {
+  const temp = String(Math.round(w.temp)).replace('-', '−');
+  return `${WEATHER_TEXT[w.code] || 'Okänt väder'}, ${temp} °C kl ${w.time}`;
 }
 
-function parseNumber(str) {
-  const n = parseFloat(String(str).replace(',', '.').replace(/\s/g, ''));
-  return Number.isFinite(n) ? n : null;
+function getPosition() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(POS_KEY) || 'null');
+    if (saved && Date.now() - saved.at < 60 * 60 * 1000) return Promise.resolve(saved);
+  } catch {}
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) { reject(new Error('ingen plats')); return; }
+    navigator.geolocation.getCurrentPosition((p) => {
+      const pos = {
+        lat: Math.round(p.coords.latitude * 100) / 100,
+        lon: Math.round(p.coords.longitude * 100) / 100,
+        at: Date.now(),
+      };
+      try { localStorage.setItem(POS_KEY, JSON.stringify(pos)); } catch {}
+      resolve(pos);
+    }, reject, { timeout: 15000, maximumAge: 30 * 60 * 1000 });
+  });
+}
+
+// Vädret kl 12 den dagen, eller just nu om man skriver dagens inlägg före kl 12.
+function wantsNow(key) {
+  return key === todayKey() && new Date().getHours() < 12;
+}
+
+async function fetchWeather(key) {
+  const { lat, lon } = await getPosition();
+  const base = `latitude=${lat}&longitude=${lon}&timezone=auto`;
+  if (wantsNow(key)) {
+    const res = await fetch(`https://api.open-meteo.com/v1/forecast?${base}&current=temperature_2m,weather_code`);
+    if (!res.ok) throw new Error('väder');
+    const data = await res.json();
+    return {
+      code: data.current.weather_code,
+      temp: data.current.temperature_2m,
+      time: timeFmt.format(new Date()),
+    };
+  }
+  // Prognos-API:t har de senaste månaderna, arkivet allt äldre.
+  const old = (Date.now() - parseKey(key).getTime()) / 864e5 > 80;
+  const host = old ? 'https://archive-api.open-meteo.com/v1/archive' : 'https://api.open-meteo.com/v1/forecast';
+  const res = await fetch(`${host}?${base}&start_date=${key}&end_date=${key}&hourly=temperature_2m,weather_code`);
+  if (!res.ok) throw new Error('väder');
+  const data = await res.json();
+  const i = data.hourly.time.indexOf(`${key}T12:00`);
+  if (i === -1 || data.hourly.temperature_2m[i] == null) throw new Error('väder');
+  return { code: data.hourly.weather_code[i], temp: data.hourly.temperature_2m[i], time: '12:00' };
+}
+
+const weatherBusy = new Set();
+
+async function updateWeather(key) {
+  const e = entries[key];
+  if (!e || weatherBusy.has(key)) return;
+  // Före kl 12 uppdateras vädret vid varje sparning, högst var 15:e minut.
+  // Annars hämtas 12-vädret en gång.
+  if (e.weather && !wantsNow(key) && e.weather.time === '12:00') return;
+  if (wantsNow(key) && e.weatherAt && Date.now() - e.weatherAt < 15 * 60 * 1000) return;
+
+  weatherBusy.add(key);
+  try {
+    const w = await fetchWeather(key);
+    if (!entries[key]) return;
+    entries[key].weather = w;
+    if (wantsNow(key)) entries[key].weatherAt = Date.now();
+    persist();
+    if (key === current) showWeather(entries[key]);
+  } catch (err) {
+    if (key === current && !entries[key]?.weather) {
+      $('weather').textContent = err && err.code === 1
+        ? 'Tillåt plats för att spara vädret.'
+        : 'Vädret kunde inte hämtas.';
+    }
+  } finally {
+    weatherBusy.delete(key);
+  }
+}
+
+function showWeather(e) {
+  $('weather').textContent = e && e.weather ? fmtWeather(e.weather) : '';
 }
 
 /* Dagvy */
 
-function isEmpty(e) {
-  return !e || (!e.highlight && !e.notes && !e.grateful && !e.tags.length &&
-    e.mood == null && e.sleep == null);
-}
-
 function readForm() {
-  const sleep = parseNumber(fields.sleep.value);
   const checked = moodButtons.find((b) => b.getAttribute('aria-checked') === 'true');
   return {
-    highlight: fields.highlight.value.trim(),
-    notes: fields.notes.value.trim(),
-    grateful: fields.grateful.value.trim(),
-    tags: fields.tags.value.split(',').map((t) => t.trim()).filter(Boolean),
+    text: textField.value.trim(),
     mood: checked ? Number(checked.dataset.v) : null,
-    sleep: sleep != null && sleep >= 0 && sleep <= 24 ? sleep : null,
   };
 }
 
@@ -118,26 +219,21 @@ function showDay(key) {
   if (key > today) key = today;
   current = key;
 
-  const e = entries[key] || {};
-  fields.highlight.value = e.highlight || '';
-  fields.notes.value = e.notes || '';
-  fields.grateful.value = e.grateful || '';
-  fields.tags.value = (e.tags || []).join(', ');
-  fields.sleep.value = e.sleep != null ? fmtNumber(e.sleep) : '';
-  setMood(e.mood ?? null);
+  const e = entries[key];
+  textField.value = e ? e.text : '';
+  setMood(e ? e.mood : null);
+  showWeather(e);
 
   $('date-label').textContent = fmtDate(key);
   $('date-pick').value = key;
   $('date-pick').max = today;
   $('next').disabled = key >= today;
   $('to-today').hidden = key === today;
-  $('delete').hidden = !entries[key];
-  setStatus(e.updated ? savedText(e.updated) : '');
+  $('text-label').textContent = key === today ? 'Vad som hänt idag' : 'Vad som hände';
+  $('delete').hidden = !e;
+  setStatus(e ? savedText(e.updated) : '');
 
-  requestAnimationFrame(() => {
-    autosize(fields.highlight);
-    autosize(fields.notes);
-  });
+  requestAnimationFrame(() => autosize(textField));
 }
 
 function savedText(iso) {
@@ -151,22 +247,29 @@ function setStatus(text) { $('status').textContent = text; }
 function save() {
   saveTimer = null;
   const data = readForm();
-  if (isEmpty(data)) {
+  if (!data.text && data.mood == null) {
     if (!entries[current]) return;
     delete entries[current];
     persist();
+    showWeather(null);
     setStatus('');
     $('delete').hidden = true;
     return;
   }
-  data.updated = new Date().toISOString();
-  entries[current] = data;
+  const old = entries[current];
+  entries[current] = {
+    ...data,
+    weather: old ? old.weather : null,
+    weatherAt: old ? old.weatherAt : undefined,
+    updated: new Date().toISOString(),
+  };
   if (persist()) {
-    setStatus(savedText(data.updated));
+    setStatus(savedText(entries[current].updated));
   } else {
     setStatus('Kunde inte spara. Lagringen kan vara full eller avstängd.');
   }
   $('delete').hidden = false;
+  updateWeather(current);
 }
 
 function scheduleSave() {
@@ -181,23 +284,15 @@ function flushSave() {
   }
 }
 
-Object.values(fields).forEach((el) => {
-  el.addEventListener('input', () => {
-    if (el.tagName === 'TEXTAREA') autosize(el);
-    scheduleSave();
-  });
-});
-
-fields.sleep.addEventListener('blur', () => {
-  const n = readForm().sleep;
-  fields.sleep.value = n != null ? fmtNumber(n) : '';
+textField.addEventListener('input', () => {
+  autosize(textField);
+  scheduleSave();
 });
 
 moodButtons.forEach((b) => {
   b.addEventListener('click', () => {
-    const v = Number(b.dataset.v);
     const on = b.getAttribute('aria-checked') === 'true';
-    setMood(on ? null : v);
+    setMood(on ? null : Number(b.dataset.v));
     scheduleSave();
   });
 });
@@ -238,17 +333,10 @@ function highlightMatch(text, q) {
   return safe.replace(re, (m) => `<mark>${m}</mark>`);
 }
 
-function snippet(e, q) {
-  const main = e.highlight || e.notes || e.grateful || '';
-  if (!q) return main;
-  const lq = q.toLowerCase();
-  for (const t of [e.highlight, e.notes, e.grateful]) {
-    const i = (t || '').toLowerCase().indexOf(lq);
-    if (i === -1) continue;
-    if (i < 60) return t;
-    return '…' + t.slice(i - 30);
-  }
-  return main;
+function snippet(text, q) {
+  if (!q) return text;
+  const i = text.toLowerCase().indexOf(q.toLowerCase());
+  return i < 60 ? text : '…' + text.slice(i - 30);
 }
 
 function renderList() {
@@ -257,8 +345,8 @@ function renderList() {
   const keys = Object.keys(entries).sort().reverse().filter((k) => {
     if (!lq) return true;
     const e = entries[k];
-    return [e.highlight, e.notes, e.grateful, e.tags.join(' '), fmtDate(k)]
-      .some((t) => (t || '').toLowerCase().includes(lq));
+    return [e.text, fmtDate(k), e.weather ? fmtWeather(e.weather) : '']
+      .some((t) => t.toLowerCase().includes(lq));
   });
 
   const list = $('list');
@@ -279,14 +367,11 @@ function renderList() {
       month = m;
       html += `<h2 class="month">${m}</h2>`;
     }
-    const meta = [];
-    if (e.mood != null) meta.push(`Humör ${e.mood}`);
-    if (e.sleep != null) meta.push(`Sömn ${fmtNumber(e.sleep)} h`);
-    if (e.tags.length) meta.push(e.tags.join(', '));
+    const dot = e.mood ? `<span class="dot" style="--m: var(--m${e.mood})" title="Humör ${e.mood}"></span>` : '';
     html += `<a class="item${k === today ? ' today' : ''}" href="#/dag/${k}">
-      <div class="when">${fmtDate(k)}</div>
-      <div class="what">${highlightMatch(snippet(e, q), q)}</div>
-      ${meta.length ? `<div class="meta">${highlightMatch(meta.join(', '), q)}</div>` : ''}
+      <div class="when">${dot}${fmtDate(k)}</div>
+      ${e.text ? `<div class="what">${highlightMatch(snippet(e.text, q), q)}</div>` : ''}
+      ${e.weather ? `<div class="meta">${highlightMatch(fmtWeather(e.weather), q)}</div>` : ''}
     </a>`;
   }
   list.innerHTML = html;
@@ -298,7 +383,7 @@ $('search').addEventListener('input', renderList);
 
 $('export').addEventListener('click', () => {
   flushSave();
-  const blob = new Blob([JSON.stringify({ app: 'dagbok', version: 1, entries }, null, 2)],
+  const blob = new Blob([JSON.stringify({ app: 'dagbok', version: 2, entries }, null, 2)],
     { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -319,27 +404,19 @@ $('import-file').addEventListener('change', async (ev) => {
   try {
     const data = JSON.parse(await file.text());
     incoming = data.entries || data;
-    if (typeof incoming !== 'object') throw new Error();
+    if (!incoming || typeof incoming !== 'object') throw new Error();
   } catch {
     alert('Filen gick inte att läsa. Välj en fil som exporterats från dagboken.');
     return;
   }
   let added = 0;
   let replaced = 0;
-  for (const [k, e] of Object.entries(incoming)) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !e || typeof e !== 'object') continue;
-    const clean = {
-      highlight: String(e.highlight || ''),
-      notes: String(e.notes || ''),
-      grateful: String(e.grateful || ''),
-      tags: Array.isArray(e.tags) ? e.tags.map(String) : [],
-      mood: Number.isInteger(e.mood) && e.mood >= 1 && e.mood <= 5 ? e.mood : null,
-      sleep: typeof e.sleep === 'number' ? e.sleep : null,
-      updated: e.updated || new Date().toISOString(),
-    };
+  for (const [k, e] of Object.entries(normalizeAll(incoming))) {
     const old = entries[k];
-    if (!old) { entries[k] = clean; added++; }
-    else if ((clean.updated || '') > (old.updated || '')) { entries[k] = clean; replaced++; }
+    if (!old) added++;
+    else if (e.updated > old.updated) replaced++;
+    else continue;
+    entries[k] = e;
   }
   persist();
   renderList();

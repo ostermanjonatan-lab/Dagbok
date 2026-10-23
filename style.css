@@ -7,6 +7,12 @@
   --accent: #8a4b2a;
   --accent-text: #fff;
   --danger: #a33b2b;
+  --m1: #d2483c;
+  --m2: #e8893c;
+  --m3: #e2c23d;
+  --m4: #95c65c;
+  --m5: #3d9c5a;
+  --on-mood: #1f1d1a;
   --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
   --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   color-scheme: light;
@@ -22,6 +28,11 @@
     --accent: #d99a72;
     --accent-text: #1b1a18;
     --danger: #e0806f;
+    --m1: #e0675b;
+    --m2: #eb9a55;
+    --m3: #e6cb58;
+    --m4: #a5d06f;
+    --m5: #5cb878;
     color-scheme: dark;
   }
 }
@@ -127,7 +138,7 @@ button, input, textarea { font: inherit; color: inherit; }
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-#to-today { margin-left: 44px; font-size: 14px; }
+#to-today { margin-left: 44px; font-size: 14px; display: block; }
 .danger { color: var(--danger); }
 
 /* Formulär */
@@ -173,33 +184,37 @@ textarea.main {
   border-color: var(--accent);
 }
 
-.row {
-  display: flex;
-  gap: 16px;
-  align-items: flex-start;
+.weather {
+  margin: 0 0 0 44px;
+  font-size: 14px;
+  color: var(--muted);
+  min-height: 21px;
 }
-.mood { flex: 1; }
-.sleep { width: 110px; flex: none; }
 
 .scale {
   display: flex;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  overflow: hidden;
-  background: var(--surface);
+  gap: 4px;
 }
 .scale button {
   flex: 1;
   height: 44px;
-  border: 0;
-  border-left: 1px solid var(--line);
-  background: none;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--m) 22%, var(--surface));
   cursor: pointer;
 }
-.scale button:first-child { border-left: 0; }
 .scale button[aria-checked="true"] {
-  background: var(--accent);
-  color: var(--accent-text);
+  background: var(--m);
+  color: var(--on-mood);
+  font-weight: 600;
+  border-color: color-mix(in srgb, var(--m) 70%, var(--text));
+}
+.ends {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 4px;
 }
 
 .foot {
@@ -249,6 +264,14 @@ textarea.main {
   color: var(--muted);
 }
 .item.today .when { color: var(--accent); }
+.dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--m);
+  margin-right: 8px;
+}
 
 .empty { color: var(--muted); margin-top: 24px; }
 

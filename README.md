@@ -1,6 +1,6 @@
 # Dagbok
 
-En liten dagboksapp för telefonen. Skriv det viktigaste som hänt, anteckningar, humör, sömn, tacksamhet och taggar för varje dag. Allt sparas automatiskt i webbläsaren på enheten och appen fungerar utan nät.
+En liten dagboksapp för telefonen. Skriv vad som hänt och välj humör på en färgskala för varje dag. Vädret sparas automatiskt: vädret kl 12 den dagen, eller vädret när du sparar om du skriver dagens inlägg före kl 12. Allt sparas automatiskt i webbläsaren på enheten och appen fungerar utan nät.
 
 ## Installera på telefonen
 
@@ -8,6 +8,10 @@ En liten dagboksapp för telefonen. Skriv det viktigaste som hänt, anteckningar
 2. Öppna sidans adress på telefonen.
    - iPhone (Safari): Dela, Lägg till på hemskärmen.
    - Android (Chrome): menyn, Installera app.
+
+## Väder
+
+Vädret hämtas från Open-Meteo med telefonens position, som avrundas till ungefär en kilometer. Första gången frågar telefonen om appen får använda platsen. Artifact-versionen (`artifact.html`) kan inte hämta väder, eftersom claude.ai stoppar anrop till andra webbplatser, men den visar väder som följer med vid import.
 
 ## Data
 

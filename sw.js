@@ -1,5 +1,5 @@
 // Höj versionen när filerna ändras så att telefonen hämtar de nya.
-const CACHE = 'dagbok-v1';
+const CACHE = 'dagbok-v2';
 const FILES = [
   './',
   'index.html',
@@ -27,6 +27,8 @@ self.addEventListener('activate', (event) => {
 // Nätet först, cachen om telefonen är offline.
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  // Väderanrop går direkt till nätet och sparas inte
+  if (new URL(event.request.url).origin !== self.location.origin) return;
   event.respondWith(
     fetch(event.request)
       .then((res) => {
