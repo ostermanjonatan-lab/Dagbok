@@ -110,6 +110,8 @@ const WEATHER_TEXT = {
   80: 'Lätta regnskurar', 81: 'Regnskurar', 82: 'Kraftiga regnskurar',
   85: 'Snöbyar', 86: 'Kraftiga snöbyar',
   95: 'Åska', 96: 'Åska med hagel', 99: 'Åska med hagel',
+  // Egen kod, inte en av Open-Meteos väderkoder
+  1000: 'Storm',
 };
 
 // Väder som valts för hand i artifact-versionen saknar klockslag och kan sakna kod eller temperatur.
@@ -144,15 +146,20 @@ function wantsNow(key) {
   return key === todayKey() && new Date().getHours() < 12;
 }
 
+// SMHI kallar medelvind från 24,5 m/s för storm. Då sparas Storm i stället för vädret.
+function stormOr(code, wind) {
+  return typeof wind === 'number' && wind >= 24.5 ? 1000 : code;
+}
+
 async function fetchWeather(key) {
   const { lat, lon } = await getPosition();
   const base = `latitude=${lat}&longitude=${lon}&timezone=auto`;
   if (wantsNow(key)) {
-    const res = await fetch(`https://api.open-meteo.com/v1/forecast?${base}&current=temperature_2m,weather_code`);
+    const res = await fetch(`https://api.open-meteo.com/v1/forecast?${base}&current=temperature_2m,weather_code,wind_speed_10m&wind_speed_unit=ms`);
     if (!res.ok) throw new Error('väder');
     const data = await res.json();
     return {
-      code: data.current.weather_code,
+      code: stormOr(data.current.weather_code, data.current.wind_speed_10m),
       temp: data.current.temperature_2m,
       time: timeFmt.format(new Date()),
     };
@@ -160,12 +167,16 @@ async function fetchWeather(key) {
   // Prognos-API:t har de senaste månaderna, arkivet allt äldre.
   const old = (Date.now() - parseKey(key).getTime()) / 864e5 > 80;
   const host = old ? 'https://archive-api.open-meteo.com/v1/archive' : 'https://api.open-meteo.com/v1/forecast';
-  const res = await fetch(`${host}?${base}&start_date=${key}&end_date=${key}&hourly=temperature_2m,weather_code`);
+  const res = await fetch(`${host}?${base}&start_date=${key}&end_date=${key}&hourly=temperature_2m,weather_code,wind_speed_10m&wind_speed_unit=ms`);
   if (!res.ok) throw new Error('väder');
   const data = await res.json();
   const i = data.hourly.time.indexOf(`${key}T12:00`);
   if (i === -1 || data.hourly.temperature_2m[i] == null) throw new Error('väder');
-  return { code: data.hourly.weather_code[i], temp: data.hourly.temperature_2m[i], time: '12:00' };
+  return {
+    code: stormOr(data.hourly.weather_code[i], data.hourly.wind_speed_10m[i]),
+    temp: data.hourly.temperature_2m[i],
+    time: '12:00',
+  };
 }
 
 const weatherBusy = new Set();
@@ -660,6 +671,8 @@ const WEATHER_ICONS = {
   63: CLOUD + '<path d="M8.5 18l-1 2.5M12.5 18l-1 2.5M16.5 18l-1 2.5"/>',
   73: CLOUD + '<path d="M8.5 18v2.4M7.3 19.2h2.4M12 19.2v2.4M10.8 20.4h2.4M15.5 18v2.4M14.3 19.2h2.4"/>',
   95: CLOUD + '<path d="M12.5 15.5 10.5 19h3l-2 3.5"/>',
+  // Storm: vindlinjer som virvlar
+  1000: '<path d="M3 8h11a2.5 2.5 0 1 0-2.5-2.5"/><path d="M3 12h15a2.5 2.5 0 1 1-2.5 2.5"/><path d="M3 16h7a2 2 0 1 1-2 2"/>',
   45: '<path d="M4 9h16M6 13h12M4 17h16"/>',
 };
 
@@ -669,6 +682,7 @@ function weatherGroup(code) {
   if (code <= 1) return 0;
   if (code === 2 || code === 3) return code;
   if (code === 45 || code === 48) return 45;
+  if (code === 1000) return 1000;
   if (code >= 95) return 95;
   if ((code >= 71 && code <= 77) || code === 85 || code === 86) return 73;
   return 63;
