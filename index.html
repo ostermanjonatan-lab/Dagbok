@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Dagbok</title>
+  <meta name="theme-color" content="#f6f3ee" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1b1a18" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Dagbok">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="bar">
+    <nav class="tabs" aria-label="Vyer">
+      <a href="#/dag" id="tab-day">Dag</a>
+      <a href="#/alla" id="tab-all">Alla dagar</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="view-day" hidden>
+      <div class="daynav">
+        <button type="button" class="icon" id="prev" aria-label="Föregående dag">&#8249;</button>
+        <label class="date">
+          <span id="date-label"></span>
+          <input type="date" id="date-pick" aria-label="Välj datum">
+        </label>
+        <button type="button" class="icon" id="next" aria-label="Nästa dag">&#8250;</button>
+      </div>
+      <button type="button" class="link" id="to-today" hidden>Gå till idag</button>
+
+      <form id="entry" autocomplete="off">
+        <label class="field">
+          <span>Det viktigaste som hänt</span>
+          <textarea id="f-highlight" rows="2" class="main"></textarea>
+        </label>
+
+        <label class="field">
+          <span>Anteckningar</span>
+          <textarea id="f-notes" rows="8"></textarea>
+        </label>
+
+        <div class="row">
+          <fieldset class="field mood">
+            <legend>Humör, 1 till 5</legend>
+            <div class="scale" id="f-mood" role="radiogroup">
+              <button type="button" role="radio" data-v="1">1</button>
+              <button type="button" role="radio" data-v="2">2</button>
+              <button type="button" role="radio" data-v="3">3</button>
+              <button type="button" role="radio" data-v="4">4</button>
+              <button type="button" role="radio" data-v="5">5</button>
+            </div>
+          </fieldset>
+          <label class="field sleep">
+            <span>Sömn, timmar</span>
+            <input id="f-sleep" inputmode="decimal" placeholder="7,5">
+          </label>
+        </div>
+
+        <label class="field">
+          <span>Tacksam för</span>
+          <input id="f-grateful">
+        </label>
+
+        <label class="field">
+          <span>Taggar</span>
+          <input id="f-tags" placeholder="jobb, träning, familj" autocapitalize="none">
+        </label>
+      </form>
+
+      <div class="foot">
+        <span id="status" aria-live="polite"></span>
+        <button type="button" class="link danger" id="delete" hidden>Ta bort dagen</button>
+      </div>
+    </section>
+
+    <section id="view-all" hidden>
+      <input type="search" id="search" placeholder="Sök i dagboken" aria-label="Sök">
+      <div id="list"></div>
+
+      <div class="backup">
+        <h2>Säkerhetskopia</h2>
+        <p class="muted">Allt sparas bara på den här enheten. Exportera då och då.</p>
+        <div class="buttons">
+          <button type="button" id="export">Exportera fil</button>
+          <button type="button" id="import">Importera fil</button>
+          <input type="file" id="import-file" accept="application/json,.json" hidden>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
