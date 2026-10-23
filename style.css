@@ -13,6 +13,7 @@
   --m4: #95c65c;
   --m5: #3d9c5a;
   --on-mood: #1f1d1a;
+  --nav-h: 58px;
   --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
   --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   color-scheme: light;
@@ -41,50 +42,32 @@
 
 html { -webkit-text-size-adjust: 100%; }
 
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  z-index: 10;
+  background: var(--bg);
+}
+
 body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
   font: 16px/1.5 var(--sans);
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-top: env(safe-area-inset-top);
 }
 
 main {
   max-width: 640px;
   margin: 0 auto;
-  padding: 8px 16px 48px;
+  padding: 8px 16px calc(var(--nav-h) + 72px);
 }
 
 [hidden] { display: none !important; }
 
 button, input, textarea { font: inherit; color: inherit; }
-
-/* Flikar */
-.bar {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  background: var(--bg);
-  border-bottom: 1px solid var(--line);
-  padding-top: env(safe-area-inset-top);
-}
-.tabs {
-  max-width: 640px;
-  margin: 0 auto;
-  display: flex;
-  gap: 20px;
-  padding: 0 16px;
-}
-.tabs a {
-  color: var(--muted);
-  text-decoration: none;
-  padding: 12px 0 10px;
-  border-bottom: 2px solid transparent;
-}
-.tabs a.on {
-  color: var(--text);
-  border-bottom-color: var(--text);
-}
 
 /* Datumrad */
 .daynav {
@@ -179,10 +162,6 @@ textarea {
   line-height: 1.55;
   overflow: hidden;
 }
-textarea.main {
-  font-size: 19px;
-  border-color: var(--accent);
-}
 
 .weather {
   margin: 0 0 0 44px;
@@ -239,31 +218,6 @@ textarea.main {
 }
 .month:first-letter { text-transform: uppercase; }
 
-.item {
-  display: block;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--line);
-  color: inherit;
-  text-decoration: none;
-}
-.item .when {
-  font-size: 14px;
-  color: var(--muted);
-}
-.item .what {
-  font-family: var(--serif);
-  font-size: 17px;
-  margin: 2px 0;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-.item .meta {
-  font-size: 13px;
-  color: var(--muted);
-}
-.item.today .when { color: var(--accent); }
 .dot {
   display: inline-block;
   width: 10px;
@@ -385,11 +339,139 @@ mark {
   border-top: 1px solid var(--line);
 }
 .read .when { font-size: 14px; color: var(--muted); }
-.read .text {
-  font-family: var(--serif);
-  font-size: 18px;
-  line-height: 1.55;
-  white-space: pre-wrap;
-  margin: 6px 0 10px;
-}
+.read .prose { margin: 6px 0 10px; font-size: 18px; }
 .read .meta { font-size: 14px; color: var(--muted); margin-bottom: 10px; }
+
+/* Skrivytan: ingen ram, bara text på sidan */
+.paper {
+  position: relative;
+  min-height: 40vh;
+  padding: 2px 0 8px;
+  font-family: var(--serif);
+  font-size: 19px;
+  line-height: 1.6;
+  outline: none;
+  overflow-wrap: anywhere;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.paper.empty::before {
+  content: "Skriv om dagen";
+  position: absolute;
+  top: 2px;
+  left: 0;
+  color: var(--muted);
+  opacity: .7;
+  pointer-events: none;
+}
+.paper p, .prose p { margin: 0; }
+.paper h2, .prose h2 {
+  font-size: 1.3em;
+  line-height: 1.3;
+  font-weight: 600;
+  margin: .7em 0 .2em;
+}
+.paper h3, .prose h3 {
+  font-size: 1.08em;
+  line-height: 1.35;
+  font-weight: 600;
+  margin: .6em 0 .1em;
+}
+.paper > :first-child, .prose > :first-child { margin-top: 0; }
+.paper ul, .paper ol, .prose ul, .prose ol { margin: .2em 0; padding-left: 1.3em; }
+.paper li, .prose li { padding-left: .15em; }
+.paper strong, .prose strong { font-weight: 700; }
+
+.prose {
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+/* Formateringsrad, syns bara när man skriver */
+.fmt {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
+  z-index: 6;
+  display: none;
+  gap: 4px;
+  padding: 6px max(12px, env(safe-area-inset-right, 0px)) 6px max(12px, env(safe-area-inset-left, 0px), calc((100% - 640px) / 2 + 8px));
+  background: var(--bg);
+  border-top: 1px solid var(--line);
+}
+body.editing .fmt { display: flex; }
+body.keyboard .fmt { bottom: 0; }
+body.keyboard .nav { visibility: hidden; }
+.fmt button {
+  min-width: 44px;
+  height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 15px;
+}
+.fmt button b, .fmt button i { font-family: var(--serif); font-size: 17px; }
+.fmt button[aria-pressed="true"] { background: var(--line); color: var(--text); }
+
+/* Bottenmeny */
+.nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  background: var(--bg);
+  border-top: 1px solid var(--line);
+  padding: 0 max(8px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(8px, env(safe-area-inset-left, 0px));
+}
+.nav a, .nav button {
+  flex: 1;
+  max-width: 160px;
+  height: var(--nav-h);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 12px;
+  cursor: pointer;
+}
+.nav svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.nav .on { color: var(--accent); }
+
+/* Flöde */
+.post {
+  padding: 16px 0 18px;
+  border-bottom: 1px solid var(--line);
+}
+.post-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.post .when { font-size: 14px; color: var(--muted); }
+.post.today .when { color: var(--accent); }
+.post .open { font-size: 14px; flex: none; }
+.post .meta { font-size: 13px; color: var(--muted); margin-top: 8px; }

@@ -1,9 +1,10 @@
 // Höj versionen när filerna ändras så att telefonen hämtar de nya.
-const CACHE = 'dagbok-v3';
+const CACHE = 'dagbok-v4';
 const FILES = [
   './',
   'index.html',
   'style.css',
+  'editor.js',
   'app.js',
   'manifest.webmanifest',
   'icons/icon-192.png',

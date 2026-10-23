@@ -13,6 +13,7 @@
   --danger: #a33b2b;
   --m1: #d2483c; --m2: #e8893c; --m3: #e2c23d; --m4: #95c65c; --m5: #3d9c5a;
   --on-mood: #1f2226;
+  --nav-h: 58px;
   --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
   --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
@@ -48,25 +49,9 @@ body::before {
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
-main.wrap { padding-block: 8px 48px; }
+main.wrap { padding-block: 8px calc(var(--nav-h) + 72px); }
 button, input, textarea { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-.bar {
-  position: sticky;
-  top: env(safe-area-inset-top, 0px);
-  z-index: 2;
-  background: var(--bg);
-  border-bottom: 1px solid var(--line);
-}
-.tabs { display: flex; gap: 20px; }
-.tabs button {
-  border: 0; background: none; cursor: pointer;
-  color: var(--muted);
-  padding: 12px 0 10px;
-  border-bottom: 2px solid transparent;
-}
-.tabs button.on { color: var(--text); border-bottom-color: var(--text); }
 
 .daynav { display: flex; align-items: center; gap: 4px; margin: 12px 0 2px; }
 .icon {
@@ -113,7 +98,6 @@ textarea {
   resize: none; overflow: hidden;
   font-family: var(--serif); font-size: 17px; line-height: 1.55;
 }
-textarea.main { font-size: 19px; border-color: var(--accent); }
 
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chips button {
@@ -148,20 +132,6 @@ textarea.main { font-size: 19px; border-color: var(--accent); }
   border-bottom: 1px solid var(--line);
 }
 .month::first-letter { text-transform: uppercase; }
-.item {
-  display: block; width: 100%; text-align: left; cursor: pointer;
-  border: 0; border-bottom: 1px solid var(--line); background: none;
-  padding: 12px 0;
-}
-.item .when { font-size: 14px; color: var(--muted); }
-.item.today .when { color: var(--accent); }
-.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--m); margin-right: 8px; }
-.item .what {
-  font-family: var(--serif); font-size: 17px; margin: 2px 0;
-  overflow: hidden; display: -webkit-box;
-  -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-}
-.item .meta { font-size: 13px; color: var(--muted); }
 .empty { color: var(--muted); margin-top: 24px; }
 mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: inherit; border-radius: 2px; }
 
@@ -261,23 +231,143 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   border-top: 1px solid var(--line);
 }
 .read .when { font-size: 14px; color: var(--muted); }
-.read .text {
-  font-family: var(--serif);
-  font-size: 18px;
-  line-height: 1.55;
-  white-space: pre-wrap;
-  margin: 6px 0 10px;
-}
+.read .prose { margin: 6px 0 10px; font-size: 18px; }
 .read .meta { font-size: 14px; color: var(--muted); margin-bottom: 10px; }
+/* Skrivytan: ingen ram, bara text på sidan */
+.paper {
+  position: relative;
+  min-height: 40vh;
+  padding: 2px 0 8px;
+  font-family: var(--serif);
+  font-size: 19px;
+  line-height: 1.6;
+  outline: none;
+  overflow-wrap: anywhere;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.paper.empty::before {
+  content: "Skriv om dagen";
+  position: absolute;
+  top: 2px;
+  left: 0;
+  color: var(--muted);
+  opacity: .7;
+  pointer-events: none;
+}
+.paper p, .prose p { margin: 0; }
+.paper h2, .prose h2 {
+  font-size: 1.3em;
+  line-height: 1.3;
+  font-weight: 600;
+  margin: .7em 0 .2em;
+}
+.paper h3, .prose h3 {
+  font-size: 1.08em;
+  line-height: 1.35;
+  font-weight: 600;
+  margin: .6em 0 .1em;
+}
+.paper > :first-child, .prose > :first-child { margin-top: 0; }
+.paper ul, .paper ol, .prose ul, .prose ol { margin: .2em 0; padding-left: 1.3em; }
+.paper li, .prose li { padding-left: .15em; }
+.paper strong, .prose strong { font-weight: 700; }
+
+.prose {
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+/* Formateringsrad, syns bara när man skriver */
+.fmt {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
+  z-index: 6;
+  display: none;
+  gap: 4px;
+  padding: 6px max(12px, env(safe-area-inset-right, 0px)) 6px max(12px, env(safe-area-inset-left, 0px), calc((100% - 640px) / 2 + 8px));
+  background: var(--bg);
+  border-top: 1px solid var(--line);
+}
+body.editing .fmt { display: flex; }
+body.keyboard .fmt { bottom: 0; }
+body.keyboard .nav { visibility: hidden; }
+.fmt button {
+  min-width: 44px;
+  height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 15px;
+}
+.fmt button b, .fmt button i { font-family: var(--serif); font-size: 17px; }
+.fmt button[aria-pressed="true"] { background: var(--line); color: var(--text); }
+
+/* Bottenmeny */
+.nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  background: var(--bg);
+  border-top: 1px solid var(--line);
+  padding: 0 max(8px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(8px, env(safe-area-inset-left, 0px));
+}
+.nav a, .nav button {
+  flex: 1;
+  max-width: 160px;
+  height: var(--nav-h);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 12px;
+  cursor: pointer;
+}
+.nav svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.nav .on { color: var(--accent); }
+
+/* Flöde */
+.post {
+  padding: 16px 0 18px;
+  border-bottom: 1px solid var(--line);
+}
+.post-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.post .when { font-size: 14px; color: var(--muted); }
+.post.today .when { color: var(--accent); }
+.post .open { font-size: 14px; flex: none; }
+.post .meta { font-size: 13px; color: var(--muted); margin-top: 8px; }
 </style>
 
-<header class="bar">
-  <nav class="tabs wrap" aria-label="Vyer">
-    <button type="button" id="tab-day" class="on">Dag</button>
-    <button type="button" id="tab-cal">Kalender</button>
-    <button type="button" id="tab-all">Alla dagar</button>
-  </nav>
-</header>
 
 <main class="wrap">
   <section id="view-day">
@@ -292,10 +382,11 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
     <button type="button" class="link" id="to-today" hidden>Gå till idag</button>
 
     <form id="entry" autocomplete="off">
-      <label class="field">
+      <div class="field">
         <span id="text-label">Vad som hänt idag</span>
-        <textarea id="f-text" rows="6" class="main"></textarea>
-      </label>
+        <div id="f-text" class="paper" contenteditable="true" role="textbox" aria-multiline="true"
+          aria-labelledby="text-label" spellcheck="true"></div>
+      </div>
       <fieldset class="field">
         <legend>Humör</legend>
         <div class="scale" id="f-mood" role="radiogroup">
@@ -374,13 +465,433 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   </section>
 </main>
 
+<div class="fmt" id="fmt" role="toolbar" aria-label="Formatering">
+  <button type="button" data-cmd="bold" aria-label="Fet"><b>B</b></button>
+  <button type="button" data-cmd="italic" aria-label="Kursiv"><i>K</i></button>
+  <button type="button" data-cmd="h2">Rubrik</button>
+  <button type="button" data-cmd="ul">Lista</button>
+</div>
+
+<nav class="nav" aria-label="Vyer">
+  <button type="button" id="tab-day" class="on">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13 7l4 4"/></svg>
+    <span>Dag</span>
+  </button>
+  <button type="button" id="tab-cal">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
+    <span>Kalender</span>
+  </button>
+  <button type="button" id="tab-all">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5h14M5 12h14M5 17.5h9"/></svg>
+    <span>Flöde</span>
+  </button>
+</nav>
+
 <script>
 'use strict';
+
+// Skrivytan. Texten sparas som Markdown: # och ## för rubriker, - och 1. för listor,
+// **fet** och *kursiv*. Varje rad blir ett eget stycke.
+const Paper = (() => {
+  function esc(s) {
+    return s.replace(/[&<>"']/g, (c) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    }[c]));
+  }
+
+  function inline(s) {
+    return esc(s)
+      .replace(/\*\*(?=\S)(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/(^|[^*])\*(?=[^\s*])([^*]+?)\*(?!\*)/g, '$1<em>$2</em>');
+  }
+
+  function mdToHtml(md) {
+    const lines = String(md || '').replace(/\r/g, '').split('\n');
+    let html = '';
+    let list = null;
+    const close = () => {
+      if (list) html += `</${list}>`;
+      list = null;
+    };
+    const item = (tag, text) => {
+      if (list !== tag) {
+        close();
+        html += `<${tag}>`;
+        list = tag;
+      }
+      html += `<li>${inline(text) || '<br>'}</li>`;
+    };
+    for (const line of lines) {
+      let m;
+      if ((m = line.match(/^\s*[-*+]\s+(.*)$/))) { item('ul', m[1]); continue; }
+      if ((m = line.match(/^\s*\d+[.)]\s+(.*)$/))) { item('ol', m[1]); continue; }
+      close();
+      if ((m = line.match(/^(#{1,6})\s+(.*)$/))) {
+        const tag = m[1].length === 1 ? 'h2' : 'h3';
+        html += `<${tag}>${inline(m[2]) || '<br>'}</${tag}>`;
+      } else {
+        html += line.trim() ? `<p>${inline(line)}</p>` : '<p><br></p>';
+      }
+    }
+    close();
+    return html;
+  }
+
+  // Ren text utan Markdown-tecken, för sökning och korta utdrag.
+  function mdToText(md) {
+    return String(md || '').split('\n')
+      .map((l) => l.replace(/^(#{1,6}|\s*[-*+]|\s*\d+[.)])\s+/, ''))
+      .join('\n')
+      .replace(/\*\*(?=\S)(.+?)\*\*/g, '$1')
+      .replace(/(^|[^*])\*(?=[^\s*])([^*]+?)\*(?!\*)/g, '$1$2');
+  }
+
+  /* Från redigeraren tillbaka till Markdown */
+
+  function wrap(s, mark) {
+    if (!s.trim()) return s;
+    const lead = s.match(/^\s*/)[0];
+    const tail = s.match(/\s*$/)[0];
+    return lead + mark + s.trim() + mark + tail;
+  }
+
+  function inlineMd(node) {
+    let out = '';
+    for (const n of node.childNodes) {
+      if (n.nodeType === 3) {
+        out += n.data.replace(/​/g, '').replace(/ /g, ' ');
+      } else if (n.nodeType === 1) {
+        const t = n.tagName;
+        if (t === 'BR') out += '\n';
+        else if (t === 'STRONG' || t === 'B') out += wrap(inlineMd(n), '**');
+        else if (t === 'EM' || t === 'I') out += wrap(inlineMd(n), '*');
+        else if (t !== 'UL' && t !== 'OL') out += inlineMd(n);
+      }
+    }
+    return out;
+  }
+
+  const oneLine = (n) => inlineMd(n).replace(/\n+/g, ' ').trim();
+  const BLOCK = /^(P|DIV|H[1-6]|UL|OL|BLOCKQUOTE|PRE)$/;
+
+  function htmlToLines(root) {
+    const lines = [];
+    let loose = [];
+    const para = (el) => {
+      inlineMd(el).replace(/\n$/, '').split('\n').forEach((l) => lines.push(l));
+    };
+    const flush = () => {
+      if (!loose.length) return;
+      const p = document.createElement('p');
+      loose.forEach((n) => p.appendChild(n.cloneNode(true)));
+      para(p);
+      loose = [];
+    };
+    for (const n of root.childNodes) {
+      if (n.nodeType !== 1 || !BLOCK.test(n.tagName)) {
+        loose.push(n);
+        continue;
+      }
+      flush();
+      const t = n.tagName;
+      if (t === 'H1' || t === 'H2') {
+        lines.push('# ' + oneLine(n));
+      } else if (/^H[3-6]$/.test(t)) {
+        lines.push('## ' + oneLine(n));
+      } else if (t === 'UL' || t === 'OL') {
+        let i = 1;
+        for (const li of n.querySelectorAll('li')) {
+          lines.push((t === 'UL' ? '- ' : `${i++}. `) + oneLine(li));
+        }
+      } else if ([...n.children].some((c) => BLOCK.test(c.tagName))) {
+        lines.push(...htmlToLines(n));
+      } else {
+        para(n);
+      }
+    }
+    flush();
+    return lines;
+  }
+
+  function htmlToMd(root) {
+    const lines = htmlToLines(root);
+    while (lines.length && !lines[lines.length - 1].trim()) lines.pop();
+    return lines.join('\n');
+  }
+
+  /* Redigeraren */
+
+  function createEditor(el, bar, onChange) {
+    try { document.execCommand('defaultParagraphSeparator', false, 'p'); } catch {}
+    const exec = (cmd, value) => document.execCommand(cmd, false, value);
+    const sel = () => window.getSelection();
+
+    // Stycket där markören står, närmast under redigeraren
+    function block() {
+      const s = sel();
+      if (!s.rangeCount) return null;
+      let n = s.anchorNode;
+      while (n && n.parentNode !== el) n = n.parentNode;
+      return n && n.nodeType === 1 ? n : null;
+    }
+
+    function inside(tag) {
+      let n = sel().anchorNode;
+      while (n && n !== el) {
+        if (n.nodeName === tag) return true;
+        n = n.parentNode;
+      }
+      return false;
+    }
+
+    function caretAtStart(b) {
+      const s = sel();
+      if (!s.rangeCount) return false;
+      const r = document.createRange();
+      r.setStart(b, 0);
+      r.setEnd(s.anchorNode, s.anchorOffset);
+      return r.toString().replace(/​/g, '') === '';
+    }
+
+    function setCaret(node, offset) {
+      const r = document.createRange();
+      r.setStart(node, offset);
+      r.collapse(true);
+      sel().removeAllRanges();
+      sel().addRange(r);
+    }
+
+    function firstText(n) {
+      const w = document.createTreeWalker(n, NodeFilter.SHOW_TEXT);
+      return w.nextNode();
+    }
+
+    // Gör stycket till en lista, eller lägger det sist i listan ovanför
+    function makeList(b, tag) {
+      const prev = b.previousElementSibling;
+      const list = prev && prev.tagName === tag.toUpperCase() ? prev : document.createElement(tag);
+      const li = document.createElement('li');
+      while (b.firstChild) li.appendChild(b.firstChild);
+      if (!li.firstChild) li.innerHTML = '<br>';
+      list.appendChild(li);
+      if (list === prev) b.remove();
+      else b.replaceWith(list);
+      const t = firstText(li);
+      if (t) setCaret(t, 0);
+      else setCaret(li, 0);
+      el.dispatchEvent(new InputEvent('input', { inputType: 'formatBlock' }));
+    }
+
+    // "# ", "## ", "- " och "1. " i början av en rad
+    function blockShortcut() {
+      const s = sel();
+      const node = s.anchorNode;
+      if (!node || node.nodeType !== 3) return false;
+      const b = block();
+      if (!b || !/^(P|DIV)$/.test(b.tagName) || firstText(b) !== node) return false;
+      const pre = node.data.slice(0, s.anchorOffset);
+      const m = pre.match(/^(##?|[-*+]|1[.)])[  ]$/);
+      if (!m) return false;
+      node.data = node.data.slice(pre.length);
+      // En tom textnod förvirrar webbläsaren, så tomma rader får en radbrytning
+      if (!b.textContent) {
+        b.innerHTML = '<br>';
+        setCaret(b, 0);
+      } else {
+        setCaret(node, 0);
+      }
+      if (m[1] === '#') exec('formatBlock', 'h2');
+      else if (m[1] === '##') exec('formatBlock', 'h3');
+      else makeList(b, /^1/.test(m[1]) ? 'ol' : 'ul');
+      return true;
+    }
+
+    // **fet** och *kursiv* när den avslutande stjärnan skrivs
+    function inlineShortcut() {
+      const s = sel();
+      const node = s.anchorNode;
+      if (!node || node.nodeType !== 3) return false;
+      const pre = node.data.slice(0, s.anchorOffset);
+      let tag = 'strong';
+      let m = pre.match(/\*\*([^*\s](?:[^*]*[^*\s])?)\*\*$/);
+      if (!m) {
+        tag = 'em';
+        m = pre.match(/(?:^|[^*])\*([^*\s](?:[^*]*[^*\s])?)\*$/);
+      }
+      if (!m) return false;
+      const inner = m[1];
+      const start = pre.length - inner.length - (tag === 'strong' ? 4 : 2);
+      node.splitText(s.anchorOffset);
+      const marked = node.splitText(start);
+      const w = document.createElement(tag);
+      w.textContent = inner;
+      marked.replaceWith(w);
+      // Ett osynligt tecken efter så att man fortsätter skriva utan formatering
+      const gap = document.createTextNode('​');
+      w.after(gap);
+      setCaret(gap, 1);
+      return true;
+    }
+
+    function ensureBlocks() {
+      if (!el.firstChild || (el.childNodes.length === 1 && el.firstChild.nodeName === 'BR')) {
+        el.innerHTML = '<p><br></p>';
+        setCaret(el.firstChild, 0);
+      } else if (el.firstChild.nodeType === 3) {
+        exec('formatBlock', 'p');
+      }
+    }
+
+    function markEmpty() {
+      el.classList.toggle('empty', !el.textContent.replace(/​/g, '').trim() &&
+        !el.querySelector('li, h2, h3'));
+    }
+
+    function updateBar() {
+      if (!bar) return;
+      for (const b of bar.querySelectorAll('button')) {
+        const c = b.dataset.cmd;
+        let on = false;
+        try {
+          // Rubriker är feta i sig och räknas inte som fetstil
+          if (c === 'bold') on = document.queryCommandState(c) && !/^H/.test((block() || {}).tagName);
+          else if (c === 'italic') on = document.queryCommandState(c);
+          else if (c === 'h2') on = /^H[23]$/.test((block() || {}).tagName);
+          else if (c === 'ul') on = inside('UL');
+        } catch {}
+        b.setAttribute('aria-pressed', String(on));
+      }
+    }
+
+    const changed = () => {
+      markEmpty();
+      updateBar();
+      onChange();
+    };
+
+    el.addEventListener('input', (ev) => {
+      if (ev.inputType === 'insertText' && ev.data) {
+        if (/^[  ]$/.test(ev.data)) blockShortcut();
+        else if (ev.data === '*') inlineShortcut();
+      }
+      ensureBlocks();
+      changed();
+    });
+
+    el.addEventListener('keydown', (ev) => {
+      const mod = (ev.metaKey || ev.ctrlKey) && !ev.altKey;
+      if (mod && /^[bi]$/i.test(ev.key)) {
+        ev.preventDefault();
+        exec(ev.key.toLowerCase() === 'b' ? 'bold' : 'italic');
+        changed();
+        return;
+      }
+      if (ev.key === 'Backspace' && sel().isCollapsed) {
+        // Backsteg först i en rubrik gör den till vanlig text igen
+        const b = block();
+        if (b && /^H[1-6]$/.test(b.tagName) && caretAtStart(b)) {
+          ev.preventDefault();
+          exec('formatBlock', 'p');
+          changed();
+        }
+      }
+    });
+
+    el.addEventListener('paste', (ev) => {
+      ev.preventDefault();
+      const text = (ev.clipboardData || window.clipboardData).getData('text/plain');
+      if (/\n/.test(text)) exec('insertHTML', mdToHtml(text));
+      else exec('insertText', text);
+    });
+
+    if (bar) {
+      // Knapparna får inte ta fokus från texten
+      const keep = (ev) => { if (ev.target.closest('button')) ev.preventDefault(); };
+      bar.addEventListener('pointerdown', keep);
+      bar.addEventListener('mousedown', keep);
+      bar.addEventListener('click', (ev) => {
+        const btn = ev.target.closest('button');
+        if (!btn) return;
+        if (document.activeElement !== el) el.focus();
+        const c = btn.dataset.cmd;
+        if (c === 'h2') {
+          exec('formatBlock', /^H[23]$/.test((block() || {}).tagName) ? 'p' : 'h2');
+        } else if (c === 'ul') {
+          exec('insertUnorderedList');
+        } else {
+          exec(c);
+        }
+        changed();
+      });
+    }
+
+    document.addEventListener('selectionchange', () => {
+      if (document.activeElement === el) updateBar();
+    });
+
+    // Verktygsraden följer med tangentbordet på telefonen
+    function place() {
+      const vv = window.visualViewport;
+      if (!vv || !bar) return;
+      const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      const open = kb > 80;
+      document.body.classList.toggle('keyboard', open);
+      bar.style.transform = open ? `translateY(${-kb}px)` : '';
+    }
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', place);
+      window.visualViewport.addEventListener('scroll', place);
+    }
+
+    el.addEventListener('focus', () => {
+      document.body.classList.add('editing');
+      place();
+      updateBar();
+    });
+    el.addEventListener('blur', () => document.body.classList.remove('editing', 'keyboard'));
+
+    return {
+      get: () => htmlToMd(el).replace(/\s+$/, ''),
+      set(md) {
+        el.innerHTML = mdToHtml(md) || '<p><br></p>';
+        markEmpty();
+      },
+      focused: () => document.activeElement === el,
+    };
+  }
+
+  // Markerar sökträffar i redan renderad text
+  function highlight(root, q) {
+    if (!q) return;
+    const lq = q.toLowerCase();
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const hits = [];
+    let n;
+    while ((n = w.nextNode())) if (n.data.toLowerCase().includes(lq)) hits.push(n);
+    for (const t of hits) {
+      const frag = document.createDocumentFragment();
+      let rest = t.data;
+      let i;
+      while ((i = rest.toLowerCase().indexOf(lq)) !== -1) {
+        frag.append(rest.slice(0, i));
+        const mark = document.createElement('mark');
+        mark.textContent = rest.slice(i, i + q.length);
+        frag.append(mark);
+        rest = rest.slice(i + q.length);
+      }
+      frag.append(rest);
+      t.replaceWith(frag);
+    }
+  }
+
+  return { mdToHtml, mdToText, createEditor, highlight };
+})();
+
 
 const CACHE_KEY = 'dagbok.v1';
 const $ = (id) => document.getElementById(id);
 
-const textField = $('f-text');
+const editor = Paper.createEditor($('f-text'), $('fmt'), () => scheduleSave());
 const tempField = $('f-temp');
 const weatherButtons = [...$('f-weather').querySelectorAll('button')];
 const moodButtons = [...$('f-mood').querySelectorAll('button')];
@@ -582,7 +1093,7 @@ function readForm() {
   const checked = moodButtons.find((b) => b.getAttribute('aria-checked') === 'true');
   const old = entries[current];
   return {
-    text: textField.value.trim(),
+    text: editor.get(),
     mood: checked ? Number(checked.dataset.v) : null,
     weather: readWeather(old && old.weather),
   };
@@ -606,11 +1117,6 @@ function showWeather(e) {
   $('weather-auto').textContent = auto ? `Hämtat: ${fmtWeather(w)}` : '';
 }
 
-function autosize(el) {
-  el.style.height = 'auto';
-  el.style.height = el.scrollHeight + 2 + 'px';
-}
-
 function showDay(key) {
   flushSave();
   const today = todayKey();
@@ -618,7 +1124,7 @@ function showDay(key) {
   current = key;
 
   const e = entries[key];
-  textField.value = e ? e.text : '';
+  editor.set(e ? e.text : '');
   setMood(e ? e.mood : null);
   showWeather(e);
 
@@ -631,8 +1137,6 @@ function showDay(key) {
   $('confirm').hidden = true;
   $('delete').hidden = !entries[key];
   setStatus(e ? savedText(e.updated) : '');
-
-  requestAnimationFrame(() => autosize(textField));
 }
 
 function savedText(iso) {
@@ -673,11 +1177,6 @@ function scheduleSave() {
 function flushSave() {
   if (saveTimer) { clearTimeout(saveTimer); save(); }
 }
-
-textField.addEventListener('input', () => {
-  autosize(textField);
-  scheduleSave();
-});
 
 moodButtons.forEach((b) => {
   b.addEventListener('click', () => {
@@ -728,23 +1227,10 @@ document.addEventListener('visibilitychange', () => {
 });
 window.addEventListener('pagehide', flushSave);
 
-/* Listvy */
+/* Flöde */
 
 function escapeHtml(s) {
   return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
-
-function highlightMatch(text, q) {
-  const safe = escapeHtml(text);
-  if (!q) return safe;
-  const re = new RegExp(escapeHtml(q).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-  return safe.replace(re, (m) => `<mark>${m}</mark>`);
-}
-
-function snippet(text, q) {
-  if (!q) return text;
-  const i = text.toLowerCase().indexOf(q.toLowerCase());
-  return i < 60 ? text : '…' + text.slice(i - 30);
 }
 
 function renderList() {
@@ -753,13 +1239,15 @@ function renderList() {
   const keys = Object.keys(entries).sort().reverse().filter((k) => {
     if (!lq) return true;
     const e = entries[k];
-    return [e.text, fmtDate(k), e.weather ? fmtWeather(e.weather) : '']
+    return [Paper.mdToText(e.text), fmtDate(k), e.weather ? fmtWeather(e.weather) : '']
       .some((t) => t.toLowerCase().includes(lq));
   });
 
   const list = $('list');
   if (!keys.length) {
-    list.innerHTML = `<p class="empty">${q ? 'Inga dagar matchar sökningen.' : 'Inget skrivet ännu. Börja på fliken Dag.'}</p>`;
+    list.innerHTML = `<p class="empty">${
+      q ? 'Inga dagar matchar sökningen.' : 'Inget skrivet ännu.'
+    }</p>`;
     return;
   }
 
@@ -774,18 +1262,22 @@ function renderList() {
       html += `<h2 class="month">${m}</h2>`;
     }
     const dot = e.mood ? `<span class="dot" style="--m: var(--m${e.mood})" title="Humör ${e.mood}"></span>` : '';
-    html += `<button type="button" class="item${k === today ? ' today' : ''}" data-key="${k}">
-      <div class="when">${dot}${fmtDate(k)}</div>
-      ${e.text ? `<div class="what">${highlightMatch(snippet(e.text, q), q)}</div>` : ''}
-      ${e.weather ? `<div class="meta">${highlightMatch(fmtWeather(e.weather), q)}</div>` : ''}
-    </button>`;
+    html += `<article class="post${k === today ? ' today' : ''}">
+      <div class="post-head">
+        <span class="when">${dot}${fmtDate(k)}</span>
+        <button type="button" class="link open" data-key="${k}">Redigera</button>
+      </div>
+      ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
+      ${e.weather ? `<div class="meta">${escapeHtml(fmtWeather(e.weather))}</div>` : ''}
+    </article>`;
   }
   list.innerHTML = html;
+  if (q) list.querySelectorAll('.when, .prose, .meta').forEach((el) => Paper.highlight(el, q));
 }
 
 $('search').addEventListener('input', renderList);
 $('list').addEventListener('click', (ev) => {
-  const item = ev.target.closest('.item');
+  const item = ev.target.closest('.open');
   if (item) { setView('day'); showDay(item.dataset.key); }
 });
 
@@ -847,7 +1339,7 @@ function renderCalEntry() {
   if (e.mood) meta.push(`<span class="dot" style="--m: var(--m${e.mood})"></span>Humör ${e.mood}`);
   if (e.weather) meta.push(escapeHtml(fmtWeather(e.weather)));
   box.innerHTML = `<div class="when">${fmtDate(calSel)}</div>
-    ${e.text ? `<div class="text">${escapeHtml(e.text)}</div>` : ''}
+    ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
     ${meta.length ? `<div class="meta">${meta.join(', ')}</div>` : ''}
     <button type="button" class="link" id="cal-open">Redigera dagen</button>`;
 }
@@ -949,7 +1441,7 @@ $('tab-day').addEventListener('click', () => { setView('day'); showDay(todayKey(
 $('tab-cal').addEventListener('click', () => setView('cal'));
 $('tab-all').addEventListener('click', () => setView('all'));
 
-if (location.hash === '#alla') setView('all');
+if (location.hash === '#flode' || location.hash === '#alla') setView('all');
 if (location.hash === '#kalender') setView('cal');
 showDay(current);
 connect();

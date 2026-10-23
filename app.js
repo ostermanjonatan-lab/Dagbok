@@ -5,7 +5,7 @@ const POS_KEY = 'dagbok.plats';
 
 const $ = (id) => document.getElementById(id);
 
-const textField = $('f-text');
+const editor = Paper.createEditor($('f-text'), $('fmt'), () => scheduleSave());
 const moodButtons = [...$('f-mood').querySelectorAll('button')];
 
 let entries = normalizeAll(load());
@@ -206,7 +206,7 @@ function showWeather(e) {
 function readForm() {
   const checked = moodButtons.find((b) => b.getAttribute('aria-checked') === 'true');
   return {
-    text: textField.value.trim(),
+    text: editor.get(),
     mood: checked ? Number(checked.dataset.v) : null,
   };
 }
@@ -217,11 +217,6 @@ function setMood(v) {
   });
 }
 
-function autosize(el) {
-  el.style.height = 'auto';
-  el.style.height = el.scrollHeight + 2 + 'px';
-}
-
 function showDay(key) {
   flushSave();
   const today = todayKey();
@@ -229,7 +224,7 @@ function showDay(key) {
   current = key;
 
   const e = entries[key];
-  textField.value = e ? e.text : '';
+  editor.set(e ? e.text : '');
   setMood(e ? e.mood : null);
   showWeather(e);
 
@@ -241,8 +236,6 @@ function showDay(key) {
   $('text-label').textContent = key === today ? 'Vad som hänt idag' : 'Vad som hände';
   $('delete').hidden = !e;
   setStatus(e ? savedText(e.updated) : '');
-
-  requestAnimationFrame(() => autosize(textField));
 }
 
 function savedText(iso) {
@@ -293,11 +286,6 @@ function flushSave() {
   }
 }
 
-textField.addEventListener('input', () => {
-  autosize(textField);
-  scheduleSave();
-});
-
 moodButtons.forEach((b) => {
   b.addEventListener('click', () => {
     const on = b.getAttribute('aria-checked') === 'true';
@@ -327,25 +315,12 @@ document.addEventListener('visibilitychange', () => {
 });
 window.addEventListener('pagehide', flushSave);
 
-/* Listvy */
+/* Flöde */
 
 function escapeHtml(s) {
   return s.replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
   }[c]));
-}
-
-function highlightMatch(text, q) {
-  const safe = escapeHtml(text);
-  if (!q) return safe;
-  const re = new RegExp(escapeHtml(q).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-  return safe.replace(re, (m) => `<mark>${m}</mark>`);
-}
-
-function snippet(text, q) {
-  if (!q) return text;
-  const i = text.toLowerCase().indexOf(q.toLowerCase());
-  return i < 60 ? text : '…' + text.slice(i - 30);
 }
 
 function renderList() {
@@ -354,7 +329,7 @@ function renderList() {
   const keys = Object.keys(entries).sort().reverse().filter((k) => {
     if (!lq) return true;
     const e = entries[k];
-    return [e.text, fmtDate(k), e.weather ? fmtWeather(e.weather) : '']
+    return [Paper.mdToText(e.text), fmtDate(k), e.weather ? fmtWeather(e.weather) : '']
       .some((t) => t.toLowerCase().includes(lq));
   });
 
@@ -377,13 +352,17 @@ function renderList() {
       html += `<h2 class="month">${m}</h2>`;
     }
     const dot = e.mood ? `<span class="dot" style="--m: var(--m${e.mood})" title="Humör ${e.mood}"></span>` : '';
-    html += `<a class="item${k === today ? ' today' : ''}" href="#/dag/${k}">
-      <div class="when">${dot}${fmtDate(k)}</div>
-      ${e.text ? `<div class="what">${highlightMatch(snippet(e.text, q), q)}</div>` : ''}
-      ${e.weather ? `<div class="meta">${highlightMatch(fmtWeather(e.weather), q)}</div>` : ''}
-    </a>`;
+    html += `<article class="post${k === today ? ' today' : ''}">
+      <div class="post-head">
+        <span class="when">${dot}${fmtDate(k)}</span>
+        <a class="link open" href="#/dag/${k}">Redigera</a>
+      </div>
+      ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
+      ${e.weather ? `<div class="meta">${escapeHtml(fmtWeather(e.weather))}</div>` : ''}
+    </article>`;
   }
   list.innerHTML = html;
+  if (q) list.querySelectorAll('.when, .prose, .meta').forEach((el) => Paper.highlight(el, q));
 }
 
 $('search').addEventListener('input', renderList);
@@ -446,7 +425,7 @@ function renderCalEntry() {
   if (e.mood) meta.push(`<span class="dot" style="--m: var(--m${e.mood})"></span>Humör ${e.mood}`);
   if (e.weather) meta.push(escapeHtml(fmtWeather(e.weather)));
   box.innerHTML = `<div class="when">${fmtDate(calSel)}</div>
-    ${e.text ? `<div class="text">${escapeHtml(e.text)}</div>` : ''}
+    ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
     ${meta.length ? `<div class="meta">${meta.join(', ')}</div>` : ''}
     <button type="button" class="link" id="cal-open">Redigera dagen</button>`;
 }
@@ -529,7 +508,7 @@ function go(hash) {
 
 function route() {
   const hash = location.hash || '#/dag';
-  const view = hash.startsWith('#/alla') ? 'all' : hash.startsWith('#/kalender') ? 'cal' : 'day';
+  const view = hash.startsWith('#/flode') || hash.startsWith('#/alla') ? 'all' : hash.startsWith('#/kalender') ? 'cal' : 'day';
   if (view !== 'day') flushSave();
   for (const v of ['day', 'cal', 'all']) {
     $(`view-${v}`).hidden = v !== view;

@@ -15,13 +15,6 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="bar">
-    <nav class="tabs" aria-label="Vyer">
-      <a href="#/dag" id="tab-day">Dag</a>
-      <a href="#/kalender" id="tab-cal">Kalender</a>
-      <a href="#/alla" id="tab-all">Alla dagar</a>
-    </nav>
-  </header>
 
   <main>
     <section id="view-day" hidden>
@@ -38,10 +31,11 @@
       <p class="weather" id="weather"></p>
 
       <form id="entry" autocomplete="off">
-        <label class="field">
+        <div class="field">
           <span id="text-label">Vad som hänt idag</span>
-          <textarea id="f-text" rows="6" class="main"></textarea>
-        </label>
+          <div id="f-text" class="paper" contenteditable="true" role="textbox" aria-multiline="true"
+            aria-labelledby="text-label" spellcheck="true"></div>
+        </div>
 
         <fieldset class="field mood">
           <legend>Humör</legend>
@@ -99,6 +93,29 @@
     </section>
   </main>
 
+  <div class="fmt" id="fmt" role="toolbar" aria-label="Formatering">
+    <button type="button" data-cmd="bold" aria-label="Fet"><b>B</b></button>
+    <button type="button" data-cmd="italic" aria-label="Kursiv"><i>K</i></button>
+    <button type="button" data-cmd="h2">Rubrik</button>
+    <button type="button" data-cmd="ul">Lista</button>
+  </div>
+
+  <nav class="nav" aria-label="Vyer">
+    <a id="tab-day" href="#/dag">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13 7l4 4"/></svg>
+      <span>Dag</span>
+    </a>
+    <a id="tab-cal" href="#/kalender">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
+      <span>Kalender</span>
+    </a>
+    <a id="tab-all" href="#/flode">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5h14M5 12h14M5 17.5h9"/></svg>
+      <span>Flöde</span>
+    </a>
+  </nav>
+
+  <script src="editor.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -9,13 +9,17 @@ En liten dagboksapp för telefonen. Skriv vad som hänt och välj humör på en 
    - iPhone (Safari): Dela, Lägg till på hemskärmen.
    - Android (Chrome): menyn, Installera app.
 
+## Skriva
+
+Skrivytan förstår Markdown medan du skriver: `# ` ger en rubrik, `## ` en mindre rubrik, `- ` en punktlista, `1. ` en numrerad lista, `**fet**` och `*kursiv*`. Ctrl/Cmd+B och I fungerar också, och när du skriver syns en rad med Fet, Kursiv, Rubrik och Lista ovanför tangentbordet. Texten sparas som Markdown.
+
 ## Väder
 
 Vädret hämtas från Open-Meteo med telefonens position, som avrundas till ungefär en kilometer. Första gången frågar telefonen om appen får använda platsen. Artifact-versionen (`artifact.html`) kan inte hämta väder, eftersom claude.ai stoppar anrop till andra webbplatser, men den visar väder som följer med vid import.
 
 ## Data
 
-Inläggen ligger i `localStorage` på den enhet du skriver på och skickas ingenstans. Använd Exportera fil under Alla dagar för en säkerhetskopia, och Importera fil för att flytta till en annan enhet. Vid import behålls den senast ändrade versionen av varje dag.
+Inläggen ligger i `localStorage` på den enhet du skriver på och skickas ingenstans. Använd Exportera fil under Flöde för en säkerhetskopia, och Importera fil för att flytta till en annan enhet. Vid import behålls den senast ändrade versionen av varje dag.
 
 ## Köra lokalt
 
