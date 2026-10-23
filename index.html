@@ -104,6 +104,11 @@
 
       </div>
       <section class="stats" id="month-stats" role="tabpanel" aria-labelledby="seg-stats" hidden>
+        <div class="pills period" id="stat-period" role="radiogroup" aria-label="Period">
+          <button type="button" class="pill" role="radio" data-period="month">Månad</button>
+          <button type="button" class="pill" role="radio" data-period="year">År</button>
+          <button type="button" class="pill" role="radio" data-period="all">Totalt</button>
+        </div>
         <p class="empty" id="stats-empty" hidden></p>
         <div id="stats-body">
         <h2 id="month-stats-title"></h2>
@@ -112,7 +117,7 @@
           <div class="distr-bar" id="distr-bar"></div>
           <div class="distr-ends"><span>Tungt</span><span>Bra</span></div>
         </div>
-        <h3>Snitthumör, senaste 12 månaderna</h3>
+        <h3 id="trend-title">Snitthumör, senaste 12 månaderna</h3>
         <div class="trend" id="trend"></div>
         <p class="trend-read" id="trend-read" aria-live="polite"></p>
         </div>

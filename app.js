@@ -931,43 +931,103 @@ function monthMoods(ym) {
 
 const avg = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
 
+// Statistiken gäller månaden eller året som kalendern visar, eller hela dagboken
+const PERIOD_KEY = 'dagbok.statperiod';
+let statPeriod = 'month';
+try {
+  const p = localStorage.getItem(PERIOD_KEY);
+  if (p === 'year' || p === 'all') statPeriod = p;
+} catch {}
+
+const daysBetween = (a, b) => Math.round((parseKey(b) - parseKey(a)) / 864e5) + 1;
+
+function periodKeys(period, ym) {
+  const all = Object.keys(entries).sort();
+  if (period === 'all') return all;
+  if (period === 'year') return all.filter((k) => k.slice(0, 4) === ym.slice(0, 4));
+  return all.filter((k) => k.slice(0, 7) === ym);
+}
+
+const moodsOf = (keys) => keys.map((k) => entries[k].mood).filter(Boolean);
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
 function renderStats() {
   const ym = calMonth;
-  const keys = Object.keys(entries).filter((k) => k.slice(0, 7) === ym).sort();
+  const year = ym.slice(0, 4);
+  const keys = periodKeys(statPeriod, ym);
+  const monthName = monthFmt.format(parseKey(ym + '-01'));
+
+  document.querySelectorAll('#stat-period .pill').forEach((b) => {
+    b.setAttribute('aria-checked', String(b.dataset.period === statPeriod));
+    b.tabIndex = b.dataset.period === statPeriod ? 0 : -1;
+  });
+
   $('stats-body').hidden = !keys.length;
   $('stats-empty').hidden = !!keys.length;
   if (!keys.length) {
-    $('stats-empty').textContent = `Ingen statistik, inget skrivet i ${monthFmt.format(parseKey(ym + '-01'))}.`;
+    $('stats-empty').textContent = statPeriod === 'all' ? 'Inget skrivet ännu.'
+      : statPeriod === 'year' ? `Ingen statistik, inget skrivet ${year}.`
+        : `Ingen statistik, inget skrivet i ${monthName}.`;
     return;
   }
 
-  const first = parseKey(ym + '-01');
-  const name = monthOnlyFmt.format(first);
-  $('month-stats-title').textContent = `Statistik för ${monthFmt.format(first)}`;
+  $('month-stats-title').textContent = statPeriod === 'all' ? 'Statistik för hela dagboken'
+    : statPeriod === 'year' ? `Statistik för ${year}` : `Statistik för ${monthName}`;
 
-  // Dagar som har passerat, så att en pågående månad inte ser halvtom ut
+  // Dagar som har passerat, så att en pågående period inte ser halvtom ut
   const today = todayKey();
-  const total = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
-  const passed = ym === today.slice(0, 7) ? Number(today.slice(8)) : total;
+  let passed;
+  if (statPeriod === 'all') {
+    passed = daysBetween(keys[0], today);
+  } else if (statPeriod === 'year') {
+    passed = year === today.slice(0, 4) ? daysBetween(`${year}-01-01`, today)
+      : daysBetween(`${year}-01-01`, `${year}-12-31`);
+  } else {
+    const first = parseKey(ym + '-01');
+    const total = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
+    passed = ym === today.slice(0, 7) ? Number(today.slice(8)) : total;
+  }
 
   const facts = [['Skrivna dagar', `${keys.length} av ${passed}`]];
+  const moods = moodsOf(keys);
 
-  const moods = keys.map((k) => entries[k].mood).filter(Boolean);
   if (moods.length) {
     const a = avg(moods);
-    const prevYm = shiftYm(ym, -1);
-    const prev = monthMoods(prevYm);
     let cmp = '';
+    let prev = [];
+    let prevName = '';
+    if (statPeriod === 'month') {
+      const prevYm = shiftYm(ym, -1);
+      prev = monthMoods(prevYm);
+      prevName = monthOnlyFmt.format(parseKey(prevYm + '-01'));
+    } else if (statPeriod === 'year') {
+      prevName = String(Number(year) - 1);
+      prev = moodsOf(periodKeys('year', `${prevName}-01`));
+    }
     if (prev.length) {
       const diff = Math.round((a - avg(prev)) * 10) / 10;
-      const prevName = monthOnlyFmt.format(parseKey(prevYm + '-01'));
       cmp = diff > 0 ? `, upp ${fmtDec(diff)} från ${prevName}`
         : diff < 0 ? `, ner ${fmtDec(-diff)} från ${prevName}`
           : `, samma som ${prevName}`;
     }
     facts.push(['Snitthumör', `${fmtDec(a)}${cmp}`]);
 
-    // Bästa veckodag, bara dagar med minst två inlägg räknas
+    // Bästa månad för år och totalt, bara månader med minst fem dagar med humör
+    if (statPeriod !== 'month') {
+      const byMonth = {};
+      for (const k of keys) {
+        if (entries[k].mood) (byMonth[k.slice(0, 7)] = byMonth[k.slice(0, 7)] || []).push(entries[k].mood);
+      }
+      const best = Object.entries(byMonth).filter(([, v]) => v.length >= 5)
+        .map(([m, v]) => [m, avg(v)]).sort((x, y) => y[1] - x[1])[0];
+      if (best) {
+        const d = parseKey(best[0] + '-01');
+        const label = statPeriod === 'year' ? monthOnlyFmt.format(d) : monthFmt.format(d);
+        facts.push(['Bästa månad', `${label}, ${fmtDec(best[1])}`]);
+      }
+    }
+
+    // Bästa veckodag, bara veckodagar med minst två inlägg räknas
     const byDay = {};
     for (const k of keys) {
       const e = entries[k];
@@ -975,11 +1035,11 @@ function renderStats() {
       const wd = parseKey(k).getDay();
       (byDay[wd] = byDay[wd] || []).push(e.mood);
     }
-    const best = Object.entries(byDay).filter(([, v]) => v.length >= 2)
+    const bestDay = Object.entries(byDay).filter(([, v]) => v.length >= 2)
       .map(([wd, v]) => [Number(wd), avg(v)]).sort((x, y) => y[1] - x[1])[0];
-    if (best) {
-      const sample = new Date(2026, 0, 4 + best[0]);
-      facts.push(['Bästa veckodag', `${weekdayFmt.format(sample)}, ${fmtDec(best[1])}`]);
+    if (bestDay) {
+      const sample = new Date(2026, 0, 4 + bestDay[0]);
+      facts.push(['Bästa veckodag', `${weekdayFmt.format(sample)}, ${fmtDec(bestDay[1])}`]);
     }
 
     // Humör per väder, väder med minst två dagar
@@ -993,8 +1053,7 @@ function renderStats() {
     const wx = Object.entries(byWx).filter(([, v]) => v.length >= 2)
       .map(([g, v]) => [WEATHER_NAMES[g], avg(v)]).sort((x, y) => y[1] - x[1]).slice(0, 4);
     if (wx.length >= 2) {
-      const list = wx.map(([n, v]) => `${n} ${fmtDec(v)}`).join(', ');
-      facts.push(['Humör per väder', list.charAt(0).toUpperCase() + list.slice(1)]);
+      facts.push(['Humör per väder', cap(wx.map(([n, v]) => `${n} ${fmtDec(v)}`).join(', '))]);
     }
   }
 
@@ -1011,26 +1070,47 @@ function renderStats() {
   $('distr-bar').innerHTML = counts.map((c, i) => (c
     ? `<span style="--m: var(--m${i + 1}); flex-grow: ${c}" title="Humör ${i + 1}: ${dagar(c)}">${c}</span>`
     : '')).join('');
-  $('distr').setAttribute('aria-label', `Humör i ${name}: ` +
-    counts.map((c, i) => `${c} med ${i + 1}`).join(', '));
+  $('distr').setAttribute('aria-label', 'Humör: ' + counts.map((c, i) => `${c} med ${i + 1}`).join(', '));
 
   renderTrend();
 }
 
-// Snitthumör per månad, de tolv månaderna fram till den som visas
+// Månaderna i diagrammet: senaste tolv, årets tolv eller alla sedan första inlägget
+function trendMonths() {
+  if (statPeriod === 'year') {
+    const y = calMonth.slice(0, 4);
+    return [...Array(12)].map((_, i) => `${y}-${pad(i + 1)}`);
+  }
+  if (statPeriod === 'all') {
+    const first = Object.keys(entries).sort()[0];
+    const end = todayKey().slice(0, 7);
+    const out = [];
+    for (let m = first ? first.slice(0, 7) : end; m <= end; m = shiftYm(m, 1)) out.push(m);
+    while (out.length < 2) out.unshift(shiftYm(out[0], -1));
+    return out;
+  }
+  const out = [];
+  for (let i = 11; i >= 0; i--) out.push(shiftYm(calMonth, -i));
+  return out;
+}
+
 function renderTrend() {
-  const months = [];
-  for (let i = 11; i >= 0; i--) months.push(shiftYm(calMonth, -i));
+  const months = trendMonths();
+  $('trend-title').textContent = statPeriod === 'year' ? `Snitthumör per månad ${calMonth.slice(0, 4)}`
+    : statPeriod === 'all' ? 'Snitthumör per månad' : 'Snitthumör, senaste 12 månaderna';
   const data = months.map((ym) => {
     const ms = monthMoods(ym);
-    return { ym, avg: ms.length ? avg(ms) : null, n: ms.length };
+    return { ym, avg: ms.length ? avg(ms) : null };
   });
+  const n = data.length;
+  const many = n > 12;
   const W = 340;
   const H = 128;
   const x0 = 22;
   const x1 = W - 8;
   const yOf = (v) => 12 + (5 - v) * 22; // 5 överst, 1 nederst
-  const xOf = (i) => x0 + (i * (x1 - x0)) / 11;
+  const xOf = (i) => x0 + (i * (x1 - x0)) / (n - 1);
+  const step = (x1 - x0) / (n - 1);
 
   let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Snitthumör per månad">`;
   for (const v of [1, 3, 5]) {
@@ -1052,18 +1132,42 @@ function renderTrend() {
   data.forEach((d, i) => {
     const cur = d.ym === calMonth;
     if (d.avg != null) {
-      svg += `<circle class="pt${cur ? ' cur' : ''}" cx="${xOf(i)}" cy="${yOf(d.avg)}" r="${cur ? 5.5 : 4}"/>`;
+      const r = cur ? 5.5 : many ? 3 : 4;
+      svg += `<circle class="pt${cur ? ' cur' : ''}" cx="${xOf(i)}" cy="${yOf(d.avg)}" r="${r}"/>`;
     }
-    const label = monthShortFmt.format(parseKey(d.ym + '-01')).replace('.', '').slice(0, 3);
-    svg += `<text class="lbl${cur ? ' cur' : ''}" x="${xOf(i)}" y="${H - 4}" text-anchor="middle">${label}</text>`;
+    // Med många månader står bara årtalet vid januari, annars månadens förkortning
+    let label = '';
+    if (!many) label = monthShortFmt.format(parseKey(d.ym + '-01')).replace('.', '').slice(0, 3);
+    else if (d.ym.endsWith('-01') || i === 0) label = d.ym.slice(0, 4);
+    if (label) {
+      svg += `<text class="lbl${cur && !many ? ' cur' : ''}" x="${xOf(i)}" y="${H - 4}" text-anchor="${many && i === 0 ? 'start' : 'middle'}">${label}</text>`;
+    }
     // Träffyta större än punkten, för tryck och hovring
-    const w = (x1 - x0) / 11;
-    svg += `<rect class="hit" x="${xOf(i) - w / 2}" y="0" width="${w}" height="${H}" data-ym="${d.ym}" tabindex="0" role="button" aria-label="${monthFmt.format(parseKey(d.ym + '-01'))}${d.avg != null ? `, snitthumör ${fmtDec(d.avg)}` : ', inget humör'}"/>`;
+    svg += `<rect class="hit" x="${xOf(i) - step / 2}" y="0" width="${step}" height="${H - 14}" data-ym="${d.ym}" tabindex="0" role="button" aria-label="${monthFmt.format(parseKey(d.ym + '-01'))}${d.avg != null ? `, snitthumör ${fmtDec(d.avg)}` : ', inget humör'}"/>`;
   });
   svg += '</svg>';
   $('trend').innerHTML = svg;
   trendRead(calMonth);
 }
+
+function choosePeriod(p) {
+  statPeriod = p;
+  try { localStorage.setItem(PERIOD_KEY, p); } catch {}
+  renderStats();
+}
+
+document.querySelectorAll('#stat-period .pill').forEach((b) => {
+  b.addEventListener('click', () => choosePeriod(b.dataset.period));
+});
+$('stat-period').addEventListener('keydown', (ev) => {
+  const order = ['month', 'year', 'all'];
+  const step = { ArrowRight: 1, ArrowLeft: -1 }[ev.key];
+  if (!step) return;
+  ev.preventDefault();
+  const next = order[(order.indexOf(statPeriod) + step + 3) % 3];
+  choosePeriod(next);
+  document.querySelector(`#stat-period [data-period="${next}"]`).focus();
+});
 
 function trendRead(ym) {
   const ms = monthMoods(ym);

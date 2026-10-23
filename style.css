@@ -374,7 +374,8 @@ mark {
   cursor: pointer;
 }
 .pill:hover { border-color: var(--accent); }
-.pill[aria-pressed="true"] {
+.pill[aria-pressed="true"],
+.pill[aria-checked="true"] {
   color: var(--accent-text);
   background: var(--accent);
   border-color: var(--accent);
@@ -477,6 +478,8 @@ mark {
 
 /* Statistik för månaden under kalendern */
 .stats { margin-top: 18px; }
+.stats .period { margin: 0 0 16px; }
+.stats .period .pill { padding: 5px 13px; font-size: 14px; }
 .stats h2 {
   margin: 0 0 10px;
   font-size: 14px;
