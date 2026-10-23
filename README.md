@@ -4,7 +4,7 @@ En liten dagboksapp för telefonen. Skriv vad som hänt och välj humör på en 
 
 ## Installera på telefonen
 
-1. Aktivera GitHub Pages: Settings, Pages, Source: **GitHub Actions**. Arbetsflödet i `.github/workflows/pages.yml` publicerar sedan sidan.
+1. Aktivera GitHub Pages: Settings, Pages, Source: **GitHub Actions**. Starta sedan publiceringen under Actions, Publicera på GitHub Pages, Run workflow. Den körs inte automatiskt vid varje uppladdning.
 2. Öppna sidans adress på telefonen.
    - iPhone (Safari): Dela, Lägg till på hemskärmen.
    - Android (Chrome): menyn, Installera app.

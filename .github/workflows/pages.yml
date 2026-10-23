@@ -1,7 +1,8 @@
 name: Publicera på GitHub Pages
 
+# Körs bara när man startar den under Actions, så att varje uppladdning inte
+# ger ett felmejl medan GitHub Pages inte är påslaget.
 on:
-  push:
   workflow_dispatch:
 
 permissions:
