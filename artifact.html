@@ -362,21 +362,32 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
 .day.today { font-weight: 700; color: var(--accent); }
 .day.sel { box-shadow: inset 0 0 0 2px var(--text); }
 .moods .day.has[style].sel { box-shadow: inset 0 0 0 2px var(--text); }
-.legend {
+/* Tabletterna och färgförklaringen delar rad så att inget flyttar sig när humör slås på */
+.cal-tools {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 14px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-top: 14px;
+}
+.cal-tools .pills { margin-top: 0; }
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-size: 13px;
   color: var(--muted);
-  margin-top: 10px;
 }
+.legend span:first-child { margin-right: 2px; }
+.legend span:last-child { margin-left: 2px; }
+.legend.off { visibility: hidden; }
 .legend i {
   display: inline-block;
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   background: var(--m);
-  margin-right: 5px;
 }
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--m); margin-right: 8px; }
 
@@ -805,16 +816,16 @@ body.keyboard .nav { visibility: hidden; }
       <button type="button" class="icon" id="cal-next" aria-label="Nästa månad">&#8250;</button>
     </div>
     <div class="grid" id="cal-grid"></div>
-    <div class="pills" id="cal-show" role="group" aria-label="Visa i kalendern">
-      <button type="button" class="pill" aria-pressed="false" data-value="mood">Humör</button>
-      <button type="button" class="pill" aria-pressed="false" data-value="weather">Väder</button>
-    </div>
-    <div class="legend" id="legend" hidden>
-      <span><i style="--m: var(--m1)"></i>1 tungt</span>
-      <span><i style="--m: var(--m2)"></i>2</span>
-      <span><i style="--m: var(--m3)"></i>3</span>
-      <span><i style="--m: var(--m4)"></i>4</span>
-      <span><i style="--m: var(--m5)"></i>5 bra</span>
+    <div class="cal-tools">
+      <div class="pills" id="cal-show" role="group" aria-label="Visa i kalendern">
+        <button type="button" class="pill" aria-pressed="false" data-value="mood">Humör</button>
+        <button type="button" class="pill" aria-pressed="false" data-value="weather">Väder</button>
+      </div>
+      <div class="legend off" id="legend" aria-label="Humörfärger från tungt till bra">
+        <span>Tungt</span>
+        <i style="--m: var(--m1)"></i><i style="--m: var(--m2)"></i><i style="--m: var(--m3)"></i><i style="--m: var(--m4)"></i><i style="--m: var(--m5)"></i>
+        <span>Bra</span>
+      </div>
     </div>
     <div class="feed">
       <input type="search" id="search" placeholder="Sök i dagboken" aria-label="Sök">
@@ -2084,7 +2095,7 @@ function renderCal() {
   $('cal-next').disabled = calMonth >= today.slice(0, 7);
   $('cal-grid').classList.toggle('moods', moods);
   $('cal-grid').classList.toggle('weathers', weathers);
-  $('legend').hidden = !moods;
+  $('legend').classList.toggle('off', !moods);
 
   let html = ['mån', 'tis', 'ons', 'tor', 'fre', 'lör', 'sön']
     .map((d) => `<div class="wd">${d}</div>`).join('');

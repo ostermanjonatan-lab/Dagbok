@@ -82,16 +82,16 @@
         <button type="button" class="icon" id="cal-next" aria-label="Nästa månad">&#8250;</button>
       </div>
       <div class="grid" id="cal-grid"></div>
-      <div class="pills" id="cal-show" role="group" aria-label="Visa i kalendern">
-        <button type="button" class="pill" aria-pressed="false" data-value="mood">Humör</button>
-        <button type="button" class="pill" aria-pressed="false" data-value="weather">Väder</button>
-      </div>
-      <div class="legend" id="legend" hidden>
-        <span><i style="--m: var(--m1)"></i>1 tungt</span>
-        <span><i style="--m: var(--m2)"></i>2</span>
-        <span><i style="--m: var(--m3)"></i>3</span>
-        <span><i style="--m: var(--m4)"></i>4</span>
-        <span><i style="--m: var(--m5)"></i>5 bra</span>
+      <div class="cal-tools">
+        <div class="pills" id="cal-show" role="group" aria-label="Visa i kalendern">
+          <button type="button" class="pill" aria-pressed="false" data-value="mood">Humör</button>
+          <button type="button" class="pill" aria-pressed="false" data-value="weather">Väder</button>
+        </div>
+        <div class="legend off" id="legend" aria-label="Humörfärger från tungt till bra">
+          <span>Tungt</span>
+          <i style="--m: var(--m1)"></i><i style="--m: var(--m2)"></i><i style="--m: var(--m3)"></i><i style="--m: var(--m4)"></i><i style="--m: var(--m5)"></i>
+          <span>Bra</span>
+        </div>
       </div>
       <div class="feed">
         <input type="search" id="search" placeholder="Sök i dagboken" aria-label="Sök">
