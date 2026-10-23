@@ -105,15 +105,46 @@
         <input type="search" id="search" placeholder="Sök i dagboken" aria-label="Sök">
         <div id="list"></div>
 
-        <div class="backup">
-          <h2>Säkerhetskopia</h2>
-          <p class="muted">Allt sparas bara på den här enheten. Exportera då och då.</p>
+      </div>
+    </section>
+
+    <section id="view-set" hidden>
+      <h1 class="page-title">Inställningar</h1>
+
+      <div class="group">
+        <h2>Dagvyn</h2>
+        <label class="switch-row">
+          <span>Visa Den här dagen<small>Inlägg från samma datum tidigare år.</small></span>
+          <input type="checkbox" role="switch" id="set-memories">
+        </label>
+        <label class="switch-row">
+          <span>Hämta väder automatiskt<small>Använder telefonens plats när du sparar.</small></span>
+          <input type="checkbox" role="switch" id="set-weather">
+        </label>
+      </div>
+
+      <div class="group">
+        <h2>Säkerhetskopia</h2>
+        <p class="muted">Allt sparas bara på den här enheten. Exportera då och då.</p>
+        <div class="buttons">
+          <button type="button" id="export">Exportera fil</button>
+          <button type="button" id="import">Importera fil</button>
+          <input type="file" id="import-file" accept="application/json,.json" hidden>
+        </div>
+      </div>
+
+      <div class="group">
+        <h2>Dagboken</h2>
+        <p class="muted" id="stats"></p>
+        <button type="button" class="link danger" id="wipe">Ta bort hela dagboken</button>
+        <div class="wipe-confirm" id="wipe-confirm" hidden>
+          <p>Allt du skrivit och alla bilder tas bort. Det går inte att ångra.</p>
           <div class="buttons">
-            <button type="button" id="export">Exportera fil</button>
-            <button type="button" id="import">Importera fil</button>
-            <input type="file" id="import-file" accept="application/json,.json" hidden>
+            <button type="button" class="danger-btn" id="wipe-yes">Ta bort allt</button>
+            <button type="button" id="wipe-no">Avbryt</button>
           </div>
         </div>
+        <p class="muted" id="wipe-msg" aria-live="polite"></p>
       </div>
     </section>
 
@@ -151,7 +182,10 @@
       <span class="bubble"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13 7l4 4"/></svg></span>
       <span>Dag</span>
     </a>
-    <span class="nav-gap" aria-hidden="true"></span>
+    <a id="tab-set" href="#/installningar">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      <span>Inställningar</span>
+    </a>
   </nav>
 
   <script src="editor.js"></script>

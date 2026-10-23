@@ -255,8 +255,6 @@ textarea {
 .empty { color: var(--muted); margin-top: 24px; }
 mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: inherit; border-radius: 2px; }
 
-.backup { margin-top: 40px; }
-.backup h2 { font-size: 16px; margin: 0 0 2px; }
 .muted { color: var(--muted); font-size: 14px; margin: 0 0 12px; }
 .buttons { display: flex; gap: 8px; flex-wrap: wrap; }
 .buttons button {
@@ -449,7 +447,72 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   margin-top: 24px;
   border-top: 1px solid var(--line);
 }
-.nav-gap { flex: 1; max-width: 160px; }
+
+/* Inställningar */
+.page-title {
+  margin: 12px 0 4px;
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.group {
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+}
+.group:last-child { border-bottom: 0; }
+.group h2 { margin: 0 0 10px; font-size: 14px; font-weight: 500; color: var(--accent); }
+.group .muted:last-child { margin-bottom: 0; }
+.switch-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 6px 0;
+  cursor: pointer;
+}
+.switch-row small { display: block; font-size: 13px; color: var(--muted); }
+/* Reglage i stället för kryssruta */
+.switch-row input {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  position: relative;
+  width: 46px;
+  height: 28px;
+  margin: 0;
+  border-radius: 14px;
+  background: var(--line);
+  cursor: pointer;
+  transition: background .15s;
+}
+.switch-row input::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: 0 1px 3px rgb(0 0 0 / .25);
+  transition: transform .15s;
+}
+.switch-row input:checked { background: var(--accent); }
+.switch-row input:checked::before { transform: translateX(18px); }
+.switch-row input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .switch-row input, .switch-row input::before { transition: none; } }
+.wipe-confirm p { margin: 10px 0; }
+.danger-btn {
+  border: 0;
+  border-radius: 8px;
+  padding: 9px 14px;
+  background: var(--danger);
+  color: var(--paper);
+  cursor: pointer;
+}
+#wipe-msg:empty { display: none; }
+#wipe-msg { margin-top: 10px; }
 
 /* Den här dagen tidigare år */
 .memories {
@@ -824,16 +887,43 @@ body.keyboard .nav { visibility: hidden; }
       <input type="search" id="search" placeholder="Sök i dagboken" aria-label="Sök">
       <div id="list"></div>
 
-      <div class="backup">
-        <h2>Säkerhetskopia</h2>
-        <p class="muted" id="where">Sparas i den här webbläsaren.</p>
-        <div class="buttons">
-          <button type="button" id="export" hidden>Exportera fil</button>
-          <button type="button" id="import">Importera fil</button>
-          <input type="file" id="import-file" accept="application/json,.json" hidden>
-        </div>
-        <p class="muted" id="backup-msg" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <section id="view-set" hidden>
+    <h1 class="page-title">Inställningar</h1>
+
+    <div class="group">
+      <h2>Dagvyn</h2>
+      <label class="switch-row">
+        <span>Visa Den här dagen<small>Inlägg från samma datum tidigare år.</small></span>
+        <input type="checkbox" role="switch" id="set-memories">
+      </label>
+    </div>
+
+    <div class="group">
+      <h2>Säkerhetskopia</h2>
+      <p class="muted" id="where">Sparas i den här webbläsaren.</p>
+      <div class="buttons">
+        <button type="button" id="export" hidden>Exportera fil</button>
+        <button type="button" id="import">Importera fil</button>
+        <input type="file" id="import-file" accept="application/json,.json" hidden>
       </div>
+      <p class="muted" id="backup-msg" aria-live="polite"></p>
+    </div>
+
+    <div class="group">
+      <h2>Dagboken</h2>
+      <p class="muted" id="stats"></p>
+      <button type="button" class="link danger" id="wipe">Ta bort hela dagboken</button>
+      <div class="wipe-confirm" id="wipe-confirm" hidden>
+        <p>Allt du skrivit och alla bilder tas bort. Det går inte att ångra.</p>
+        <div class="buttons">
+          <button type="button" class="danger-btn" id="wipe-yes">Ta bort allt</button>
+          <button type="button" id="wipe-no">Avbryt</button>
+        </div>
+      </div>
+      <p class="muted" id="wipe-msg" aria-live="polite"></p>
     </div>
   </section>
 
@@ -893,7 +983,10 @@ body.keyboard .nav { visibility: hidden; }
     <span class="bubble"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13 7l4 4"/></svg></span>
     <span>Dag</span>
   </button>
-  <span class="nav-gap" aria-hidden="true"></span>
+  <button type="button" id="tab-set">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    <span>Inställningar</span>
+  </button>
 </nav>
 
 <script>
@@ -1480,6 +1573,70 @@ async function connect() {
   });
 }
 
+/* Inställningar */
+
+const SETTINGS_KEY = 'dagbok.installningar';
+const settings = { memories: true, weather: true };
+try { Object.assign(settings, JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}')); } catch {}
+
+function saveSettings() {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch {}
+}
+
+function renderSettings() {
+  $('set-memories').checked = settings.memories;
+  if ($('set-weather')) $('set-weather').checked = settings.weather;
+  const keys = Object.keys(entries).sort();
+  const pics = keys.reduce((n, k) => n + entries[k].photos.length, 0);
+  $('stats').textContent = keys.length
+    ? `${keys.length} ${keys.length === 1 ? 'dag' : 'dagar'} och ${pics} ${pics === 1 ? 'bild' : 'bilder'}, sedan ${fmtDate(keys[0])}.`
+    : 'Inget skrivet ännu.';
+  $('wipe').hidden = !keys.length;
+  $('wipe-confirm').hidden = true;
+}
+
+$('set-memories').addEventListener('change', (ev) => {
+  settings.memories = ev.target.checked;
+  saveSettings();
+});
+if ($('set-weather')) {
+  $('set-weather').addEventListener('change', (ev) => {
+    settings.weather = ev.target.checked;
+    saveSettings();
+  });
+}
+$('wipe').addEventListener('click', () => {
+  $('wipe').hidden = true;
+  $('wipe-confirm').hidden = false;
+});
+$('wipe-no').addEventListener('click', () => {
+  $('wipe-confirm').hidden = true;
+  $('wipe').hidden = false;
+});
+
+$('wipe-yes').addEventListener('click', async () => {
+  clearTimeout(saveTimer);
+  saveTimer = null;
+  const keys = Object.keys(entries);
+  $('wipe-confirm').hidden = true;
+  // En dag i taget, så att databasen inte får för många skrivningar samtidigt
+  let done = 0;
+  for (const k of keys) {
+    const e = entries[k];
+    delete entries[k];
+    e.photos.forEach(removeAsset);
+    if (col) {
+      try { await col.doc(k).delete(); } catch {}
+    }
+    done++;
+    if (done % 20 === 0) $('wipe-msg').textContent = `Tar bort ${done} av ${keys.length} dagar…`;
+  }
+  writeCache();
+  photos = [];
+  renderSettings();
+  $('wipe-msg').textContent = `Tog bort ${keys.length} dagar.`;
+});
+
 /* Dagvy */
 
 function parseTemp(str) {
@@ -1826,7 +1983,9 @@ window.addEventListener('pagehide', flushSave);
 function renderMemories(key) {
   const md = key.slice(4);
   const year = Number(key.slice(0, 4));
-  const keys = Object.keys(entries).filter((k) => k.slice(4) === md && k < key).sort().reverse();
+  const keys = settings.memories
+    ? Object.keys(entries).filter((k) => k.slice(4) === md && k < key).sort().reverse()
+    : [];
   $('memories').hidden = !keys.length;
   $('memory-list').innerHTML = keys.map((k) => {
     const e = entries[k];
@@ -2267,9 +2426,13 @@ $('import-file').addEventListener('change', async (ev) => {
 function setView(v) {
   flushSave();
   view = v;
-  for (const name of ['day', 'cal']) {
+  for (const name of ['day', 'cal', 'set']) {
     $(`view-${name}`).hidden = name !== v;
     $(`tab-${name}`).classList.toggle('on', name === v);
+  }
+  if (v === 'set') {
+    renderSettings();
+    $('wipe-msg').textContent = '';
   }
   if (v === 'cal') {
     // Kalendern öppnar på dagen som senast visades
@@ -2282,8 +2445,10 @@ function setView(v) {
 
 $('tab-day').addEventListener('click', () => { setView('day'); showDay(todayKey()); });
 $('tab-cal').addEventListener('click', () => setView('cal'));
+$('tab-set').addEventListener('click', () => setView('set'));
 
 if (['#kalender', '#flode', '#alla'].includes(location.hash)) setView('cal');
+if (location.hash === '#installningar') setView('set');
 showDay(current);
 connect();
 </script>

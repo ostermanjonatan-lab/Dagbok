@@ -23,7 +23,7 @@ Telefonappen sparar bilderna i webbläsarens databas (IndexedDB) på telefonen. 
 
 ## Data
 
-Inläggen ligger i `localStorage` på den enhet du skriver på och skickas ingenstans. Använd Exportera fil under Kalender för en säkerhetskopia, och Importera fil för att flytta till en annan enhet. Vid import behålls den senast ändrade versionen av varje dag.
+Inläggen ligger i `localStorage` på den enhet du skriver på och skickas ingenstans. Använd Exportera fil under Inställningar för en säkerhetskopia, och Importera fil för att flytta till en annan enhet. Vid import behålls den senast ändrade versionen av varje dag.
 
 ## Köra lokalt
 

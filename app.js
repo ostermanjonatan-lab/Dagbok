@@ -172,7 +172,7 @@ const weatherBusy = new Set();
 
 async function updateWeather(key) {
   const e = entries[key];
-  if (!e || weatherBusy.has(key)) return;
+  if (!e || weatherBusy.has(key) || !settings.weather) return;
   // Före kl 12 uppdateras vädret vid varje sparning, högst var 15:e minut.
   // Annars hämtas 12-vädret en gång.
   // Väder som valts för hand skrivs inte över
@@ -202,6 +202,60 @@ async function updateWeather(key) {
 function showWeather(e) {
   $('weather').textContent = e && e.weather ? fmtWeather(e.weather) : '';
 }
+
+/* Inställningar */
+
+const SETTINGS_KEY = 'dagbok.installningar';
+const settings = { memories: true, weather: true };
+try { Object.assign(settings, JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}')); } catch {}
+
+function saveSettings() {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch {}
+}
+
+function renderSettings() {
+  $('set-memories').checked = settings.memories;
+  if ($('set-weather')) $('set-weather').checked = settings.weather;
+  const keys = Object.keys(entries).sort();
+  const pics = keys.reduce((n, k) => n + entries[k].photos.length, 0);
+  $('stats').textContent = keys.length
+    ? `${keys.length} ${keys.length === 1 ? 'dag' : 'dagar'} och ${pics} ${pics === 1 ? 'bild' : 'bilder'}, sedan ${fmtDate(keys[0])}.`
+    : 'Inget skrivet ännu.';
+  $('wipe').hidden = !keys.length;
+  $('wipe-confirm').hidden = true;
+}
+
+$('set-memories').addEventListener('change', (ev) => {
+  settings.memories = ev.target.checked;
+  saveSettings();
+});
+if ($('set-weather')) {
+  $('set-weather').addEventListener('change', (ev) => {
+    settings.weather = ev.target.checked;
+    saveSettings();
+  });
+}
+$('wipe').addEventListener('click', () => {
+  $('wipe').hidden = true;
+  $('wipe-confirm').hidden = false;
+});
+$('wipe-no').addEventListener('click', () => {
+  $('wipe-confirm').hidden = true;
+  $('wipe').hidden = false;
+});
+
+$('wipe-yes').addEventListener('click', async () => {
+  clearTimeout(saveTimer);
+  saveTimer = null;
+  const keys = Object.keys(entries);
+  for (const k of keys) entries[k].photos.forEach(removeAsset);
+  entries = {};
+  persist();
+  photos = [];
+  try { await photoTx('readwrite', (st) => st.clear()); } catch {}
+  renderSettings();
+  $('wipe-msg').textContent = `Tog bort ${keys.length} dagar.`;
+});
 
 /* Dagvy */
 
@@ -513,7 +567,9 @@ $('photo-delete-yes').addEventListener('click', () => {
 function renderMemories(key) {
   const md = key.slice(4);
   const year = Number(key.slice(0, 4));
-  const keys = Object.keys(entries).filter((k) => k.slice(4) === md && k < key).sort().reverse();
+  const keys = settings.memories
+    ? Object.keys(entries).filter((k) => k.slice(4) === md && k < key).sort().reverse()
+    : [];
   $('memories').hidden = !keys.length;
   $('memory-list').innerHTML = keys.map((k) => {
     const e = entries[k];
@@ -959,14 +1015,18 @@ function go(hash) {
 function route() {
   const hash = location.hash || '#/dag';
   // Flödet ligger numera under kalendern, så gamla länkar dit öppnar kalendern
-  const view = /^#\/(kalender|flode|alla)/.test(hash) ? 'cal' : 'day';
+  const view = /^#\/(kalender|flode|alla)/.test(hash) ? 'cal'
+    : hash.startsWith('#/installningar') ? 'set' : 'day';
   if (view !== 'day') flushSave();
-  for (const v of ['day', 'cal']) {
+  for (const v of ['day', 'cal', 'set']) {
     $(`view-${v}`).hidden = v !== view;
     $(`tab-${v}`).classList.toggle('on', v === view);
   }
 
-  if (view === 'cal') {
+  if (view === 'set') {
+    renderSettings();
+    $('wipe-msg').textContent = '';
+  } else if (view === 'cal') {
     // Kalendern öppnar på dagen som senast visades
     calSel = current;
     calMonth = current.slice(0, 7);
