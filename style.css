@@ -808,7 +808,7 @@ mark {
   .sheet-panel, .sheet-backdrop { animation: none; }
   .day-sheet.closing .sheet-panel, .day-sheet.closing .sheet-backdrop { transition: none; }
 }
-/* Greppet överst: dra nedåt för att stänga */
+/* Greppet överst. Svep nedåt för att stänga. */
 .sheet-grab {
   position: sticky;
   top: 0;
@@ -820,22 +820,12 @@ mark {
   touch-action: none;
   cursor: grab;
 }
-.cap-icon {
-  position: absolute;
-  top: 9px;
-  left: calc(50% - 13px);
-  width: 26px;
-  height: 26px;
-  color: var(--accent);
-}
-.cap-icon svg {
-  width: 100%;
-  height: 100%;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.9;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+.grab-bar {
+  width: 42px;
+  height: 5px;
+  margin-top: 9px;
+  border-radius: 3px;
+  background: var(--line);
 }
 .sheet-grab .close-x { position: absolute; top: 2px; right: 8px; }
 .sheet-body { padding: 0 16px 48px; }

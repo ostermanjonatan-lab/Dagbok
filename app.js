@@ -1757,29 +1757,22 @@ document.addEventListener('keydown', (ev) => {
   closeSheet();
 });
 
-// Dra ner greppet för att stänga
+// Svep nedåt för att stänga: från greppet, eller var som helst när arket är rullat högst upp
 (() => {
   const grab = $('sheet-grab');
+  let sx = 0;
   let sy = 0;
   let dy = 0;
-  let dragging = false;
-  grab.addEventListener('pointerdown', (ev) => {
-    if (ev.target.closest('button')) return;
-    dragging = true;
-    sy = ev.clientY;
-    dy = 0;
-    grab.setPointerCapture(ev.pointerId);
-    dayPanel.style.transition = 'none';
-  });
-  grab.addEventListener('pointermove', (ev) => {
-    if (!dragging) return;
-    dy = Math.max(0, ev.clientY - sy);
+  let t0 = 0;
+  let mode = null; // null, 'start', 'drag' eller 'none'
+
+  function move(y) {
+    dy = Math.max(0, y);
     dayPanel.style.transform = `translateY(${dy}px)`;
-  });
-  const end = () => {
-    if (!dragging) return;
-    dragging = false;
-    if (dy > 90) {
+  }
+  function release() {
+    const fast = dy > 40 && dy / Math.max(1, Date.now() - t0) > 0.5;
+    if (dy > 110 || fast) {
       dayPanel.style.transition = 'transform .2s ease-in';
       dayPanel.style.transform = 'translateY(100%)';
       setTimeout(() => closeSheet(), 180);
@@ -1787,6 +1780,63 @@ document.addEventListener('keydown', (ev) => {
       dayPanel.style.transition = 'transform .18s ease-out';
       dayPanel.style.transform = '';
     }
+  }
+
+  dayPanel.addEventListener('touchstart', (ev) => {
+    if (ev.touches.length !== 1 || ev.target.closest('button, input, dialog')) {
+      mode = null;
+      return;
+    }
+    sx = ev.touches[0].clientX;
+    sy = ev.touches[0].clientY;
+    dy = 0;
+    t0 = Date.now();
+    mode = 'start';
+  }, { passive: true });
+
+  dayPanel.addEventListener('touchmove', (ev) => {
+    if (!mode || mode === 'none') return;
+    const mx = ev.touches[0].clientX - sx;
+    const my = ev.touches[0].clientY - sy;
+    if (mode === 'start') {
+      if (Math.abs(mx) < 10 && Math.abs(my) < 10) return;
+      const atTop = dayPanel.scrollTop <= 0 || grab.contains(ev.target);
+      const down = my > 0 && my > Math.abs(mx) * 1.2;
+      mode = atTop && down && window.getSelection().isCollapsed ? 'drag' : 'none';
+      if (mode !== 'drag') return;
+      sy = ev.touches[0].clientY;
+      t0 = Date.now();
+      dayPanel.style.transition = 'none';
+    }
+    ev.preventDefault();
+    move(ev.touches[0].clientY - sy);
+  }, { passive: false });
+
+  const touchEnd = () => {
+    if (mode === 'drag') release();
+    mode = null;
+  };
+  dayPanel.addEventListener('touchend', touchEnd);
+  dayPanel.addEventListener('touchcancel', touchEnd);
+
+  // Med mus går det att dra i greppet
+  let dragging = false;
+  grab.addEventListener('pointerdown', (ev) => {
+    if (ev.pointerType === 'touch' || ev.target.closest('button')) return;
+    dragging = true;
+    sy = ev.clientY;
+    dy = 0;
+    t0 = Date.now();
+    grab.setPointerCapture(ev.pointerId);
+    dayPanel.style.transition = 'none';
+  });
+  grab.addEventListener('pointermove', (ev) => {
+    if (dragging) move(ev.clientY - sy);
+  });
+  const end = () => {
+    if (!dragging) return;
+    dragging = false;
+    release();
   };
   grab.addEventListener('pointerup', end);
   grab.addEventListener('pointercancel', end);

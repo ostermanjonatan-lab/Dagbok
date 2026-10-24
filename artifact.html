@@ -754,7 +754,7 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   .sheet-panel, .sheet-backdrop { animation: none; }
   .day-sheet.closing .sheet-panel, .day-sheet.closing .sheet-backdrop { transition: none; }
 }
-/* Greppet överst: dra nedåt för att stänga */
+/* Greppet överst. Svep nedåt för att stänga. */
 .sheet-grab {
   position: sticky;
   top: 0;
@@ -766,22 +766,12 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   touch-action: none;
   cursor: grab;
 }
-.cap-icon {
-  position: absolute;
-  top: 9px;
-  left: calc(50% - 13px);
-  width: 26px;
-  height: 26px;
-  color: var(--accent);
-}
-.cap-icon svg {
-  width: 100%;
-  height: 100%;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.9;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+.grab-bar {
+  width: 42px;
+  height: 5px;
+  margin-top: 9px;
+  border-radius: 3px;
+  background: var(--line);
 }
 .sheet-grab .close-x { position: absolute; top: 2px; right: 8px; }
 .sheet-body { padding: 0 16px 48px; }
@@ -1219,7 +1209,7 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
   <div class="sheet-backdrop" id="sheet-backdrop"></div>
   <div class="sheet-panel" id="sheet-panel" role="dialog" aria-modal="true" aria-label="Dagen">
     <div class="sheet-grab" id="sheet-grab">
-      <span class="cap-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13 7l4 4"/></svg></span>
+      <span class="grab-bar" aria-hidden="true"></span>
       <button type="button" class="icon close-x" id="sheet-close" aria-label="Stäng"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     </div>
     <div class="wrap sheet-body">
@@ -3434,29 +3424,22 @@ document.addEventListener('keydown', (ev) => {
   closeSheet();
 });
 
-// Dra ner greppet för att stänga
+// Svep nedåt för att stänga: från greppet, eller var som helst när arket är rullat högst upp
 (() => {
   const grab = $('sheet-grab');
+  let sx = 0;
   let sy = 0;
   let dy = 0;
-  let dragging = false;
-  grab.addEventListener('pointerdown', (ev) => {
-    if (ev.target.closest('button')) return;
-    dragging = true;
-    sy = ev.clientY;
-    dy = 0;
-    grab.setPointerCapture(ev.pointerId);
-    dayPanel.style.transition = 'none';
-  });
-  grab.addEventListener('pointermove', (ev) => {
-    if (!dragging) return;
-    dy = Math.max(0, ev.clientY - sy);
+  let t0 = 0;
+  let mode = null; // null, 'start', 'drag' eller 'none'
+
+  function move(y) {
+    dy = Math.max(0, y);
     dayPanel.style.transform = `translateY(${dy}px)`;
-  });
-  const end = () => {
-    if (!dragging) return;
-    dragging = false;
-    if (dy > 90) {
+  }
+  function release() {
+    const fast = dy > 40 && dy / Math.max(1, Date.now() - t0) > 0.5;
+    if (dy > 110 || fast) {
       dayPanel.style.transition = 'transform .2s ease-in';
       dayPanel.style.transform = 'translateY(100%)';
       setTimeout(() => closeSheet(), 180);
@@ -3464,6 +3447,63 @@ document.addEventListener('keydown', (ev) => {
       dayPanel.style.transition = 'transform .18s ease-out';
       dayPanel.style.transform = '';
     }
+  }
+
+  dayPanel.addEventListener('touchstart', (ev) => {
+    if (ev.touches.length !== 1 || ev.target.closest('button, input, dialog')) {
+      mode = null;
+      return;
+    }
+    sx = ev.touches[0].clientX;
+    sy = ev.touches[0].clientY;
+    dy = 0;
+    t0 = Date.now();
+    mode = 'start';
+  }, { passive: true });
+
+  dayPanel.addEventListener('touchmove', (ev) => {
+    if (!mode || mode === 'none') return;
+    const mx = ev.touches[0].clientX - sx;
+    const my = ev.touches[0].clientY - sy;
+    if (mode === 'start') {
+      if (Math.abs(mx) < 10 && Math.abs(my) < 10) return;
+      const atTop = dayPanel.scrollTop <= 0 || grab.contains(ev.target);
+      const down = my > 0 && my > Math.abs(mx) * 1.2;
+      mode = atTop && down && window.getSelection().isCollapsed ? 'drag' : 'none';
+      if (mode !== 'drag') return;
+      sy = ev.touches[0].clientY;
+      t0 = Date.now();
+      dayPanel.style.transition = 'none';
+    }
+    ev.preventDefault();
+    move(ev.touches[0].clientY - sy);
+  }, { passive: false });
+
+  const touchEnd = () => {
+    if (mode === 'drag') release();
+    mode = null;
+  };
+  dayPanel.addEventListener('touchend', touchEnd);
+  dayPanel.addEventListener('touchcancel', touchEnd);
+
+  // Med mus går det att dra i greppet
+  let dragging = false;
+  grab.addEventListener('pointerdown', (ev) => {
+    if (ev.pointerType === 'touch' || ev.target.closest('button')) return;
+    dragging = true;
+    sy = ev.clientY;
+    dy = 0;
+    t0 = Date.now();
+    grab.setPointerCapture(ev.pointerId);
+    dayPanel.style.transition = 'none';
+  });
+  grab.addEventListener('pointermove', (ev) => {
+    if (dragging) move(ev.clientY - sy);
+  });
+  const end = () => {
+    if (!dragging) return;
+    dragging = false;
+    release();
   };
   grab.addEventListener('pointerup', end);
   grab.addEventListener('pointercancel', end);
