@@ -989,20 +989,42 @@ try {
   }
 } catch {}
 
-/* Tabletterna för vad kalendern visar. Ett tryck slår på, ett till slår av. */
+/* Lagerknappen: en ruta med reglage för humör och väder i kalendern */
 
-const pills = [...$('cal-show').querySelectorAll('.pill')];
+const layersBtn = $('layers-btn');
+const layersPop = $('layers-pop');
 
 function syncShow() {
-  pills.forEach((b) => b.setAttribute('aria-pressed', String(calShow[b.dataset.value])));
+  $('show-mood').checked = calShow.mood;
+  $('show-weather').checked = calShow.weather;
+  layersBtn.classList.toggle('on', calShow.mood || calShow.weather);
 }
 
-pills.forEach((b) => b.addEventListener('click', () => {
-  calShow[b.dataset.value] = !calShow[b.dataset.value];
+function changeShow(key, on) {
+  calShow[key] = on;
   try { localStorage.setItem(SHOW_KEY, JSON.stringify(calShow)); } catch {}
   syncShow();
   renderCal();
-}));
+}
+
+function toggleLayers(open) {
+  layersPop.hidden = !open;
+  layersBtn.setAttribute('aria-expanded', String(open));
+}
+
+$('show-mood').addEventListener('change', (ev) => changeShow('mood', ev.target.checked));
+$('show-weather').addEventListener('change', (ev) => changeShow('weather', ev.target.checked));
+layersBtn.addEventListener('click', () => toggleLayers(layersPop.hidden));
+// Ett tryck utanför eller Esc stänger rutan
+document.addEventListener('pointerdown', (ev) => {
+  if (!layersPop.hidden && !$('layers').contains(ev.target)) toggleLayers(false);
+});
+document.addEventListener('keydown', (ev) => {
+  if (ev.key === 'Escape' && !layersPop.hidden) {
+    toggleLayers(false);
+    layersBtn.focus();
+  }
+});
 syncShow();
 
 function renderCal() {
@@ -1056,6 +1078,14 @@ function writtenNeighbors(key) {
   return { prev, next };
 }
 
+// Bilderna i full bredd under texten, ett tryck öppnar bilden i helskärm
+function bigPhotos(list) {
+  if (!list || !list.length) return '';
+  return `<div class="reader-photos">${list.map((id) =>
+    `<button type="button" data-photo="${escapeHtml(id)}" aria-label="Visa bilden i helskärm">
+      <img src="${escapeHtml(photoUrl(id))}" data-id="${escapeHtml(id)}" alt="" loading="lazy"></button>`).join('')}</div>`;
+}
+
 function readerPane(key) {
   const e = entries[key];
   if (!e) {
@@ -1069,7 +1099,7 @@ function readerPane(key) {
   if (e.weather) meta.push(escapeHtml(fmtWeather(e.weather)));
   return `<div class="reader-pane" data-key="${key}">
     ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
-    ${thumbs(e.photos, 'thumbs')}
+    ${bigPhotos(e.photos)}
     ${meta.length ? `<div class="meta">${meta.join(', ')}</div>` : ''}
     <div class="reader-foot"><button type="button" class="link reader-edit" data-key="${key}">Redigera dagen</button></div>
   </div>`;

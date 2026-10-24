@@ -81,14 +81,24 @@
         <button type="button" class="icon" id="cal-prev" aria-label="Föregående månad">&#8249;</button>
         <h2 id="cal-title"></h2>
         <button type="button" class="icon" id="cal-next" aria-label="Nästa månad">&#8250;</button>
-      </div>
-      <div class="grid" id="cal-grid"></div>
-      <div class="cal-tools">
-        <div class="pills" id="cal-show" role="group" aria-label="Visa i kalendern">
-          <button type="button" class="pill" aria-pressed="false" data-value="mood">Humör</button>
-          <button type="button" class="pill" aria-pressed="false" data-value="weather">Väder</button>
+        <div class="layers" id="layers">
+          <button type="button" class="hd-btn" id="layers-btn" aria-haspopup="true" aria-expanded="false"
+            aria-controls="layers-pop" aria-label="Visa i kalendern">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 3 9l9 5 9-5z"/><path d="m3 14 9 5 9-5"/></svg>
+          </button>
+          <div class="layers-pop" id="layers-pop" hidden>
+            <label class="switch-row">
+              <span>Visa humör</span>
+              <input type="checkbox" role="switch" id="show-mood">
+            </label>
+            <label class="switch-row">
+              <span>Visa väder</span>
+              <input type="checkbox" role="switch" id="show-weather">
+            </label>
+          </div>
         </div>
       </div>
+      <div class="grid" id="cal-grid"></div>
       <div class="seg" role="tablist" aria-label="Under kalendern">
         <button type="button" role="tab" id="seg-feed" aria-controls="feed-panel" aria-selected="true">Flöde</button>
         <button type="button" role="tab" id="seg-stats" aria-controls="month-stats" aria-selected="false">Statistik</button>

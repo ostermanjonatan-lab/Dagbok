@@ -368,17 +368,70 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
 .day.today { font-weight: 700; color: var(--accent); }
 .day.sel { box-shadow: inset 0 0 0 2px var(--text); }
 .moods .day.has[style].sel { box-shadow: inset 0 0 0 2px var(--text); }
-/* Tabletterna under kalendern */
-.cal-tools {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 12px;
-  margin-top: 14px;
-}
-.cal-tools .pills { margin-top: 0; }
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--m); margin-right: 8px; }
+
+/* Lagerknappen i kalenderns huvud och rutan med vad kalendern visar */
+.layers { position: relative; flex: none; margin-left: 4px; }
+.hd-btn {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+}
+.hd-btn svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+.hd-btn.on {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: var(--accent);
+}
+.layers-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+  width: 220px;
+  padding: 4px 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 10px 28px rgb(0 0 0 / .16);
+  transform-origin: top right;
+  animation: pop-in .14s ease-out;
+}
+@keyframes pop-in { from { opacity: 0; transform: scale(.95); } }
+@media (prefers-reduced-motion: reduce) { .layers-pop { animation: none; } }
+.layers-pop .switch-row { padding: 10px 0; }
+.layers-pop .switch-row + .switch-row { border-top: 1px solid var(--line); }
+
+/* Stora bilder under texten i dagens fönster */
+.reader-photos { display: grid; gap: 10px; margin-top: 16px; }
+.reader-photos button {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+.reader-photos img {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 80px;
+  border-radius: 10px;
+  background: var(--line);
+}
 
 /* Växlare mellan flöde och statistik under kalendern */
 .seg {
@@ -962,14 +1015,24 @@ body.keyboard .nav { visibility: hidden; }
       <button type="button" class="icon" id="cal-prev" aria-label="Föregående månad">&#8249;</button>
       <h2 id="cal-title"></h2>
       <button type="button" class="icon" id="cal-next" aria-label="Nästa månad">&#8250;</button>
-    </div>
-    <div class="grid" id="cal-grid"></div>
-    <div class="cal-tools">
-      <div class="pills" id="cal-show" role="group" aria-label="Visa i kalendern">
-        <button type="button" class="pill" aria-pressed="false" data-value="mood">Humör</button>
-        <button type="button" class="pill" aria-pressed="false" data-value="weather">Väder</button>
+      <div class="layers" id="layers">
+        <button type="button" class="hd-btn" id="layers-btn" aria-haspopup="true" aria-expanded="false"
+          aria-controls="layers-pop" aria-label="Visa i kalendern">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 3 9l9 5 9-5z"/><path d="m3 14 9 5 9-5"/></svg>
+        </button>
+        <div class="layers-pop" id="layers-pop" hidden>
+          <label class="switch-row">
+            <span>Visa humör</span>
+            <input type="checkbox" role="switch" id="show-mood">
+          </label>
+          <label class="switch-row">
+            <span>Visa väder</span>
+            <input type="checkbox" role="switch" id="show-weather">
+          </label>
+        </div>
       </div>
     </div>
+    <div class="grid" id="cal-grid"></div>
     <div class="seg" role="tablist" aria-label="Under kalendern">
       <button type="button" role="tab" id="seg-feed" aria-controls="feed-panel" aria-selected="true">Flöde</button>
       <button type="button" role="tab" id="seg-stats" aria-controls="month-stats" aria-selected="false">Statistik</button>
@@ -2545,20 +2608,42 @@ try {
   }
 } catch {}
 
-/* Tabletterna för vad kalendern visar. Ett tryck slår på, ett till slår av. */
+/* Lagerknappen: en ruta med reglage för humör och väder i kalendern */
 
-const pills = [...$('cal-show').querySelectorAll('.pill')];
+const layersBtn = $('layers-btn');
+const layersPop = $('layers-pop');
 
 function syncShow() {
-  pills.forEach((b) => b.setAttribute('aria-pressed', String(calShow[b.dataset.value])));
+  $('show-mood').checked = calShow.mood;
+  $('show-weather').checked = calShow.weather;
+  layersBtn.classList.toggle('on', calShow.mood || calShow.weather);
 }
 
-pills.forEach((b) => b.addEventListener('click', () => {
-  calShow[b.dataset.value] = !calShow[b.dataset.value];
+function changeShow(key, on) {
+  calShow[key] = on;
   try { localStorage.setItem(SHOW_KEY, JSON.stringify(calShow)); } catch {}
   syncShow();
   renderCal();
-}));
+}
+
+function toggleLayers(open) {
+  layersPop.hidden = !open;
+  layersBtn.setAttribute('aria-expanded', String(open));
+}
+
+$('show-mood').addEventListener('change', (ev) => changeShow('mood', ev.target.checked));
+$('show-weather').addEventListener('change', (ev) => changeShow('weather', ev.target.checked));
+layersBtn.addEventListener('click', () => toggleLayers(layersPop.hidden));
+// Ett tryck utanför eller Esc stänger rutan
+document.addEventListener('pointerdown', (ev) => {
+  if (!layersPop.hidden && !$('layers').contains(ev.target)) toggleLayers(false);
+});
+document.addEventListener('keydown', (ev) => {
+  if (ev.key === 'Escape' && !layersPop.hidden) {
+    toggleLayers(false);
+    layersBtn.focus();
+  }
+});
 syncShow();
 
 function renderCal() {
@@ -2612,6 +2697,14 @@ function writtenNeighbors(key) {
   return { prev, next };
 }
 
+// Bilderna i full bredd under texten, ett tryck öppnar bilden i helskärm
+function bigPhotos(list) {
+  if (!list || !list.length) return '';
+  return `<div class="reader-photos">${list.map((id) =>
+    `<button type="button" data-photo="${escapeHtml(id)}" aria-label="Visa bilden i helskärm">
+      <img src="${escapeHtml(photoUrl(id))}" data-id="${escapeHtml(id)}" alt="" loading="lazy"></button>`).join('')}</div>`;
+}
+
 function readerPane(key) {
   const e = entries[key];
   if (!e) {
@@ -2625,7 +2718,7 @@ function readerPane(key) {
   if (e.weather) meta.push(escapeHtml(fmtWeather(e.weather)));
   return `<div class="reader-pane" data-key="${key}">
     ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
-    ${thumbs(e.photos, 'thumbs')}
+    ${bigPhotos(e.photos)}
     ${meta.length ? `<div class="meta">${meta.join(', ')}</div>` : ''}
     <div class="reader-foot"><button type="button" class="link reader-edit" data-key="${key}">Redigera dagen</button></div>
   </div>`;

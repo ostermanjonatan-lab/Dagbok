@@ -424,16 +424,69 @@ mark {
 .day.today { font-weight: 700; color: var(--accent); }
 .day.sel { box-shadow: inset 0 0 0 2px var(--text); }
 .moods .day.has[style].sel { box-shadow: inset 0 0 0 2px var(--text); }
-/* Tabletterna under kalendern */
-.cal-tools {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 12px;
-  margin-top: 14px;
+/* Lagerknappen i kalenderns huvud och rutan med vad kalendern visar */
+.layers { position: relative; flex: none; margin-left: 4px; }
+.hd-btn {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
 }
-.cal-tools .pills { margin-top: 0; }
+.hd-btn svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+.hd-btn.on {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: var(--accent);
+}
+.layers-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+  width: 220px;
+  padding: 4px 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 10px 28px rgb(0 0 0 / .16);
+  transform-origin: top right;
+  animation: pop-in .14s ease-out;
+}
+@keyframes pop-in { from { opacity: 0; transform: scale(.95); } }
+@media (prefers-reduced-motion: reduce) { .layers-pop { animation: none; } }
+.layers-pop .switch-row { padding: 10px 0; }
+.layers-pop .switch-row + .switch-row { border-top: 1px solid var(--line); }
+
+/* Stora bilder under texten i dagens fönster */
+.reader-photos { display: grid; gap: 10px; margin-top: 16px; }
+.reader-photos button {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+.reader-photos img {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 80px;
+  border-radius: 10px;
+  background: var(--line);
+}
+
 /* Växlare mellan flöde och statistik under kalendern */
 .seg {
   display: flex;
