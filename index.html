@@ -46,7 +46,24 @@
         <button type="button" role="tab" id="seg-stats" aria-controls="month-stats" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V12M12 20V5M19 20v-5"/></svg>Statistik</button>
       </div>
       <div class="feed" id="feed-panel" role="tabpanel" aria-labelledby="seg-feed">
-        <input type="search" id="search" placeholder="Sök i dagboken" aria-label="Sök">
+        <div class="search-row">
+          <input type="search" id="search" placeholder="Sök i dagboken" aria-label="Sök">
+          <div class="sorter" id="sorter">
+            <button type="button" class="hd-btn" id="sort-btn" aria-haspopup="true" aria-expanded="false"
+              aria-controls="sort-pop" aria-label="Sortera">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16M3.5 16.5 7 20l3.5-3.5M17 20V4M13.5 7.5 17 4l3.5 3.5"/></svg>
+            </button>
+            <div class="layers-pop sort-pop" id="sort-pop" role="menu" aria-label="Sortera" hidden>
+              <button type="button" role="menuitemradio" data-sort="newest" aria-checked="true">Senaste först<svg class="check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17l9-10"/></svg></button>
+              <button type="button" role="menuitemradio" data-sort="oldest" aria-checked="false">Äldsta först<svg class="check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17l9-10"/></svg></button>
+              <button type="button" role="menuitemradio" data-sort="best" aria-checked="false">Bästa dagarna<svg class="check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17l9-10"/></svg></button>
+              <button type="button" role="menuitemradio" data-sort="worst" aria-checked="false">Sämsta dagarna<svg class="check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17l9-10"/></svg></button>
+              <button type="button" role="menuitemradio" data-sort="words" aria-checked="false">Mest skrivet<svg class="check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17l9-10"/></svg></button>
+              <button type="button" role="menuitemradio" data-sort="photos" aria-checked="false">Flest bilder<svg class="check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17l9-10"/></svg></button>
+            </div>
+          </div>
+        </div>
+        <p class="sort-note" id="sort-note" hidden></p>
         <div id="list"></div>
 
       </div>

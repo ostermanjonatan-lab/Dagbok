@@ -918,7 +918,7 @@ function postHtml(k, e, today, searching) {
   const icon = g != null ? `<svg viewBox="0 0 24 24" aria-hidden="true">${WEATHER_ICONS[g]}</svg>` : '';
   const wx = e.weather ? icon + escapeHtml(fmtWeather(e.weather)) : '';
   const sub = [rel, wx].filter(Boolean).join('<span class="sep" aria-hidden="true">·</span>');
-  const words = e.text ? Paper.mdToText(e.text).split(/\s+/).filter(Boolean).length : 0;
+  const words = wordCount(e);
   const mood = e.mood
     ? `<span class="mood-chip" style="--m: var(--m${e.mood})">Humör ${e.mood}</span>` : '';
   return `<article class="post${k === today ? ' today' : ''}">
@@ -954,42 +954,117 @@ $('list').addEventListener('click', (ev) => {
   more.hidden = true;
 });
 
+/* Sortering av flödet. Allt utom Senaste först gäller hela dagboken. */
+
+const SORTS = {
+  newest: { note: '', order: (a, b) => (a < b ? 1 : -1) },
+  oldest: { note: 'Äldsta först i hela dagboken', order: (a, b) => (a < b ? -1 : 1) },
+  best: { note: 'Bästa dagarna i hela dagboken', keep: (e) => e.mood != null, order: (a, b) => entries[b].mood - entries[a].mood || (a < b ? 1 : -1) },
+  worst: { note: 'Sämsta dagarna i hela dagboken', keep: (e) => e.mood != null, order: (a, b) => entries[a].mood - entries[b].mood || (a < b ? 1 : -1) },
+  words: { note: 'Mest skrivet i hela dagboken', keep: (e) => wordCount(e) > 0, order: (a, b) => wordCount(entries[b]) - wordCount(entries[a]) || (a < b ? 1 : -1) },
+  photos: { note: 'Flest bilder i hela dagboken', keep: (e) => (e.photos || []).length > 0, order: (a, b) => entries[b].photos.length - entries[a].photos.length || (a < b ? 1 : -1) },
+};
+const PAGE = 30;
+let sortBy = 'newest';
+let shownCount = PAGE;
+
+function wordCount(e) {
+  return e.text ? Paper.mdToText(e.text).split(/\s+/).filter(Boolean).length : 0;
+}
+
 function renderList() {
   const q = $('search').value.trim();
   const lq = q.toLowerCase();
-  // Utan sökning visas månaden i kalendern, med sökning hela dagboken
-  const keys = Object.keys(entries).sort().reverse().filter((k) => {
-    if (!lq) return k.slice(0, 7) === calMonth;
+  const sort = SORTS[sortBy];
+  // Utan sökning och sortering visas månaden i kalendern, annars hela dagboken
+  const whole = !!lq || sortBy !== 'newest';
+  const keys = Object.keys(entries).filter((k) => {
     const e = entries[k];
+    if (!whole) return k.slice(0, 7) === calMonth;
+    if (sort.keep && !sort.keep(e)) return false;
+    if (!lq) return true;
     return [Paper.mdToText(e.text), fmtDate(k), e.weather ? fmtWeather(e.weather) : '']
       .some((t) => t.toLowerCase().includes(lq));
-  });
+  }).sort(sort.order);
+
+  $('sort-note').hidden = !sort.note;
+  $('sort-note').textContent = sort.note;
 
   const list = $('list');
   if (!keys.length) {
     list.innerHTML = `<p class="empty">${
-      q ? 'Inga dagar matchar sökningen.' : `Inget skrivet i ${monthFmt.format(parseKey(calMonth + '-01'))}.`
+      whole ? 'Inga dagar matchar.' : `Inget skrivet i ${monthFmt.format(parseKey(calMonth + '-01'))}.`
     }</p>`;
     return;
   }
 
   const today = todayKey();
+  const byMonth = whole && (sortBy === 'newest' || sortBy === 'oldest');
   let html = '';
   let month = '';
-  for (const k of keys) {
+  for (const k of keys.slice(0, shownCount)) {
     const m = monthFmt.format(parseKey(k));
-    if (q && m !== month) {
+    if (byMonth && m !== month) {
       month = m;
       html += `<h2 class="month">${m}</h2>`;
     }
     html += postHtml(k, entries[k], today, !!q);
+  }
+  if (keys.length > shownCount) {
+    html += `<button type="button" class="link show-more" id="show-more">Visa fler (${keys.length - shownCount} kvar)</button>`;
   }
   list.innerHTML = html;
   if (q) list.querySelectorAll('.when, .prose, .sub').forEach((el) => Paper.highlight(el, q));
   else markLongPosts(list);
 }
 
-$('search').addEventListener('input', renderList);
+$('search').addEventListener('input', () => {
+  shownCount = PAGE;
+  renderList();
+});
+$('list').addEventListener('click', (ev) => {
+  if (!ev.target.closest('#show-more')) return;
+  shownCount += PAGE;
+  renderList();
+});
+
+const sortBtn = $('sort-btn');
+const sortPop = $('sort-pop');
+
+function toggleSort(open) {
+  sortPop.hidden = !open;
+  sortBtn.setAttribute('aria-expanded', String(open));
+  if (open) sortPop.querySelector('[aria-checked="true"]').focus();
+}
+
+sortBtn.addEventListener('click', () => toggleSort(sortPop.hidden));
+sortPop.addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-sort]');
+  if (!b) return;
+  sortBy = b.dataset.sort;
+  shownCount = PAGE;
+  sortPop.querySelectorAll('[data-sort]').forEach((x) => x.setAttribute('aria-checked', String(x === b)));
+  sortBtn.classList.toggle('on', sortBy !== 'newest');
+  sortBtn.setAttribute('aria-label', `Sortera: ${b.textContent}`);
+  toggleSort(false);
+  renderList();
+});
+sortPop.addEventListener('keydown', (ev) => {
+  const items = [...sortPop.querySelectorAll('[data-sort]')];
+  const step = { ArrowDown: 1, ArrowUp: -1 }[ev.key];
+  if (!step) return;
+  ev.preventDefault();
+  items[(items.indexOf(document.activeElement) + step + items.length) % items.length].focus();
+});
+document.addEventListener('pointerdown', (ev) => {
+  if (!sortPop.hidden && !$('sorter').contains(ev.target)) toggleSort(false);
+});
+document.addEventListener('keydown', (ev) => {
+  if (ev.key === 'Escape' && !sortPop.hidden) {
+    toggleSort(false);
+    sortBtn.focus();
+  }
+});
 
 /* Kalender */
 

@@ -214,7 +214,40 @@ textarea {
 }
 
 /* Lista */
-#search { margin: 16px 0 4px; }
+.search-row { display: flex; gap: 8px; align-items: center; margin: 16px 0 4px; }
+#search { flex: 1; min-width: 0; margin: 0; }
+.sorter { position: relative; flex: none; }
+.sorter .hd-btn { width: 44px; height: 44px; }
+.sorter .hd-btn svg { stroke-linecap: round; }
+.sort-pop { width: 210px; padding: 4px 0; }
+.sort-pop button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 11px 14px;
+  border: 0;
+  background: none;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+}
+.sort-pop button + button { border-top: 1px solid var(--line); }
+.sort-pop button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.sort-pop .check {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  visibility: hidden;
+}
+.sort-pop [aria-checked="true"] { color: var(--accent); font-weight: 600; }
+.sort-pop [aria-checked="true"] .check { visibility: visible; }
+.sort-note { margin: 10px 0 0; font-size: 14px; color: var(--muted); }
+.show-more { display: block; margin: 16px auto 4px; font-size: 15px; }
 
 .month {
   font-size: 14px;
