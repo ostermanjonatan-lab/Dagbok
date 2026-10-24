@@ -453,6 +453,19 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   color: var(--muted);
   font-size: 15px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+.seg svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
 }
 .seg button[aria-selected="true"] {
   background: var(--accent);
@@ -1054,8 +1067,8 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
     </div>
     <div class="grid" id="cal-grid"></div>
     <div class="seg" role="tablist" aria-label="Under kalendern">
-      <button type="button" role="tab" id="seg-feed" aria-controls="feed-panel" aria-selected="true">Flöde</button>
-      <button type="button" role="tab" id="seg-stats" aria-controls="month-stats" aria-selected="false">Statistik</button>
+      <button type="button" role="tab" id="seg-feed" aria-controls="feed-panel" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Flöde</button>
+      <button type="button" role="tab" id="seg-stats" aria-controls="month-stats" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V12M12 20V5M19 20v-5"/></svg>Statistik</button>
     </div>
     <div class="feed" id="feed-panel" role="tabpanel" aria-labelledby="seg-feed">
       <input type="search" id="search" placeholder="Sök i dagboken" aria-label="Sök">
