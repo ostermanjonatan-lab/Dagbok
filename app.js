@@ -1484,8 +1484,8 @@ function renderTrend() {
     if (label) {
       svg += `<text class="lbl${cur && !many ? ' cur' : ''}" x="${xOf(i)}" y="${H - 4}" text-anchor="${many && i === 0 ? 'start' : 'middle'}">${label}</text>`;
     }
-    // Träffyta större än punkten, för tryck och hovring
-    svg += `<rect class="hit" x="${xOf(i) - step / 2}" y="0" width="${step}" height="${H - 14}" data-ym="${d.ym}" tabindex="0" role="button" aria-label="${monthFmt.format(parseKey(d.ym + '-01'))}${d.avg != null ? `, snitthumör ${fmtDec(d.avg)}` : ', inget humör'}"/>`;
+    // Träffyta större än punkten: visar månadens siffror vid tryck och hovring
+    svg += `<rect class="hit" x="${xOf(i) - step / 2}" y="0" width="${step}" height="${H - 14}" data-ym="${d.ym}" tabindex="0" aria-label="${monthFmt.format(parseKey(d.ym + '-01'))}${d.avg != null ? `, snitthumör ${fmtDec(d.avg)}` : ', inget humör'}"/>`;
   });
   svg += '</svg>';
   $('trend').innerHTML = svg;
@@ -1527,20 +1527,6 @@ $('trend').addEventListener('pointerleave', () => trendRead(calMonth));
 $('trend').addEventListener('focusin', (ev) => {
   const r = ev.target.closest('.hit');
   if (r) trendRead(r.dataset.ym);
-});
-// Ett tryck på en månad visar den i kalendern
-$('trend').addEventListener('click', (ev) => {
-  const r = ev.target.closest('.hit');
-  if (!r || r.dataset.ym > todayKey().slice(0, 7)) return;
-  calMonth = r.dataset.ym;
-  renderCal();
-});
-$('trend').addEventListener('keydown', (ev) => {
-  const r = ev.target.closest('.hit');
-  if (r && (ev.key === 'Enter' || ev.key === ' ')) {
-    ev.preventDefault();
-    r.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-  }
 });
 
 /* Flöde eller statistik under kalendern */
