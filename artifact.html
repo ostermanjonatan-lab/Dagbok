@@ -368,7 +368,7 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
 .day.today { font-weight: 700; color: var(--accent); }
 .day.sel { box-shadow: inset 0 0 0 2px var(--text); }
 .moods .day.has[style].sel { box-shadow: inset 0 0 0 2px var(--text); }
-/* Tabletterna och färgförklaringen delar rad så att inget flyttar sig när humör slås på */
+/* Tabletterna under kalendern */
 .cal-tools {
   display: flex;
   flex-wrap: wrap;
@@ -378,23 +378,6 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   margin-top: 14px;
 }
 .cal-tools .pills { margin-top: 0; }
-.legend {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  color: var(--muted);
-}
-.legend span:first-child { margin-right: 2px; }
-.legend span:last-child { margin-left: 2px; }
-.legend.off { visibility: hidden; }
-.legend i {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--m);
-}
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--m); margin-right: 8px; }
 
 /* Växlare mellan flöde och statistik under kalendern */
@@ -985,11 +968,6 @@ body.keyboard .nav { visibility: hidden; }
       <div class="pills" id="cal-show" role="group" aria-label="Visa i kalendern">
         <button type="button" class="pill" aria-pressed="false" data-value="mood">Humör</button>
         <button type="button" class="pill" aria-pressed="false" data-value="weather">Väder</button>
-      </div>
-      <div class="legend off" id="legend" aria-label="Humörfärger från tungt till bra">
-        <span>Tungt</span>
-        <i style="--m: var(--m1)"></i><i style="--m: var(--m2)"></i><i style="--m: var(--m3)"></i><i style="--m: var(--m4)"></i><i style="--m: var(--m5)"></i>
-        <span>Bra</span>
       </div>
     </div>
     <div class="seg" role="tablist" aria-label="Under kalendern">
@@ -2595,7 +2573,6 @@ function renderCal() {
   $('cal-next').disabled = calMonth >= today.slice(0, 7);
   $('cal-grid').classList.toggle('moods', moods);
   $('cal-grid').classList.toggle('weathers', weathers);
-  $('legend').classList.toggle('off', !moods);
 
   let html = ['mån', 'tis', 'ons', 'tor', 'fre', 'lör', 'sön']
     .map((d) => `<div class="wd">${d}</div>`).join('');

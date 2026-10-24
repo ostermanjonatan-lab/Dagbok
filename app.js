@@ -1017,7 +1017,6 @@ function renderCal() {
   $('cal-next').disabled = calMonth >= today.slice(0, 7);
   $('cal-grid').classList.toggle('moods', moods);
   $('cal-grid').classList.toggle('weathers', weathers);
-  $('legend').classList.toggle('off', !moods);
 
   let html = ['mån', 'tis', 'ons', 'tor', 'fre', 'lör', 'sön']
     .map((d) => `<div class="wd">${d}</div>`).join('');

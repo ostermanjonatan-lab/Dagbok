@@ -424,7 +424,7 @@ mark {
 .day.today { font-weight: 700; color: var(--accent); }
 .day.sel { box-shadow: inset 0 0 0 2px var(--text); }
 .moods .day.has[style].sel { box-shadow: inset 0 0 0 2px var(--text); }
-/* Tabletterna och färgförklaringen delar rad så att inget flyttar sig när humör slås på */
+/* Tabletterna under kalendern */
 .cal-tools {
   display: flex;
   flex-wrap: wrap;
@@ -434,23 +434,6 @@ mark {
   margin-top: 14px;
 }
 .cal-tools .pills { margin-top: 0; }
-.legend {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  color: var(--muted);
-}
-.legend span:first-child { margin-right: 2px; }
-.legend span:last-child { margin-left: 2px; }
-.legend.off { visibility: hidden; }
-.legend i {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--m);
-}
 /* Växlare mellan flöde och statistik under kalendern */
 .seg {
   display: flex;
