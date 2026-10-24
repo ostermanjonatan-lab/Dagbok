@@ -770,6 +770,67 @@ mark {
   background: var(--line);
 }
 
+/* Dagen är ett ark som glider upp över kalendern */
+.day-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / .35);
+  animation: fade-in .22s ease-out;
+}
+.sheet-panel {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  height: calc(100% - 22px - env(safe-area-inset-top, 0px));
+  margin: 0 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--bg);
+  border-radius: 18px 18px 0 0;
+  box-shadow: 0 -8px 30px rgb(0 0 0 / .18);
+  animation: slide-up .28s cubic-bezier(.2, .8, .2, 1);
+}
+.day-sheet.closing .sheet-panel { transform: translateY(100%); transition: transform .22s ease-in; }
+.day-sheet.closing .sheet-backdrop { opacity: 0; transition: opacity .22s; }
+@keyframes slide-up { from { transform: translateY(100%); } }
+@keyframes fade-in { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .sheet-panel, .sheet-backdrop { animation: none; }
+  .day-sheet.closing .sheet-panel, .day-sheet.closing .sheet-backdrop { transition: none; }
+}
+/* Greppet överst: dra nedåt för att stänga */
+.sheet-grab {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  height: 44px;
+  background: var(--bg);
+  touch-action: none;
+  cursor: grab;
+}
+.grab-bar {
+  width: 42px;
+  height: 5px;
+  margin-top: 9px;
+  border-radius: 3px;
+  background: var(--line);
+}
+.sheet-grab .close-x { position: absolute; top: 2px; right: 8px; }
+.sheet-body { padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px)); }
+.sheet-panel .fmt { top: 44px; }
+.sheet-panel .daynav { margin-top: 0; }
+body.sheet-open { overflow: hidden; }
+
 /* Läsrutan som öppnas från kalendern, ett fönster mitt på skärmen */
 .reader {
   width: calc(100% - 32px);

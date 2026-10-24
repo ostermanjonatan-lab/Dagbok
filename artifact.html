@@ -716,6 +716,67 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   background: var(--line);
 }
 
+/* Dagen är ett ark som glider upp över kalendern */
+.day-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / .35);
+  animation: fade-in .22s ease-out;
+}
+.sheet-panel {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  height: calc(100% - 22px - env(safe-area-inset-top, 0px));
+  margin: 0 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--bg);
+  border-radius: 18px 18px 0 0;
+  box-shadow: 0 -8px 30px rgb(0 0 0 / .18);
+  animation: slide-up .28s cubic-bezier(.2, .8, .2, 1);
+}
+.day-sheet.closing .sheet-panel { transform: translateY(100%); transition: transform .22s ease-in; }
+.day-sheet.closing .sheet-backdrop { opacity: 0; transition: opacity .22s; }
+@keyframes slide-up { from { transform: translateY(100%); } }
+@keyframes fade-in { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .sheet-panel, .sheet-backdrop { animation: none; }
+  .day-sheet.closing .sheet-panel, .day-sheet.closing .sheet-backdrop { transition: none; }
+}
+/* Greppet överst: dra nedåt för att stänga */
+.sheet-grab {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  height: 44px;
+  background: var(--bg);
+  touch-action: none;
+  cursor: grab;
+}
+.grab-bar {
+  width: 42px;
+  height: 5px;
+  margin-top: 9px;
+  border-radius: 3px;
+  background: var(--line);
+}
+.sheet-grab .close-x { position: absolute; top: 2px; right: 8px; }
+.sheet-body { padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px)); }
+.sheet-panel .fmt { top: 44px; }
+.sheet-panel .daynav { margin-top: 0; }
+body.sheet-open { overflow: hidden; }
+
 /* Läsrutan som öppnas från kalendern, ett fönster mitt på skärmen */
 .reader {
   width: calc(100% - 32px);
@@ -956,70 +1017,6 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
 
 
 <main class="wrap">
-  <section id="view-day">
-    <div class="daynav">
-      <button type="button" class="icon" id="prev" aria-label="Föregående dag">&#8249;</button>
-      <label class="date">
-        <span id="date-label"></span>
-        <input type="date" id="date-pick" aria-label="Välj datum">
-      </label>
-      <button type="button" class="icon" id="next" aria-label="Nästa dag">&#8250;</button>
-    </div>
-    <button type="button" class="link" id="to-today" hidden>Gå till idag</button>
-    <p class="streak" id="streak" hidden></p>
-
-    <form id="entry" autocomplete="off">
-      <div class="field">
-        <span id="text-label">Vad som hänt idag</span>
-        <div class="writer">
-          <div class="fmt" id="fmt" role="toolbar" aria-label="Formatering" aria-controls="f-text">
-            <button type="button" data-cmd="bold" aria-label="Fet"><b>B</b></button>
-            <button type="button" data-cmd="italic" aria-label="Kursiv"><i>K</i></button>
-            <button type="button" data-cmd="h2">Rubrik</button>
-            <button type="button" data-cmd="ul">Lista</button>
-          </div>
-          <div id="f-text" class="paper" contenteditable="true" role="textbox" aria-multiline="true"
-            aria-labelledby="text-label" spellcheck="true"></div>
-        </div>
-      </div>
-      <fieldset class="field">
-        <legend>Humör</legend>
-        <div class="scale" id="f-mood" role="radiogroup">
-          <button type="button" role="radio" data-v="1" style="--m: var(--m1)" aria-label="1, tungt">1</button>
-          <button type="button" role="radio" data-v="2" style="--m: var(--m2)">2</button>
-          <button type="button" role="radio" data-v="3" style="--m: var(--m3)">3</button>
-          <button type="button" role="radio" data-v="4" style="--m: var(--m4)">4</button>
-          <button type="button" role="radio" data-v="5" style="--m: var(--m5)" aria-label="5, bra">5</button>
-        </div>
-        <div class="ends"><span>Tungt</span><span>Bra</span></div>
-      </fieldset>
-      <div class="field">
-        <span id="weather-label">Väder</span>
-        <button type="button" class="pick" id="weather-btn" aria-haspopup="dialog"
-          aria-describedby="weather-label">Välj väder</button>
-      </div>
-      <div class="field">
-        <span>Bilder</span>
-        <div class="photos" id="photos"></div>
-        <button type="button" class="add-photo" id="add-photo" hidden>Lägg till bilder</button>
-        <input type="file" id="photo-file" accept="image/*" multiple hidden>
-        <p class="muted" id="photo-msg" aria-live="polite"></p>
-      </div>
-    </form>
-
-    <div class="foot">
-      <span id="status" aria-live="polite"></span>
-      <button type="button" class="link danger" id="delete" hidden>Ta bort dagen</button>
-      <span class="confirm" id="confirm" hidden>
-        <button type="button" class="link danger" id="delete-yes">Ta bort</button>
-        <button type="button" class="link" id="delete-no">Avbryt</button>
-      </span>
-    </div>
-    <section class="memories" id="memories" aria-labelledby="memories-title" hidden>
-      <h2 id="memories-title">Den här dagen</h2>
-      <div id="memory-list"></div>
-    </section>
-  </section>
 
   <section id="view-cal" hidden>
     <div class="cal-head">
@@ -1196,12 +1193,88 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   </div>
 </div>
 
+<div class="day-sheet" id="day-sheet" hidden>
+  <div class="sheet-backdrop" id="sheet-backdrop"></div>
+  <div class="sheet-panel" id="sheet-panel" role="dialog" aria-modal="true" aria-label="Dagen">
+    <div class="sheet-grab" id="sheet-grab">
+      <span class="grab-bar" aria-hidden="true"></span>
+      <button type="button" class="icon close-x" id="sheet-close" aria-label="Stäng"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="wrap sheet-body">
+      <section id="view-day">
+        <div class="daynav">
+          <button type="button" class="icon" id="prev" aria-label="Föregående dag">&#8249;</button>
+          <label class="date">
+            <span id="date-label"></span>
+            <input type="date" id="date-pick" aria-label="Välj datum">
+          </label>
+          <button type="button" class="icon" id="next" aria-label="Nästa dag">&#8250;</button>
+        </div>
+        <button type="button" class="link" id="to-today" hidden>Gå till idag</button>
+        <p class="streak" id="streak" hidden></p>
+
+        <form id="entry" autocomplete="off">
+          <div class="field">
+            <span id="text-label">Vad som hänt idag</span>
+            <div class="writer">
+              <div class="fmt" id="fmt" role="toolbar" aria-label="Formatering" aria-controls="f-text">
+                <button type="button" data-cmd="bold" aria-label="Fet"><b>B</b></button>
+                <button type="button" data-cmd="italic" aria-label="Kursiv"><i>K</i></button>
+                <button type="button" data-cmd="h2">Rubrik</button>
+                <button type="button" data-cmd="ul">Lista</button>
+              </div>
+              <div id="f-text" class="paper" contenteditable="true" role="textbox" aria-multiline="true"
+                aria-labelledby="text-label" spellcheck="true"></div>
+            </div>
+          </div>
+          <fieldset class="field">
+            <legend>Humör</legend>
+            <div class="scale" id="f-mood" role="radiogroup">
+              <button type="button" role="radio" data-v="1" style="--m: var(--m1)" aria-label="1, tungt">1</button>
+              <button type="button" role="radio" data-v="2" style="--m: var(--m2)">2</button>
+              <button type="button" role="radio" data-v="3" style="--m: var(--m3)">3</button>
+              <button type="button" role="radio" data-v="4" style="--m: var(--m4)">4</button>
+              <button type="button" role="radio" data-v="5" style="--m: var(--m5)" aria-label="5, bra">5</button>
+            </div>
+            <div class="ends"><span>Tungt</span><span>Bra</span></div>
+          </fieldset>
+          <div class="field">
+            <span id="weather-label">Väder</span>
+            <button type="button" class="pick" id="weather-btn" aria-haspopup="dialog"
+              aria-describedby="weather-label">Välj väder</button>
+          </div>
+          <div class="field">
+            <span>Bilder</span>
+            <div class="photos" id="photos"></div>
+            <button type="button" class="add-photo" id="add-photo" hidden>Lägg till bilder</button>
+            <input type="file" id="photo-file" accept="image/*" multiple hidden>
+            <p class="muted" id="photo-msg" aria-live="polite"></p>
+          </div>
+        </form>
+
+        <div class="foot">
+          <span id="status" aria-live="polite"></span>
+          <button type="button" class="link danger" id="delete" hidden>Ta bort dagen</button>
+          <span class="confirm" id="confirm" hidden>
+            <button type="button" class="link danger" id="delete-yes">Ta bort</button>
+            <button type="button" class="link" id="delete-no">Avbryt</button>
+          </span>
+        </div>
+        <section class="memories" id="memories" aria-labelledby="memories-title" hidden>
+          <h2 id="memories-title">Den här dagen</h2>
+          <div id="memory-list"></div>
+        </section>
+      </section>
+    </div>
+  </div>
+</div>
+
 <nav class="nav" aria-label="Vyer">
-  <button type="button" id="tab-cal">
+  <button type="button" id="tab-cal" class="on">
     <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
     <span>Kalender</span>
   </button>
-  <button type="button" id="tab-day" class="main on" aria-label="Dag">
+  <button type="button" id="tab-day" class="main" aria-label="Dag">
     <span class="bubble"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13 7l4 4"/></svg></span>
   </button>
   <button type="button" id="tab-set">
@@ -1606,7 +1679,7 @@ const moodButtons = [...$('f-mood').querySelectorAll('button')];
 
 let entries = normalizeAll(loadCache());
 let current = todayKey();
-let view = 'day';
+let view = 'cal';
 let saveTimer = null;
 let col = null;       // dagbokens samling i databasen, om den finns
 let downloads = null;
@@ -1776,7 +1849,7 @@ async function connect() {
     if (!touched) return;
     writeCache();
     if (view === 'cal') renderCal();
-    else if (!saveTimer && !$('entry').contains(document.activeElement)) showDay(current);
+    if (!$('day-sheet').hidden && !saveTimer && !$('entry').contains(document.activeElement)) showDay(current);
   }, () => {
     col = null;
     $('where').textContent = 'Anslutningen bröts. Sparas i den här webbläsaren tills sidan laddas om.';
@@ -2555,7 +2628,7 @@ function renderList() {
 $('search').addEventListener('input', renderList);
 $('list').addEventListener('click', (ev) => {
   const item = ev.target.closest('.open');
-  if (item) { setView('day'); showDay(item.dataset.key); }
+  if (item) openSheet(item.dataset.key);
 });
 
 /* Kalender */
@@ -3189,7 +3262,7 @@ $('reader').addEventListener('click', (ev) => {
   if (ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom) closeReader();
 });
 
-function openDay(key) { setView('day'); showDay(key); }
+function openDay(key) { openSheet(key); }
 
 /* Säkerhetskopia */
 
@@ -3267,32 +3340,117 @@ $('import-file').addEventListener('change', async (ev) => {
 
 /* Flikar */
 
+// Kalendern eller inställningarna ligger under, dagen öppnas som ett ark ovanpå
 function setView(v) {
-  flushSave();
   view = v;
-  for (const name of ['day', 'cal', 'set']) {
+  for (const name of ['cal', 'set']) {
     $(`view-${name}`).hidden = name !== v;
     $(`tab-${name}`).classList.toggle('on', name === v);
   }
-  if (v === 'set') {
+  if (v === 'set') $('wipe-msg').textContent = '';
+  refreshBase();
+  window.scrollTo(0, 0);
+}
+
+function refreshBase() {
+  if (view === 'set') {
     renderSettings();
-    $('wipe-msg').textContent = '';
-  }
-  if (v === 'cal') {
-    // Kalendern öppnar på dagen som senast visades
+  } else {
+    // Kalendern visar månaden för dagen som senast visades
     calSel = current;
     calMonth = current.slice(0, 7);
     renderCal();
   }
-  window.scrollTo(0, 0);
 }
 
-$('tab-day').addEventListener('click', () => { setView('day'); showDay(todayKey()); });
-$('tab-cal').addEventListener('click', () => setView('cal'));
-$('tab-set').addEventListener('click', () => setView('set'));
+function closeSheet() { hideSheet(); }
 
-if (['#kalender', '#flode', '#alla'].includes(location.hash)) setView('cal');
-if (location.hash === '#installningar') setView('set');
+/* Dagen som ett ark som glider upp */
+
+const daySheet = $('day-sheet');
+const dayPanel = $('sheet-panel');
+
+function openSheet(key) {
+  const wasOpen = !daySheet.hidden;
+  daySheet.classList.remove('closing');
+  dayPanel.style.transform = '';
+  daySheet.hidden = false;
+  document.body.classList.add('sheet-open');
+  $('tab-day').classList.add('on');
+  showDay(key);
+  if (!wasOpen) dayPanel.scrollTop = 0;
+}
+
+// Stänger arket och visar vyn under med det som just skrivits
+function hideSheet() {
+  if (daySheet.hidden) return;
+  flushSave();
+  if (dayPanel.contains(document.activeElement)) document.activeElement.blur();
+  document.body.classList.remove('sheet-open');
+  $('tab-day').classList.remove('on');
+  refreshBase();
+  const done = () => {
+    daySheet.hidden = true;
+    daySheet.classList.remove('closing');
+    dayPanel.style.transform = '';
+    dayPanel.style.transition = '';
+  };
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) done();
+  else {
+    daySheet.classList.add('closing');
+    setTimeout(done, 220);
+  }
+}
+
+$('sheet-close').addEventListener('click', () => closeSheet());
+$('sheet-backdrop').addEventListener('click', () => closeSheet());
+document.addEventListener('keydown', (ev) => {
+  if (ev.key !== 'Escape' || daySheet.hidden || !$('lock').hidden) return;
+  if (document.querySelector('dialog[open]')) return;
+  closeSheet();
+});
+
+// Dra ner greppet för att stänga
+(() => {
+  const grab = $('sheet-grab');
+  let sy = 0;
+  let dy = 0;
+  let dragging = false;
+  grab.addEventListener('pointerdown', (ev) => {
+    if (ev.target.closest('button')) return;
+    dragging = true;
+    sy = ev.clientY;
+    dy = 0;
+    grab.setPointerCapture(ev.pointerId);
+    dayPanel.style.transition = 'none';
+  });
+  grab.addEventListener('pointermove', (ev) => {
+    if (!dragging) return;
+    dy = Math.max(0, ev.clientY - sy);
+    dayPanel.style.transform = `translateY(${dy}px)`;
+  });
+  const end = () => {
+    if (!dragging) return;
+    dragging = false;
+    if (dy > 90) {
+      dayPanel.style.transition = 'transform .2s ease-in';
+      dayPanel.style.transform = 'translateY(100%)';
+      setTimeout(() => closeSheet(), 180);
+    } else {
+      dayPanel.style.transition = 'transform .18s ease-out';
+      dayPanel.style.transform = '';
+    }
+  };
+  grab.addEventListener('pointerup', end);
+  grab.addEventListener('pointercancel', end);
+})();
+
+$('tab-day').addEventListener('click', () => openSheet(todayKey()));
+$('tab-cal').addEventListener('click', () => { hideSheet(); setView('cal'); });
+$('tab-set').addEventListener('click', () => { hideSheet(); setView('set'); });
+
 showDay(current);
+setView(location.hash === '#installningar' ? 'set' : 'cal');
+if (location.hash === '#dag') openSheet(todayKey());
 connect();
 </script>

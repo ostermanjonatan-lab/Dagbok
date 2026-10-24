@@ -1655,31 +1655,134 @@ function go(hash) {
   else location.hash = hash;
 }
 
-function route() {
-  const hash = location.hash || '#/dag';
-  // Flödet ligger numera under kalendern, så gamla länkar dit öppnar kalendern
-  const view = /^#\/(kalender|flode|alla)/.test(hash) ? 'cal'
-    : hash.startsWith('#/installningar') ? 'set' : 'day';
-  if (view !== 'day') flushSave();
-  for (const v of ['day', 'cal', 'set']) {
-    $(`view-${v}`).hidden = v !== view;
-    $(`tab-${v}`).classList.toggle('on', v === view);
-  }
+// Kalendern eller inställningarna ligger under, dagen öppnas som ett ark ovanpå
+let baseView = 'cal';
+let baseShown = false;
 
-  if (view === 'set') {
+function showBase() {
+  baseShown = true;
+  for (const v of ['cal', 'set']) {
+    $(`view-${v}`).hidden = v !== baseView;
+    $(`tab-${v}`).classList.toggle('on', v === baseView);
+  }
+  refreshBase();
+}
+
+function refreshBase() {
+  if (baseView === 'set') {
     renderSettings();
-    $('wipe-msg').textContent = '';
-  } else if (view === 'cal') {
-    // Kalendern öppnar på dagen som senast visades
+  } else {
+    // Kalendern visar månaden för dagen som senast visades
     calSel = current;
     calMonth = current.slice(0, 7);
     renderCal();
-  } else {
-    const m = hash.match(/^#\/dag\/(\d{4}-\d{2}-\d{2})$/);
-    showDay(m ? m[1] : todayKey());
   }
-  window.scrollTo(0, 0);
 }
+
+function closeSheet() { go(baseView === 'set' ? '#/installningar' : '#/kalender'); }
+
+function route() {
+  const hash = location.hash || '#/kalender';
+  const day = hash.match(/^#\/dag(?:\/(\d{4}-\d{2}-\d{2}))?$/);
+  if (day) {
+    if (!baseShown) showBase();
+    openSheet(day[1] || todayKey());
+    return;
+  }
+  // Flödet ligger numera under kalendern, så gamla länkar dit öppnar kalendern
+  baseView = hash.startsWith('#/installningar') ? 'set' : 'cal';
+  if (baseView === 'set') $('wipe-msg').textContent = '';
+  if (daySheet.hidden) {
+    showBase();
+    window.scrollTo(0, 0);
+  } else {
+    for (const v of ['cal', 'set']) {
+      $(`view-${v}`).hidden = v !== baseView;
+      $(`tab-${v}`).classList.toggle('on', v === baseView);
+    }
+    hideSheet();
+  }
+}
+
+/* Dagen som ett ark som glider upp */
+
+const daySheet = $('day-sheet');
+const dayPanel = $('sheet-panel');
+
+function openSheet(key) {
+  const wasOpen = !daySheet.hidden;
+  daySheet.classList.remove('closing');
+  dayPanel.style.transform = '';
+  daySheet.hidden = false;
+  document.body.classList.add('sheet-open');
+  $('tab-day').classList.add('on');
+  showDay(key);
+  if (!wasOpen) dayPanel.scrollTop = 0;
+}
+
+// Stänger arket och visar vyn under med det som just skrivits
+function hideSheet() {
+  if (daySheet.hidden) return;
+  flushSave();
+  if (dayPanel.contains(document.activeElement)) document.activeElement.blur();
+  document.body.classList.remove('sheet-open');
+  $('tab-day').classList.remove('on');
+  refreshBase();
+  const done = () => {
+    daySheet.hidden = true;
+    daySheet.classList.remove('closing');
+    dayPanel.style.transform = '';
+    dayPanel.style.transition = '';
+  };
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) done();
+  else {
+    daySheet.classList.add('closing');
+    setTimeout(done, 220);
+  }
+}
+
+$('sheet-close').addEventListener('click', () => closeSheet());
+$('sheet-backdrop').addEventListener('click', () => closeSheet());
+document.addEventListener('keydown', (ev) => {
+  if (ev.key !== 'Escape' || daySheet.hidden || !$('lock').hidden) return;
+  if (document.querySelector('dialog[open]')) return;
+  closeSheet();
+});
+
+// Dra ner greppet för att stänga
+(() => {
+  const grab = $('sheet-grab');
+  let sy = 0;
+  let dy = 0;
+  let dragging = false;
+  grab.addEventListener('pointerdown', (ev) => {
+    if (ev.target.closest('button')) return;
+    dragging = true;
+    sy = ev.clientY;
+    dy = 0;
+    grab.setPointerCapture(ev.pointerId);
+    dayPanel.style.transition = 'none';
+  });
+  grab.addEventListener('pointermove', (ev) => {
+    if (!dragging) return;
+    dy = Math.max(0, ev.clientY - sy);
+    dayPanel.style.transform = `translateY(${dy}px)`;
+  });
+  const end = () => {
+    if (!dragging) return;
+    dragging = false;
+    if (dy > 90) {
+      dayPanel.style.transition = 'transform .2s ease-in';
+      dayPanel.style.transform = 'translateY(100%)';
+      setTimeout(() => closeSheet(), 180);
+    } else {
+      dayPanel.style.transition = 'transform .18s ease-out';
+      dayPanel.style.transform = '';
+    }
+  };
+  grab.addEventListener('pointerup', end);
+  grab.addEventListener('pointercancel', end);
+})();
 
 window.addEventListener('hashchange', route);
 route();
