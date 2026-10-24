@@ -755,7 +755,15 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   font-weight: 600;
   text-align: center;
 }
-.reader-head .link { margin-left: 8px; }
+.close-x svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.close-x { color: var(--text); margin-left: 4px; }
 /* Dagarna ligger bredvid varandra och snäpper fast när man sveper */
 .reader-track {
   flex: 1;
@@ -1120,7 +1128,7 @@ body.keyboard .nav { visibility: hidden; }
     <button type="button" class="icon" id="reader-prev" aria-label="Föregående dag">&#8249;</button>
     <h2 id="reader-title"></h2>
     <button type="button" class="icon" id="reader-next" aria-label="Nästa dag">&#8250;</button>
-    <button type="button" class="link" id="reader-close">Stäng</button>
+    <button type="button" class="icon close-x" id="reader-close" aria-label="Stäng"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
   </div>
   <div class="reader-track" id="reader-track"></div>
 </dialog>
