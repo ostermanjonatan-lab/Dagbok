@@ -831,7 +831,7 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   background: var(--line);
 }
 .sheet-grab .close-x { position: absolute; top: 2px; right: 8px; }
-.sheet-body { padding: 0 16px 48px; }
+.sheet-body { padding: 0 16px calc(48px + var(--kb, 0px)); }
 .sheet-panel .fmt { top: 44px; }
 .sheet-panel .daynav { margin-top: 0; }
 body.sheet-open { overflow: hidden; }
@@ -2977,15 +2977,31 @@ function parseAt(raw) {
   return null;
 }
 
+// Delar sökningen i en @-del och vanlig text. @-delen är så många ord efter @ som
+// går att tolka som ett datum, resten och det som står före @ är vanlig text.
+function splitAt(q) {
+  const i = q.indexOf('@');
+  if (i < 0) return null;
+  const words = q.slice(i + 1).trim().split(/\s+/).filter(Boolean);
+  for (let n = words.length; n > 0; n--) {
+    const at = parseAt(words.slice(0, n).join(' '));
+    if (at) return { at, text: `${q.slice(0, i)} ${words.slice(n).join(' ')}`.trim(), rest: words.length - n };
+  }
+  return { at: null, text: q.slice(0, i).trim(), rest: 0, after: words.join(' ') };
+}
+
 // Förslag under sökfältet medan man skriver efter @
 function renderAtSuggest() {
   const box = $('at-suggest');
   const v = $('search').value;
-  if (!v.startsWith('@')) {
+  const i = v.lastIndexOf('@');
+  const sp = i < 0 ? null : splitAt(v.slice(i));
+  // Inga förslag när man redan skriver vanlig text efter datumet
+  if (!sp || sp.rest > 0 || (sp.at && /\s$/.test(v))) {
     box.hidden = true;
     return;
   }
-  const n = normAt(v.slice(1));
+  const n = normAt(v.slice(i + 1));
   const all = [...AT_DEFAULTS, ...Object.keys(HOLIDAY_GROUPS), ...HOLIDAY_NAMES,
     ...MONTHS.map((x) => x.charAt(0).toUpperCase() + x.slice(1))];
   const pool = n ? [...new Set(all)].filter((x) => normAt(x).startsWith(n)) : AT_DEFAULTS;
@@ -2997,7 +3013,9 @@ function renderAtSuggest() {
 $('at-suggest').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-at]');
   if (!b) return;
-  $('search').value = `@${b.dataset.at}`;
+  const v = $('search').value;
+  $('search').value = `${v.slice(0, v.lastIndexOf('@'))}@${b.dataset.at} `;
+  $('search').focus();
   shownCount = PAGE;
   renderAtSuggest();
   renderList();
@@ -3025,33 +3043,41 @@ function renderList() {
   const q = $('search').value.trim();
   const lq = q.toLowerCase();
   const sort = SORTS[sortBy];
-  const isAt = q.startsWith('@');
-  const at = isAt ? parseAt(q.slice(1)) : null;
+  const sp = splitAt(q);
+  const isAt = !!sp;
+  const at = sp ? sp.at : null;
+  // Vanlig text att söka på, utan @-delen
+  const text = sp ? sp.text : q;
+  const lt = text.toLowerCase();
   // Utan sökning och sortering visas månaden i kalendern, annars hela dagboken
   const whole = !!lq || sortBy !== 'newest';
   const keys = Object.keys(entries).filter((k) => {
     const e = entries[k];
     if (!whole) return k.slice(0, 7) === calMonth;
     if (sort.keep && !sort.keep(e)) return false;
-    if (isAt) return !!at && at.test(k);
-    if (!lq) return true;
+    if (isAt && !(at && at.test(k))) return false;
+    if (!lt) return true;
     return [Paper.mdToText(e.text), fmtDate(k), e.weather ? fmtWeather(e.weather) : '']
-      .some((t) => t.toLowerCase().includes(lq));
+      .some((t) => t.toLowerCase().includes(lt));
   }).sort(sort.order);
 
-  const note = at && keys.length ? `${at.label}, ${keys.length} ${keys.length === 1 ? 'dag' : 'dagar'}` : at ? at.label : sort.note;
+  const count = `${keys.length} ${keys.length === 1 ? 'dag' : 'dagar'}`;
+  const note = !at ? sort.note
+    : !keys.length ? at.label
+    : text ? `${at.label}, ${count} med ”${text}”` : `${at.label}, ${count}`;
   $('sort-note').hidden = !note;
   $('sort-note').textContent = note;
 
   const list = $('list');
   // Bara @ visar förslagen och inget annat
-  if (q === '@') {
+  if (isAt && !at && !sp.after) {
     list.innerHTML = '';
     return;
   }
   if (!keys.length) {
     list.innerHTML = `<p class="empty">${
       isAt && !at ? 'Känner inte igen datumet. Prova @julafton, @24 dec, @maj 2025 eller @lördagar.'
+        : at && text ? 'Inga dagar matchar.'
         : at ? 'Inget skrivet då.'
         : whole ? 'Inga dagar matchar.' : `Inget skrivet i ${monthFmt.format(parseKey(calMonth + '-01'))}.`
     }</p>`;
@@ -3068,13 +3094,13 @@ function renderList() {
       month = m;
       html += `<h2 class="month">${m}</h2>`;
     }
-    html += postHtml(k, entries[k], today, !!q && !isAt);
+    html += postHtml(k, entries[k], today, !!text);
   }
   if (keys.length > shownCount) {
     html += `<button type="button" class="link show-more" id="show-more">Visa fler (${keys.length - shownCount} kvar)</button>`;
   }
   list.innerHTML = html;
-  if (q && !isAt) list.querySelectorAll('.when, .prose, .sub').forEach((el) => Paper.highlight(el, q));
+  if (text) list.querySelectorAll('.when, .prose, .sub').forEach((el) => Paper.highlight(el, text));
   else markLongPosts(list);
 }
 
@@ -3897,6 +3923,45 @@ document.addEventListener('keydown', (ev) => {
   if (document.querySelector('dialog[open]')) return;
   closeSheet();
 });
+
+// Håller markören ovanför tangentbordet när man skriver i dagen
+(() => {
+  const vv = window.visualViewport;
+  const paper = $('f-text');
+  if (!vv || !paper) return;
+  let raf = 0;
+  function caretBottom() {
+    const sel = window.getSelection();
+    if (sel.rangeCount && paper.contains(sel.anchorNode)) {
+      const rects = sel.getRangeAt(0).getClientRects();
+      if (rects.length) return rects[rects.length - 1].bottom;
+      const el = sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement;
+      return el.getBoundingClientRect().bottom;
+    }
+    return paper.getBoundingClientRect().top + 60;
+  }
+  function keep() {
+    raf = 0;
+    if (document.activeElement !== paper || daySheet.hidden) return;
+    // Tangentbordets höjd, så att arket kan rullas så långt att texten hamnar ovanför det
+    const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    dayPanel.style.setProperty('--kb', `${Math.round(kb)}px`);
+    const visible = Math.min(vv.offsetTop + vv.height, dayPanel.getBoundingClientRect().bottom) - 24;
+    const over = caretBottom() - visible;
+    if (over > 0) dayPanel.scrollTop += over;
+  }
+  const soon = () => { if (!raf) raf = requestAnimationFrame(keep); };
+  paper.addEventListener('focus', () => {
+    soon();
+    // Tangentbordet glider upp en stund efter att rutan fått fokus
+    setTimeout(soon, 300);
+    setTimeout(soon, 650);
+  });
+  paper.addEventListener('input', soon);
+  paper.addEventListener('blur', () => dayPanel.style.setProperty('--kb', '0px'));
+  vv.addEventListener('resize', soon);
+  vv.addEventListener('scroll', soon);
+})();
 
 // Svep nedåt för att stänga: från greppet, eller var som helst när arket är rullat högst upp
 (() => {
