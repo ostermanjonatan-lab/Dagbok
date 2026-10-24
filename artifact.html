@@ -3620,17 +3620,16 @@ function trendMonths() {
   return out;
 }
 
-// Punkterna i diagrammet: sjudagarsperioder bakåt från idag för Vecka, annars månader
+// Punkterna i diagrammet: veckans sju dagar för Vecka, annars månader
 let trendItems = {};
 let trendCur = '';
 function trendBuckets() {
   if (statPeriod === 'week') {
-    return [...Array(12)].map((_, i) => {
-      const start = shiftKey(weekStart(), -7 * (11 - i));
-      const end = parseKey(shiftKey(start, 6));
-      // Var tredje punkt får ett datum, annars blir det trångt
-      const label = i % 3 === 2 ? `${end.getDate()} ${monthShortFmt.format(end).replace('.', '').slice(0, 3)}` : '';
-      return { id: start, ms: weekMoods(start), label, name: cap(weekRange(start)) };
+    return [...Array(7)].map((_, i) => {
+      const k = shiftKey(weekStart(), i);
+      const e = entries[k];
+      const label = weekdayFmt.format(parseKey(k)).slice(0, 3);
+      return { id: k, ms: e && e.mood ? [e.mood] : [], label, name: cap(postDayFmt.format(parseKey(k))), day: true };
     });
   }
   return trendMonths().map((ym) => ({ id: ym, ms: monthMoods(ym), name: cap(monthFmt.format(parseKey(ym + '-01'))) }));
@@ -3639,10 +3638,10 @@ function trendBuckets() {
 function renderTrend() {
   $('trend-title').textContent = statPeriod === 'year' ? `Snitthumör per månad ${calMonth.slice(0, 4)}`
     : statPeriod === 'all' ? 'Snitthumör per månad'
-      : statPeriod === 'week' ? 'Snitthumör, senaste 12 veckorna' : 'Snitthumör, senaste 12 månaderna';
+      : statPeriod === 'week' ? 'Humör per dag, senaste veckan' : 'Snitthumör, senaste 12 månaderna';
   const data = trendBuckets().map((d) => ({ ...d, avg: d.ms.length ? avg(d.ms) : null }));
   trendItems = Object.fromEntries(data.map((d) => [d.id, d]));
-  trendCur = statPeriod === 'week' ? weekStart() : calMonth;
+  trendCur = statPeriod === 'week' ? todayKey() : calMonth;
   const n = data.length;
   const many = n > 12;
   const W = 340;
@@ -3676,7 +3675,7 @@ function renderTrend() {
       const r = cur ? 5.5 : many ? 3 : 4;
       svg += `<circle class="pt${cur ? ' cur' : ''}" cx="${xOf(i)}" cy="${yOf(d.avg)}" r="${r}"/>`;
     }
-    // Veckor har slutdatum. Med många månader står bara årtalet vid januari, annars månadens förkortning
+    // Dagar har veckodag. Med många månader står bara årtalet vid januari, annars månadens förkortning
     let label = '';
     if (d.label !== undefined) label = d.label;
     else if (!many) label = monthShortFmt.format(parseKey(d.id + '-01')).replace('.', '').slice(0, 3);
@@ -3685,7 +3684,7 @@ function renderTrend() {
       svg += `<text class="lbl${cur && !many ? ' cur' : ''}" x="${xOf(i)}" y="${H - 4}" text-anchor="${many && i === 0 ? 'start' : 'middle'}">${label}</text>`;
     }
     // Träffyta större än punkten: visar månadens siffror vid tryck och hovring
-    svg += `<rect class="hit" x="${xOf(i) - step / 2}" y="0" width="${step}" height="${H - 14}" data-id="${d.id}" tabindex="0" aria-label="${d.name}${d.avg != null ? `, snitthumör ${fmtDec(d.avg)}` : ', inget humör'}"/>`;
+    svg += `<rect class="hit" x="${xOf(i) - step / 2}" y="0" width="${step}" height="${H - 14}" data-id="${d.id}" tabindex="0" aria-label="${d.name}${d.avg != null ? `, ${d.day ? 'humör' : 'snitthumör'} ${fmtDec(d.avg)}` : ', inget humör'}"/>`;
   });
   svg += '</svg>';
   $('trend').innerHTML = svg;
@@ -3714,6 +3713,10 @@ $('stat-period').addEventListener('keydown', (ev) => {
 function trendRead(id) {
   const d = trendItems[id];
   if (!d) return;
+  if (d.day) {
+    $('trend-read').textContent = `${d.name}: ${d.ms.length ? `humör ${d.ms[0]}` : 'inget humör'}`;
+    return;
+  }
   $('trend-read').textContent = d.ms.length
     ? `${d.name}: snitt ${fmtDec(avg(d.ms))}, ${dagar(d.ms.length)} med humör`
     : `${d.name}: inget humör`;
