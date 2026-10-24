@@ -893,6 +893,67 @@ function escapeHtml(s) {
   }[c]));
 }
 
+/* Flöde: varje dag som ett inlägg, med större bilder och en rad längst ner */
+
+const postDayFmt = new Intl.DateTimeFormat('sv-SE', { weekday: 'long', day: 'numeric', month: 'long' });
+const postDayYearFmt = new Intl.DateTimeFormat('sv-SE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+const PEN_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13 7l4 4"/></svg>';
+
+function postMedia(list) {
+  if (!list || !list.length) return '';
+  const shown = list.slice(0, 4);
+  const extra = list.length - shown.length;
+  return `<div class="media n${shown.length}">${shown.map((id, i) =>
+    `<button type="button" data-photo="${escapeHtml(id)}" aria-label="Visa bild">
+      <img src="${escapeHtml(photoUrl(id))}" data-id="${escapeHtml(id)}" alt="" loading="lazy">${
+      i === 3 && extra > 0 ? `<span class="extra">+${extra}</span>` : ''}</button>`).join('')}</div>`;
+}
+
+function postHtml(k, e, today, searching) {
+  const d = parseKey(k);
+  const name = (k.slice(0, 4) === today.slice(0, 4) ? postDayFmt : postDayYearFmt).format(d);
+  const yesterday = shiftKey(today, -1);
+  const rel = k === today ? 'Idag' : k === yesterday ? 'Igår' : '';
+  const g = e.weather ? weatherGroup(e.weather.code) : null;
+  const icon = g != null ? `<svg viewBox="0 0 24 24" aria-hidden="true">${WEATHER_ICONS[g]}</svg>` : '';
+  const wx = e.weather ? icon + escapeHtml(fmtWeather(e.weather)) : '';
+  const sub = [rel, wx].filter(Boolean).join('<span class="sep" aria-hidden="true">·</span>');
+  const words = e.text ? Paper.mdToText(e.text).split(/\s+/).filter(Boolean).length : 0;
+  const mood = e.mood
+    ? `<span class="mood-chip" style="--m: var(--m${e.mood})">Humör ${e.mood}</span>` : '';
+  return `<article class="post${k === today ? ' today' : ''}">
+    <header class="post-head">
+      <span class="avatar${e.mood ? '' : ' none'}" data-m="${e.mood || ''}" style="--m: var(--m${e.mood || 3})" aria-hidden="true">${d.getDate()}</span>
+      <div class="who">
+        <span class="when">${name.charAt(0).toUpperCase() + name.slice(1)}</span>
+        ${sub ? `<span class="sub">${sub}</span>` : ''}
+      </div>
+    </header>
+    ${e.text ? `<div class="prose${searching ? '' : ' clamp'}">${Paper.mdToHtml(e.text)}</div>
+    <button type="button" class="link more" hidden>Visa mer</button>` : ''}
+    ${postMedia(e.photos)}
+    <footer class="post-foot">
+      ${mood}${words ? `<span class="words">${words} ord</span>` : ''}
+      <a class="edit" href="#/dag/${k}">${PEN_ICON}Redigera</a>
+    </footer>
+  </article>`;
+}
+
+// Långa inlägg visas förkortade tills man trycker på Visa mer
+function markLongPosts(list) {
+  list.querySelectorAll('.prose.clamp').forEach((p) => {
+    if (p.scrollHeight > p.clientHeight + 2) p.nextElementSibling.hidden = false;
+    else p.classList.remove('clamp');
+  });
+}
+
+$('list').addEventListener('click', (ev) => {
+  const more = ev.target.closest('.more');
+  if (!more) return;
+  more.previousElementSibling.classList.remove('clamp');
+  more.hidden = true;
+});
+
 function renderList() {
   const q = $('search').value.trim();
   const lq = q.toLowerCase();
@@ -916,25 +977,16 @@ function renderList() {
   let html = '';
   let month = '';
   for (const k of keys) {
-    const e = entries[k];
     const m = monthFmt.format(parseKey(k));
     if (q && m !== month) {
       month = m;
       html += `<h2 class="month">${m}</h2>`;
     }
-    const dot = e.mood ? `<span class="dot" style="--m: var(--m${e.mood})" title="Humör ${e.mood}"></span>` : '';
-    html += `<article class="post${k === today ? ' today' : ''}">
-      <div class="post-head">
-        <span class="when">${dot}${fmtDate(k)}</span>
-        <a class="link open" href="#/dag/${k}">Redigera</a>
-      </div>
-      ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
-      ${thumbs(e.photos, 'thumbs')}
-      ${e.weather ? `<div class="meta">${escapeHtml(fmtWeather(e.weather))}</div>` : ''}
-    </article>`;
+    html += postHtml(k, entries[k], today, !!q);
   }
   list.innerHTML = html;
-  if (q) list.querySelectorAll('.when, .prose, .meta').forEach((el) => Paper.highlight(el, q));
+  if (q) list.querySelectorAll('.when, .prose, .sub').forEach((el) => Paper.highlight(el, q));
+  else markLongPosts(list);
 }
 
 $('search').addEventListener('input', renderList);

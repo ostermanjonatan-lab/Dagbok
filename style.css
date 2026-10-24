@@ -1076,20 +1076,119 @@ body.sheet-open .nav .on:not(.main) { color: color-mix(in srgb, var(--brand-text
 body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
 @media (prefers-reduced-motion: reduce) { .nav .main .bubble, .nav .main .bubble svg { transition: none; } }
 
-/* Flöde */
+/* Flöde: varje dag som ett inlägg */
 .post {
-  padding: 16px 0 18px;
-  border-bottom: 1px solid var(--line);
+  margin-top: 12px;
+  padding: 14px 14px 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
 }
 .post-head {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 12px;
-  margin-bottom: 6px;
+  align-items: center;
+  gap: 11px;
+  margin-bottom: 10px;
 }
-.post .when { font-size: 14px; color: var(--accent); }
-.post.today .when { font-weight: 600; }
+.post .avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--m);
+  color: var(--on-mood);
+  font-weight: 600;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+.post .avatar.none { background: var(--line); color: var(--muted); }
+.post .avatar[data-m="1"], .post .avatar[data-m="5"] { color: #fff; }
+.post .who { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
+.post .when { font-size: 15px; font-weight: 600; color: var(--text); }
 .post.today .when { color: var(--accent); }
-.post .open { font-size: 14px; flex: none; }
-.post .meta { font-size: 13px; color: var(--muted); margin-top: 8px; }
+.post .sub { display: flex; align-items: center; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.post .sub svg {
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.post .sep { margin: 0 6px; }
+.post .prose.clamp {
+  max-height: calc(1.55em * 7);
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(#000 70%, transparent);
+  mask-image: linear-gradient(#000 70%, transparent);
+}
+.post .more { margin-top: 4px; font-size: 14px; }
+.post .media {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-rows: 1fr;
+  gap: 2px;
+  margin: 12px -14px 0;
+  aspect-ratio: 4 / 3;
+}
+.post .media.n1 { grid-template-columns: 1fr; }
+.post .media.n2 { aspect-ratio: 2 / 1; }
+.post .media.n3 > :first-child { grid-row: span 2; }
+.post .media button {
+  position: relative;
+  display: block;
+  padding: 0;
+  border: 0;
+  background: var(--line);
+  cursor: zoom-in;
+  overflow: hidden;
+  min-height: 0;
+}
+.post .media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.post .media .extra {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgb(0 0 0 / .45);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 600;
+}
+.post-foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.post .mood-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--m) 28%, transparent);
+  color: var(--text);
+}
+.post .mood-chip::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--m); }
+.post .edit {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 2px;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+}
+.post .edit svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
