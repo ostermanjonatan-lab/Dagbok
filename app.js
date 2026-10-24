@@ -649,6 +649,7 @@ $('prev').addEventListener('click', () => go(`#/dag/${shiftKey(current, -1)}`));
 $('next').addEventListener('click', () => go(`#/dag/${shiftKey(current, 1)}`));
 $('to-today').addEventListener('click', () => go('#/dag'));
 $('date-pick').addEventListener('change', (ev) => {
+  ev.target.blur();
   if (ev.target.value) go(`#/dag/${ev.target.value}`);
 });
 

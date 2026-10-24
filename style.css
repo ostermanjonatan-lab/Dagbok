@@ -930,6 +930,10 @@ body.keyboard .nav { visibility: hidden; }
   justify-content: center;
   background: var(--brand);
   padding: 0 max(8px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(8px, env(safe-area-inset-left, 0px));
+  /* Eget lager så att Safari inte låter menyn blinka bort när sidan ritas om */
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 .nav a, .nav button {
   flex: 1;

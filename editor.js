@@ -346,7 +346,8 @@ const Paper = (() => {
       const a = document.activeElement;
       if (!a) return false;
       if (a.isContentEditable || a.tagName === 'TEXTAREA') return true;
-      return a.tagName === 'INPUT' && !/^(checkbox|radio|button|file|range)$/.test(a.type);
+      // Bara fält man skriver text i, inte datumväljare, reglage eller knappar
+      return a.tagName === 'INPUT' && /^(text|search|email|url|tel|password|number)$/.test(a.type);
     }
     function place() {
       const vv = window.visualViewport;
