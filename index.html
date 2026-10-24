@@ -70,13 +70,20 @@
       </div>
       <section class="stats" id="month-stats" role="tabpanel" aria-labelledby="seg-stats" hidden>
         <div class="pills period" id="stat-period" role="radiogroup" aria-label="Period">
+          <button type="button" class="pill" role="radio" data-period="week">Vecka</button>
           <button type="button" class="pill" role="radio" data-period="month">Månad</button>
           <button type="button" class="pill" role="radio" data-period="year">År</button>
           <button type="button" class="pill" role="radio" data-period="all">Totalt</button>
         </div>
+        <div class="stats-head">
+          <h2 id="month-stats-title"></h2>
+          <div class="week-nav" id="week-nav" hidden>
+            <button type="button" id="week-prev" aria-label="Föregående vecka">&#8249;</button>
+            <button type="button" id="week-next" aria-label="Nästa vecka">&#8250;</button>
+          </div>
+        </div>
         <p class="empty" id="stats-empty" hidden></p>
         <div id="stats-body">
-        <h2 id="month-stats-title"></h2>
         <dl class="facts" id="facts"></dl>
         <div class="distr" id="distr" role="img">
           <div class="distr-bar" id="distr-bar"></div>

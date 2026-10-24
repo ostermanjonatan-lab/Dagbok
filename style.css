@@ -582,6 +582,21 @@ mark {
   color: var(--accent);
 }
 .stats h2::first-letter { text-transform: uppercase; }
+.stats-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.stats-head h2 { margin: 0; }
+.week-nav { display: flex; gap: 6px; flex: none; }
+.week-nav button {
+  width: 38px;
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.week-nav button:disabled { opacity: .35; cursor: default; }
 .stats h3 {
   margin: 20px 0 4px;
   font-size: 13px;
