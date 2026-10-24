@@ -107,7 +107,7 @@ button, input, textarea { font: inherit; color: inherit; }
 }
 #date-label .yr { font-weight: 400; color: var(--muted); }
 /* Datumväljaren ligger osynlig ovanpå rubriken så att ett tryck öppnar den */
-#view-day { touch-action: pan-y; }
+#view-day, #view-cal { touch-action: pan-y; }
 #date-pick {
   position: absolute;
   inset: 0;

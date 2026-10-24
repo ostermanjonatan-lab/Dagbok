@@ -563,10 +563,11 @@ moodButtons.forEach((b) => {
 
 function stepDay(dir) { go(`#/dag/${shiftKey(current, dir)}`); }
 
-/* Svep åt höger eller vänster i dagvyn för att byta dag */
+/* Svep åt höger eller vänster för att byta dag i dagvyn och månad i kalendern */
 
-(() => {
-  const view = $('view-day');
+// area tar emot svepet, moving är det som följer fingret. canNext säger om det går
+// att gå framåt, step(dir) byter med -1 eller 1. Svep som börjar i skip räknas inte.
+function attachSwipe({ area, moving, skip, canNext, step }) {
   const reduce = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let sx = 0;
   let sy = 0;
@@ -574,34 +575,34 @@ function stepDay(dir) { go(`#/dag/${shiftKey(current, dir)}`); }
   let mode = null; // null, 'start', 'x' (sidled) eller 'y' (vanlig scroll)
 
   function reset(animated) {
-    view.style.transition = animated && !reduce() ? 'transform .16s ease-out, opacity .16s' : 'none';
-    view.style.transform = '';
-    view.style.opacity = '';
+    moving.style.transition = animated && !reduce() ? 'transform .16s ease-out, opacity .16s' : 'none';
+    moving.style.transform = '';
+    moving.style.opacity = '';
   }
 
-  view.addEventListener('pointerdown', (ev) => {
-    if (ev.pointerType !== 'touch' || ev.target.closest('.photos, .fmt')) return;
+  area.addEventListener('pointerdown', (ev) => {
+    if (ev.pointerType !== 'touch' || (skip && ev.target.closest(skip))) return;
     sx = ev.clientX;
     sy = ev.clientY;
     dx = 0;
     mode = 'start';
   });
 
-  view.addEventListener('pointermove', (ev) => {
+  area.addEventListener('pointermove', (ev) => {
     if (!mode || ev.pointerType !== 'touch') return;
     const mx = ev.clientX - sx;
     const my = ev.clientY - sy;
     if (mode === 'start') {
       if (Math.abs(mx) < 12 && Math.abs(my) < 12) return;
-      // Bara tydligt sidledes rörelser byter dag, och inte när man markerar text
+      // Bara tydligt sidledes rörelser byter, och inte när man markerar text
       mode = Math.abs(mx) > Math.abs(my) * 1.5 && window.getSelection().isCollapsed ? 'x' : 'y';
     }
     if (mode !== 'x') return;
     dx = mx;
-    const blocked = dx < 0 && current >= todayKey();
-    view.style.transition = 'none';
-    view.style.transform = `translateX(${dx * (blocked ? 0.12 : 0.5)}px)`;
-    view.style.opacity = String(1 - Math.min(Math.abs(dx) / 700, 0.3));
+    const blocked = dx < 0 && !canNext();
+    moving.style.transition = 'none';
+    moving.style.transform = `translateX(${dx * (blocked ? 0.12 : 0.5)}px)`;
+    moving.style.opacity = String(1 - Math.min(Math.abs(dx) / 700, 0.3));
   });
 
   function end() {
@@ -611,30 +612,38 @@ function stepDay(dir) { go(`#/dag/${shiftKey(current, dir)}`); }
     }
     mode = null;
     const dir = dx < 0 ? 1 : -1;
-    if (Math.abs(dx) < 70 || (dir > 0 && current >= todayKey())) {
+    if (Math.abs(dx) < 70 || (dir > 0 && !canNext())) {
       reset(true);
       return;
     }
     if (reduce()) {
       reset(false);
-      stepDay(dir);
+      step(dir);
       return;
     }
-    // Glid ut åt samma håll som fingret, byt dag och glid in från andra sidan
-    view.style.transition = 'transform .14s ease-in, opacity .14s';
-    view.style.transform = `translateX(${dir > 0 ? -70 : 70}px)`;
-    view.style.opacity = '0';
+    // Glid ut åt samma håll som fingret, byt och glid in från andra sidan
+    moving.style.transition = 'transform .14s ease-in, opacity .14s';
+    moving.style.transform = `translateX(${dir > 0 ? -70 : 70}px)`;
+    moving.style.opacity = '0';
     setTimeout(() => {
-      stepDay(dir);
-      view.style.transition = 'none';
-      view.style.transform = `translateX(${dir > 0 ? 70 : -70}px)`;
+      step(dir);
+      moving.style.transition = 'none';
+      moving.style.transform = `translateX(${dir > 0 ? 70 : -70}px)`;
       requestAnimationFrame(() => requestAnimationFrame(() => reset(true)));
     }, 140);
   }
 
-  view.addEventListener('pointerup', end);
-  view.addEventListener('pointercancel', end);
-})();
+  area.addEventListener('pointerup', end);
+  area.addEventListener('pointercancel', end);
+}
+
+attachSwipe({
+  area: $('view-day'),
+  moving: $('view-day'),
+  skip: '.photos, .fmt',
+  canNext: () => current < todayKey(),
+  step: (dir) => stepDay(dir),
+});
 
 $('prev').addEventListener('click', () => go(`#/dag/${shiftKey(current, -1)}`));
 $('next').addEventListener('click', () => go(`#/dag/${shiftKey(current, 1)}`));
@@ -1519,6 +1528,14 @@ function shiftMonth(n) {
   calMonth = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
   renderCal();
 }
+
+attachSwipe({
+  area: $('view-cal'),
+  moving: $('cal-grid'),
+  skip: '.seg, #feed-panel, #month-stats, .layers',
+  canNext: () => calMonth < todayKey().slice(0, 7),
+  step: (dir) => shiftMonth(dir),
+});
 
 $('cal-prev').addEventListener('click', () => shiftMonth(-1));
 $('cal-next').addEventListener('click', () => shiftMonth(1));
