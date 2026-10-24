@@ -468,6 +468,15 @@ function setMood(v) {
   });
 }
 
+// Veckodag, datum och år som separata delar så att de kan få olika storlek
+const dayPartFmt = new Intl.DateTimeFormat('sv-SE', { day: 'numeric', month: 'long' });
+function setDateLabel(key) {
+  const d = parseKey(key);
+  $('date-label').innerHTML = `<span class="wd">${weekdayFmt.format(d)}</span>` +
+    `<span class="dm">${dayPartFmt.format(d)} <span class="yr">${d.getFullYear()}</span></span>`;
+  $('date-label').setAttribute('aria-label', fmtDate(key));
+}
+
 function showDay(key) {
   flushSave();
   const today = todayKey();
@@ -482,7 +491,7 @@ function showDay(key) {
   setMood(e ? e.mood : null);
   showWeather(e);
 
-  $('date-label').textContent = fmtDate(key);
+  setDateLabel(key);
   $('date-pick').value = key;
   $('date-pick').max = today;
   $('next').disabled = key >= today;

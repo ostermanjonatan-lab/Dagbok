@@ -68,12 +68,31 @@ button, input, textarea { font: inherit; color: inherit; }
 .icon:active { background: var(--line); }
 .icon:disabled { opacity: .3; cursor: default; }
 .date { position: relative; flex: 1; min-width: 0; }
+/* Datumet i två rader: veckodagen liten överst, datum och månad stort under.
+   Storleken följer skärmens bredd. */
 #date-label {
-  display: block;
-  color: var(--accent);
-  font-family: var(--serif);
-  font-size: 22px; font-weight: 600; line-height: 1.25;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  line-height: 1.1;
 }
+#date-label .wd {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+#date-label .dm {
+  margin-top: 4px;
+  font-family: var(--serif);
+  font-size: clamp(26px, 7.5vw, 38px);
+  font-weight: 600;
+  color: var(--accent);
+  white-space: nowrap;
+}
+#date-label .yr { font-weight: 400; color: var(--muted); }
 /* Datumväljaren ligger osynlig ovanpå rubriken så att ett tryck öppnar den */
 #date-pick { position: absolute; inset: 0; opacity: 0; width: 100%; cursor: pointer; }
 
@@ -82,7 +101,7 @@ button, input, textarea { font: inherit; color: inherit; }
   color: var(--accent);
   text-decoration: underline; text-underline-offset: 3px;
 }
-#to-today { margin-left: 44px; font-size: 14px; display: block; }
+#to-today { margin: 4px auto 0; font-size: 14px; display: block; }
 .danger { color: var(--danger); }
 
 form { margin-top: 16px; }
@@ -477,7 +496,8 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
 
 /* Svit i dagvyn */
 .streak {
-  margin: 0 0 0 44px;
+  margin: 4px 0 0;
+  text-align: center;
   font-size: 14px;
   color: var(--accent);
 }
@@ -2044,6 +2064,15 @@ function updateWeatherBtn() {
   $('weather-clear').hidden = !w;
 }
 
+// Veckodag, datum och år som separata delar så att de kan få olika storlek
+const dayPartFmt = new Intl.DateTimeFormat('sv-SE', { day: 'numeric', month: 'long' });
+function setDateLabel(key) {
+  const d = parseKey(key);
+  $('date-label').innerHTML = `<span class="wd">${weekdayFmt.format(d)}</span>` +
+    `<span class="dm">${dayPartFmt.format(d)} <span class="yr">${d.getFullYear()}</span></span>`;
+  $('date-label').setAttribute('aria-label', fmtDate(key));
+}
+
 function showDay(key) {
   flushSave();
   const today = todayKey();
@@ -2058,7 +2087,7 @@ function showDay(key) {
   setMood(e ? e.mood : null);
   showWeather(e);
 
-  $('date-label').textContent = fmtDate(key);
+  setDateLabel(key);
   $('date-pick').value = key;
   $('date-pick').max = today;
   $('next').disabled = key >= today;

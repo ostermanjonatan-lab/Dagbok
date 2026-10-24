@@ -100,14 +100,31 @@ button, input, textarea { font: inherit; color: inherit; }
   flex: 1;
   min-width: 0;
 }
+/* Datumet i två rader: veckodagen liten överst, datum och månad stort under.
+   Storleken följer skärmens bredd. */
 #date-label {
-  display: block;
-  color: var(--accent);
-  font-family: var(--serif);
-  font-size: 22px;
-  font-weight: 600;
-  line-height: 1.25;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  line-height: 1.1;
 }
+#date-label .wd {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+#date-label .dm {
+  margin-top: 4px;
+  font-family: var(--serif);
+  font-size: clamp(26px, 7.5vw, 38px);
+  font-weight: 600;
+  color: var(--accent);
+  white-space: nowrap;
+}
+#date-label .yr { font-weight: 400; color: var(--muted); }
 /* Datumväljaren ligger osynlig ovanpå rubriken så att ett tryck öppnar den */
 #date-pick {
   position: absolute;
@@ -126,7 +143,7 @@ button, input, textarea { font: inherit; color: inherit; }
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-#to-today { margin-left: 44px; font-size: 14px; display: block; }
+#to-today { margin: 4px auto 0; font-size: 14px; display: block; }
 .danger { color: var(--danger); }
 
 /* Formulär */
@@ -170,7 +187,8 @@ textarea {
 }
 
 .weather {
-  margin: 0 0 0 44px;
+  margin: 4px 0 0;
+  text-align: center;
   font-size: 14px;
   color: var(--muted);
   min-height: 21px;
@@ -536,7 +554,8 @@ mark {
 
 /* Svit i dagvyn */
 .streak {
-  margin: 0 0 0 44px;
+  margin: 4px 0 0;
+  text-align: center;
   font-size: 14px;
   color: var(--accent);
 }
