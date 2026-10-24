@@ -1704,18 +1704,30 @@ function route() {
   }
 }
 
-/* Dagen som ett ark som glider upp */
+/* Dagen som en kapsel som öppnas ur Dag-knappen */
 
 const daySheet = $('day-sheet');
 const dayPanel = $('sheet-panel');
+
+// Var Dag-knappen sitter i förhållande till arket, så att kapseln börjar och slutar där
+function measureCapsule() {
+  const p = dayPanel.getBoundingClientRect();
+  const b = document.querySelector('#tab-day .bubble').getBoundingClientRect();
+  dayPanel.style.setProperty('--cap-top', `${Math.max(0, b.top - p.top)}px`);
+  dayPanel.style.setProperty('--cap-l', `${Math.max(0, b.left - p.left)}px`);
+  dayPanel.style.setProperty('--cap-r', `${Math.max(0, p.right - b.right)}px`);
+  dayPanel.style.setProperty('--rise', `${b.top + b.height / 2 - (p.top + 22)}px`);
+}
 
 function openSheet(key) {
   const wasOpen = !daySheet.hidden;
   daySheet.classList.remove('closing');
   dayPanel.style.transform = '';
   daySheet.hidden = false;
+  if (!wasOpen) measureCapsule();
   document.body.classList.add('sheet-open');
   $('tab-day').classList.add('on');
+  $('tab-day').setAttribute('aria-label', 'Stäng dagen');
   showDay(key);
   if (!wasOpen) dayPanel.scrollTop = 0;
 }
@@ -1727,6 +1739,7 @@ function hideSheet() {
   if (dayPanel.contains(document.activeElement)) document.activeElement.blur();
   document.body.classList.remove('sheet-open');
   $('tab-day').classList.remove('on');
+  $('tab-day').setAttribute('aria-label', 'Dag');
   refreshBase();
   const done = () => {
     daySheet.hidden = true;
@@ -1736,12 +1749,19 @@ function hideSheet() {
   };
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) done();
   else {
+    measureCapsule();
     daySheet.classList.add('closing');
-    setTimeout(done, 220);
+    setTimeout(done, 230);
   }
 }
 
 $('sheet-close').addEventListener('click', () => closeSheet());
+// Dag-knappen stänger kapseln när den är öppen
+$('tab-day').addEventListener('click', (ev) => {
+  if (daySheet.hidden) return;
+  ev.preventDefault();
+  closeSheet();
+});
 $('sheet-backdrop').addEventListener('click', () => closeSheet());
 document.addEventListener('keydown', (ev) => {
   if (ev.key !== 'Escape' || daySheet.hidden || !$('lock').hidden) return;

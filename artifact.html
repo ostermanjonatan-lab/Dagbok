@@ -716,10 +716,10 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   background: var(--line);
 }
 
-/* Dagen är ett ark som glider upp över kalendern */
+/* Dagen öppnas som en kapsel ur Dag-knappen. Bottenmenyn syns hela tiden. */
 .day-sheet {
   position: fixed;
-  inset: 0;
+  inset: 0 0 calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
   z-index: 30;
   display: flex;
   flex-direction: column;
@@ -742,15 +742,26 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   background: var(--bg);
   border-radius: 18px 18px 0 0;
   box-shadow: 0 -8px 30px rgb(0 0 0 / .18);
-  animation: slide-up .28s cubic-bezier(.2, .8, .2, 1);
+  animation: cap-open .34s cubic-bezier(.2, .8, .2, 1);
 }
-.day-sheet.closing .sheet-panel { transform: translateY(100%); transition: transform .22s ease-in; }
+.day-sheet.closing .sheet-panel { animation: cap-close .24s ease-in forwards; }
 .day-sheet.closing .sheet-backdrop { opacity: 0; transition: opacity .22s; }
-@keyframes slide-up { from { transform: translateY(100%); } }
+/* Kapseln växer från knappens cirkel till hela arket, ikonen följer kapselns topp */
+@keyframes cap-open {
+  from { clip-path: inset(var(--cap-top, 100%) var(--cap-r, 50%) 0 var(--cap-l, 50%) round 30px); }
+  to { clip-path: inset(0 round 18px 18px 0 0); }
+}
+@keyframes cap-close {
+  from { clip-path: inset(0 round 18px 18px 0 0); }
+  to { clip-path: inset(var(--cap-top, 100%) var(--cap-r, 50%) 0 var(--cap-l, 50%) round 30px); }
+}
+@keyframes cap-rise { from { transform: translateY(var(--rise, 0px)); } }
+@keyframes cap-sink { to { transform: translateY(var(--rise, 0px)); } }
 @keyframes fade-in { from { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
-  .sheet-panel, .sheet-backdrop { animation: none; }
-  .day-sheet.closing .sheet-panel, .day-sheet.closing .sheet-backdrop { transition: none; }
+  .sheet-panel, .sheet-backdrop, .cap-icon { animation: none; }
+  .day-sheet.closing .sheet-panel, .day-sheet.closing .cap-icon { animation: none; }
+  .day-sheet.closing .sheet-backdrop { transition: none; }
 }
 /* Greppet överst: dra nedåt för att stänga */
 .sheet-grab {
@@ -764,15 +775,27 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   touch-action: none;
   cursor: grab;
 }
-.grab-bar {
-  width: 42px;
-  height: 5px;
-  margin-top: 9px;
-  border-radius: 3px;
-  background: var(--line);
+.cap-icon {
+  position: absolute;
+  top: 9px;
+  left: calc(50% - 13px);
+  width: 26px;
+  height: 26px;
+  color: var(--accent);
+  animation: cap-rise .34s cubic-bezier(.2, .8, .2, 1);
 }
+.cap-icon svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.day-sheet.closing .cap-icon { animation: cap-sink .24s ease-in forwards; }
 .sheet-grab .close-x { position: absolute; top: 2px; right: 8px; }
-.sheet-body { padding: 0 16px calc(40px + env(safe-area-inset-bottom, 0px)); }
+.sheet-body { padding: 0 16px 48px; }
 .sheet-panel .fmt { top: 44px; }
 .sheet-panel .daynav { margin-top: 0; }
 body.sheet-open { overflow: hidden; }
@@ -938,7 +961,7 @@ body.sheet-open { overflow: hidden; }
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 5;
+  z-index: 40;
   display: flex;
   justify-content: center;
   background: var(--brand);
@@ -994,7 +1017,15 @@ body.sheet-open { overflow: hidden; }
 .nav .main:active .bubble { transform: scale(.95); }
 .nav .main:focus-visible { outline: none; }
 .nav .main:focus-visible .bubble { outline: 2px solid var(--brand-text); outline-offset: 3px; }
-@media (prefers-reduced-motion: reduce) { .nav .main .bubble { transition: none; } }
+.nav .main .bubble svg { grid-area: 1 / 1; transition: opacity .2s; }
+.nav .main .bubble .shut { opacity: 0; }
+/* När dagen är öppen smälter knappen ihop med kapseln och stänger den */
+.nav .main.on .bubble { border-color: var(--bg); box-shadow: none; }
+.nav .main.on .bubble svg { opacity: 0; }
+.nav .main.on .bubble .shut { opacity: 1; }
+body.sheet-open .nav .on:not(.main) { color: color-mix(in srgb, var(--brand-text) 70%, transparent); font-weight: 400; }
+body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
+@media (prefers-reduced-motion: reduce) { .nav .main .bubble, .nav .main .bubble svg { transition: none; } }
 
 /* Flöde */
 .post {
@@ -1197,7 +1228,7 @@ body.sheet-open { overflow: hidden; }
   <div class="sheet-backdrop" id="sheet-backdrop"></div>
   <div class="sheet-panel" id="sheet-panel" role="dialog" aria-modal="true" aria-label="Dagen">
     <div class="sheet-grab" id="sheet-grab">
-      <span class="grab-bar" aria-hidden="true"></span>
+      <span class="cap-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13 7l4 4"/></svg></span>
       <button type="button" class="icon close-x" id="sheet-close" aria-label="Stäng"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     </div>
     <div class="wrap sheet-body">
@@ -1275,7 +1306,7 @@ body.sheet-open { overflow: hidden; }
     <span>Kalender</span>
   </button>
   <button type="button" id="tab-day" class="main" aria-label="Dag">
-    <span class="bubble"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13 7l4 4"/></svg></span>
+    <span class="bubble"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13 7l4 4"/></svg><svg class="shut" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span>
   </button>
   <button type="button" id="tab-set">
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
@@ -3365,18 +3396,30 @@ function refreshBase() {
 
 function closeSheet() { hideSheet(); }
 
-/* Dagen som ett ark som glider upp */
+/* Dagen som en kapsel som öppnas ur Dag-knappen */
 
 const daySheet = $('day-sheet');
 const dayPanel = $('sheet-panel');
+
+// Var Dag-knappen sitter i förhållande till arket, så att kapseln börjar och slutar där
+function measureCapsule() {
+  const p = dayPanel.getBoundingClientRect();
+  const b = document.querySelector('#tab-day .bubble').getBoundingClientRect();
+  dayPanel.style.setProperty('--cap-top', `${Math.max(0, b.top - p.top)}px`);
+  dayPanel.style.setProperty('--cap-l', `${Math.max(0, b.left - p.left)}px`);
+  dayPanel.style.setProperty('--cap-r', `${Math.max(0, p.right - b.right)}px`);
+  dayPanel.style.setProperty('--rise', `${b.top + b.height / 2 - (p.top + 22)}px`);
+}
 
 function openSheet(key) {
   const wasOpen = !daySheet.hidden;
   daySheet.classList.remove('closing');
   dayPanel.style.transform = '';
   daySheet.hidden = false;
+  if (!wasOpen) measureCapsule();
   document.body.classList.add('sheet-open');
   $('tab-day').classList.add('on');
+  $('tab-day').setAttribute('aria-label', 'Stäng dagen');
   showDay(key);
   if (!wasOpen) dayPanel.scrollTop = 0;
 }
@@ -3388,6 +3431,7 @@ function hideSheet() {
   if (dayPanel.contains(document.activeElement)) document.activeElement.blur();
   document.body.classList.remove('sheet-open');
   $('tab-day').classList.remove('on');
+  $('tab-day').setAttribute('aria-label', 'Dag');
   refreshBase();
   const done = () => {
     daySheet.hidden = true;
@@ -3397,8 +3441,9 @@ function hideSheet() {
   };
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) done();
   else {
+    measureCapsule();
     daySheet.classList.add('closing');
-    setTimeout(done, 220);
+    setTimeout(done, 230);
   }
 }
 
@@ -3445,7 +3490,8 @@ document.addEventListener('keydown', (ev) => {
   grab.addEventListener('pointercancel', end);
 })();
 
-$('tab-day').addEventListener('click', () => openSheet(todayKey()));
+// Dag-knappen stänger kapseln när den är öppen
+$('tab-day').addEventListener('click', () => (daySheet.hidden ? openSheet(todayKey()) : hideSheet()));
 $('tab-cal').addEventListener('click', () => { hideSheet(); setView('cal'); });
 $('tab-set').addEventListener('click', () => { hideSheet(); setView('set'); });
 
