@@ -247,6 +247,17 @@ textarea {
 .sort-pop [aria-checked="true"] { color: var(--accent); font-weight: 600; }
 .sort-pop [aria-checked="true"] .check { visibility: visible; }
 .sort-note { margin: 10px 0 0; font-size: 14px; color: var(--muted); }
+/* Förslag efter @ i sökfältet, en rad som går att svepa i sidled */
+.at-suggest {
+  display: flex;
+  gap: 6px;
+  margin: 10px -16px 0;
+  padding: 0 16px 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.at-suggest::-webkit-scrollbar { display: none; }
+.at-suggest .pill { flex: none; padding: 6px 12px; font-size: 14px; }
 .show-more { display: block; margin: 16px auto 4px; font-size: 15px; }
 
 .month {

@@ -285,6 +285,17 @@ textarea {
 .sort-pop [aria-checked="true"] { color: var(--accent); font-weight: 600; }
 .sort-pop [aria-checked="true"] .check { visibility: visible; }
 .sort-note { margin: 10px 0 0; font-size: 14px; color: var(--muted); }
+/* Förslag efter @ i sökfältet, en rad som går att svepa i sidled */
+.at-suggest {
+  display: flex;
+  gap: 6px;
+  margin: 10px -16px 0;
+  padding: 0 16px 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.at-suggest::-webkit-scrollbar { display: none; }
+.at-suggest .pill { flex: none; padding: 6px 12px; font-size: 14px; }
 .show-more { display: block; margin: 16px auto 4px; font-size: 15px; }
 .month {
   font-size: 14px; font-weight: 400; color: var(--accent);
@@ -1207,7 +1218,7 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
     </div>
     <div class="feed" id="feed-panel" role="tabpanel" aria-labelledby="seg-feed">
       <div class="search-row">
-        <input type="search" id="search" placeholder="Sök i dagboken" aria-label="Sök">
+        <input type="search" id="search" placeholder="Sök, eller @ för datum" aria-label="Sök. Skriv @ för att söka på datum och helgdagar.">
         <div class="sorter" id="sorter">
           <button type="button" class="hd-btn" id="sort-btn" aria-haspopup="true" aria-expanded="false"
             aria-controls="sort-pop" aria-label="Sortera">
@@ -1223,6 +1234,7 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
           </div>
         </div>
       </div>
+      <div class="at-suggest" id="at-suggest" hidden></div>
       <p class="sort-note" id="sort-note" hidden></p>
       <div id="list"></div>
 
@@ -2819,6 +2831,178 @@ $('list').addEventListener('click', (ev) => {
   more.hidden = true;
 });
 
+/* @-sökning: datum, månader, år, veckodagar och helgdagar */
+
+const MONTHS = ['januari', 'februari', 'mars', 'april', 'maj', 'juni', 'juli', 'augusti', 'september', 'oktober', 'november', 'december'];
+const WEEKDAYS = ['söndag', 'måndag', 'tisdag', 'onsdag', 'torsdag', 'fredag', 'lördag'];
+const HOLIDAY_GROUPS = {
+  Påsk: ['Långfredagen', 'Påskafton', 'Påskdagen', 'Annandag påsk'],
+  Jul: ['Julafton', 'Juldagen', 'Annandag jul'],
+  Midsommar: ['Midsommarafton', 'Midsommardagen'],
+  Nyår: ['Nyårsafton', 'Nyårsdagen'],
+};
+const AT_DEFAULTS = ['Idag', 'Igår', 'Julafton', 'Midsommarafton', 'Påsk', 'Nyårsafton', 'Helgdagar'];
+const holidayCache = {};
+
+const pad2 = (n) => String(n).padStart(2, '0');
+const normAt = (s) => s.toLowerCase().replace(/[\s.\-]/g, '');
+
+// Påskdagen enligt den gregorianska kalendern
+function easter(y) {
+  const a = y % 19;
+  const b = Math.floor(y / 100);
+  const c = y % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(y, month - 1, day);
+}
+
+// Helgdagar för ett år, som datum (ÅÅÅÅ-MM-DD) till namn
+function holidays(y) {
+  if (holidayCache[y]) return holidayCache[y];
+  const out = {};
+  const put = (d, name) => { out[`${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`] = name; };
+  const on = (m, d, name) => put(new Date(y, m - 1, d), name);
+  const fromEaster = (n, name) => { const d = easter(y); d.setDate(d.getDate() + n); put(d, name); };
+  // Första veckodagen wd (0 = söndag) från och med ett datum
+  const firstFrom = (m, d, wd) => { const x = new Date(y, m - 1, d); x.setDate(d + ((wd - x.getDay() + 7) % 7)); return x; };
+  on(1, 1, 'Nyårsdagen');
+  on(1, 6, 'Trettondedag jul');
+  on(2, 14, 'Alla hjärtans dag');
+  fromEaster(-2, 'Långfredagen');
+  fromEaster(-1, 'Påskafton');
+  fromEaster(0, 'Påskdagen');
+  fromEaster(1, 'Annandag påsk');
+  on(4, 30, 'Valborg');
+  on(5, 1, 'Första maj');
+  fromEaster(39, 'Kristi himmelsfärds dag');
+  const mors = firstFrom(5, 25, 0);
+  put(mors, 'Mors dag');
+  fromEaster(49, 'Pingstdagen');
+  on(6, 6, 'Nationaldagen');
+  const msa = firstFrom(6, 19, 5);
+  put(msa, 'Midsommarafton');
+  put(new Date(y, 5, msa.getDate() + 1), 'Midsommardagen');
+  const helgon = firstFrom(10, 31, 6);
+  put(new Date(helgon.getFullYear(), helgon.getMonth(), helgon.getDate() - 1), 'Allhelgonaafton');
+  put(helgon, 'Alla helgons dag');
+  put(firstFrom(11, 8, 0), 'Fars dag');
+  on(12, 13, 'Lucia');
+  on(12, 24, 'Julafton');
+  on(12, 25, 'Juldagen');
+  on(12, 26, 'Annandag jul');
+  on(12, 31, 'Nyårsafton');
+  holidayCache[y] = out;
+  return out;
+}
+
+const HOLIDAY_NAMES = [...new Set(Object.values(holidays(2026)))];
+const holidayOf = (k) => holidays(Number(k.slice(0, 4)))[k];
+
+// Gör om texten efter @ till en etikett och ett test för datumnycklar
+function parseAt(raw) {
+  let s = raw.trim().toLowerCase();
+  if (!s) return null;
+  let year = null;
+  const ym = s.match(/^(.*\D)\s+(\d{4})$/);
+  if (ym) { s = ym[1].trim(); year = ym[2]; }
+  const inYear = (k) => !year || k.startsWith(year);
+  const withYear = (label) => (year ? `${label} ${year}` : label);
+  const monthIdx = (w) => (w.length >= 3 ? MONTHS.findIndex((m) => m.startsWith(w)) : -1);
+  let m;
+
+  if (s === 'idag' || s === 'igår') {
+    const k = s === 'idag' ? todayKey() : shiftKey(todayKey(), -1);
+    return { label: s === 'idag' ? 'Idag' : 'Igår', test: (x) => x === k };
+  }
+  if ((m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/))) {
+    const k = `${m[1]}-${pad2(m[2])}-${pad2(m[3])}`;
+    return { label: fmtDate(k), test: (x) => x === k };
+  }
+  if ((m = s.match(/^(\d{4})-(\d{1,2})$/))) {
+    const p = `${m[1]}-${pad2(m[2])}`;
+    const name = monthFmt.format(parseKey(p + '-01'));
+    return { label: name.charAt(0).toUpperCase() + name.slice(1), test: (x) => x.startsWith(p) };
+  }
+  if ((m = s.match(/^(\d{4})$/))) return { label: m[1], test: (x) => x.startsWith(m[1]) };
+  if ((m = s.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?$/))) {
+    const md = `-${pad2(m[2])}-${pad2(m[1])}`;
+    const y = m[3] || year;
+    if (Number(m[2]) < 1 || Number(m[2]) > 12) return null;
+    return { label: `${Number(m[1])} ${MONTHS[m[2] - 1]}${y ? ` ${y}` : ''}`, test: (x) => x.endsWith(md) && (!y || x.startsWith(y)) };
+  }
+  if ((m = s.match(/^(\d{1,2})\s*([a-zåäö]+)$/)) && monthIdx(m[2]) >= 0) {
+    const mi = monthIdx(m[2]);
+    const md = `-${pad2(mi + 1)}-${pad2(m[1])}`;
+    return { label: withYear(`${Number(m[1])} ${MONTHS[mi]}`), test: (x) => x.endsWith(md) && inYear(x) };
+  }
+
+  const n = normAt(s);
+  if (n === 'helgdagar' || n === 'helgdag' || n === 'rödadagar') {
+    return { label: withYear('Helgdagar'), test: (x) => !!holidayOf(x) && inYear(x) };
+  }
+  const group = Object.keys(HOLIDAY_GROUPS).find((g) => normAt(g) === n);
+  const exact = HOLIDAY_NAMES.filter((h) => normAt(h) === n);
+  if (group || exact.length) {
+    const names = group ? HOLIDAY_GROUPS[group] : exact;
+    return { label: withYear(group || exact[0]), test: (x) => names.includes(holidayOf(x)) && inYear(x) };
+  }
+  const mi = monthIdx(s);
+  if (/^[a-zåäö]+$/.test(s) && mi >= 0) {
+    const mm = `-${pad2(mi + 1)}-`;
+    const name = MONTHS[mi];
+    return { label: withYear(name.charAt(0).toUpperCase() + name.slice(1)), test: (x) => x.slice(4, 8) === mm && inYear(x) };
+  }
+  const wd = WEEKDAYS.findIndex((w) => s.length >= 3 && (w.startsWith(s) || s === `${w}ar`));
+  if (/^[a-zåäö]+$/.test(s) && wd >= 0) {
+    const name = WEEKDAYS[wd];
+    return { label: withYear(`${name.charAt(0).toUpperCase() + name.slice(1)}ar`), test: (x) => parseKey(x).getDay() === wd && inYear(x) };
+  }
+  const prefix = [...Object.keys(HOLIDAY_GROUPS).flatMap((g) => (normAt(g).startsWith(n) ? HOLIDAY_GROUPS[g] : [])),
+    ...HOLIDAY_NAMES.filter((h) => normAt(h).startsWith(n))];
+  if (prefix.length) {
+    const names = [...new Set(prefix)];
+    const label = names.length <= 2 ? names.join(' och ') : `${names.slice(0, 2).join(', ')} med flera`;
+    return { label: withYear(label), test: (x) => names.includes(holidayOf(x)) && inYear(x) };
+  }
+  return null;
+}
+
+// Förslag under sökfältet medan man skriver efter @
+function renderAtSuggest() {
+  const box = $('at-suggest');
+  const v = $('search').value;
+  if (!v.startsWith('@')) {
+    box.hidden = true;
+    return;
+  }
+  const n = normAt(v.slice(1));
+  const all = [...AT_DEFAULTS, ...Object.keys(HOLIDAY_GROUPS), ...HOLIDAY_NAMES,
+    ...MONTHS.map((x) => x.charAt(0).toUpperCase() + x.slice(1))];
+  const pool = n ? [...new Set(all)].filter((x) => normAt(x).startsWith(n)) : AT_DEFAULTS;
+  const list = pool.filter((x) => normAt(x) !== n).slice(0, 8);
+  box.hidden = !list.length;
+  box.innerHTML = list.map((x) => `<button type="button" class="pill" data-at="${escapeHtml(x)}">@${escapeHtml(x)}</button>`).join('');
+}
+
+$('at-suggest').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-at]');
+  if (!b) return;
+  $('search').value = `@${b.dataset.at}`;
+  shownCount = PAGE;
+  renderAtSuggest();
+  renderList();
+});
+
 /* Sortering av flödet. Allt utom Senaste först gäller hela dagboken. */
 
 const SORTS = {
@@ -2841,24 +3025,35 @@ function renderList() {
   const q = $('search').value.trim();
   const lq = q.toLowerCase();
   const sort = SORTS[sortBy];
+  const isAt = q.startsWith('@');
+  const at = isAt ? parseAt(q.slice(1)) : null;
   // Utan sökning och sortering visas månaden i kalendern, annars hela dagboken
   const whole = !!lq || sortBy !== 'newest';
   const keys = Object.keys(entries).filter((k) => {
     const e = entries[k];
     if (!whole) return k.slice(0, 7) === calMonth;
     if (sort.keep && !sort.keep(e)) return false;
+    if (isAt) return !!at && at.test(k);
     if (!lq) return true;
     return [Paper.mdToText(e.text), fmtDate(k), e.weather ? fmtWeather(e.weather) : '']
       .some((t) => t.toLowerCase().includes(lq));
   }).sort(sort.order);
 
-  $('sort-note').hidden = !sort.note;
-  $('sort-note').textContent = sort.note;
+  const note = at && keys.length ? `${at.label}, ${keys.length} ${keys.length === 1 ? 'dag' : 'dagar'}` : at ? at.label : sort.note;
+  $('sort-note').hidden = !note;
+  $('sort-note').textContent = note;
 
   const list = $('list');
+  // Bara @ visar förslagen och inget annat
+  if (q === '@') {
+    list.innerHTML = '';
+    return;
+  }
   if (!keys.length) {
     list.innerHTML = `<p class="empty">${
-      whole ? 'Inga dagar matchar.' : `Inget skrivet i ${monthFmt.format(parseKey(calMonth + '-01'))}.`
+      isAt && !at ? 'Känner inte igen datumet. Prova @julafton, @24 dec, @maj 2025 eller @lördagar.'
+        : at ? 'Inget skrivet då.'
+        : whole ? 'Inga dagar matchar.' : `Inget skrivet i ${monthFmt.format(parseKey(calMonth + '-01'))}.`
     }</p>`;
     return;
   }
@@ -2873,18 +3068,19 @@ function renderList() {
       month = m;
       html += `<h2 class="month">${m}</h2>`;
     }
-    html += postHtml(k, entries[k], today, !!q);
+    html += postHtml(k, entries[k], today, !!q && !isAt);
   }
   if (keys.length > shownCount) {
     html += `<button type="button" class="link show-more" id="show-more">Visa fler (${keys.length - shownCount} kvar)</button>`;
   }
   list.innerHTML = html;
-  if (q) list.querySelectorAll('.when, .prose, .sub').forEach((el) => Paper.highlight(el, q));
+  if (q && !isAt) list.querySelectorAll('.when, .prose, .sub').forEach((el) => Paper.highlight(el, q));
   else markLongPosts(list);
 }
 
 $('search').addEventListener('input', () => {
   shownCount = PAGE;
+  renderAtSuggest();
   renderList();
 });
 $('list').addEventListener('click', (ev) => {

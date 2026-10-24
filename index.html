@@ -47,7 +47,7 @@
       </div>
       <div class="feed" id="feed-panel" role="tabpanel" aria-labelledby="seg-feed">
         <div class="search-row">
-          <input type="search" id="search" placeholder="Sök i dagboken" aria-label="Sök">
+          <input type="search" id="search" placeholder="Sök, eller @ för datum" aria-label="Sök. Skriv @ för att söka på datum och helgdagar.">
           <div class="sorter" id="sorter">
             <button type="button" class="hd-btn" id="sort-btn" aria-haspopup="true" aria-expanded="false"
               aria-controls="sort-pop" aria-label="Sortera">
@@ -63,6 +63,7 @@
             </div>
           </div>
         </div>
+        <div class="at-suggest" id="at-suggest" hidden></div>
         <p class="sort-note" id="sort-note" hidden></p>
         <div id="list"></div>
 
