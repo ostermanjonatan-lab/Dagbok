@@ -492,8 +492,7 @@ function showDay(key) {
   showWeather(e);
 
   setDateLabel(key);
-  $('date-pick').value = key;
-  $('date-pick').max = today;
+  toggleDatePop(false);
   $('next').disabled = key >= today;
   $('to-today').hidden = key === today;
   $('text-label').textContent = key === today ? 'Vad som hänt idag' : 'Vad som hände';
@@ -640,7 +639,7 @@ function attachSwipe({ area, moving, skip, canNext, step }) {
 attachSwipe({
   area: $('view-day'),
   moving: $('view-day'),
-  skip: '.photos, .fmt',
+  skip: '.photos, .fmt, .date-pop',
   canNext: () => current < todayKey(),
   step: (dir) => stepDay(dir),
 });
@@ -648,9 +647,52 @@ attachSwipe({
 $('prev').addEventListener('click', () => go(`#/dag/${shiftKey(current, -1)}`));
 $('next').addEventListener('click', () => go(`#/dag/${shiftKey(current, 1)}`));
 $('to-today').addEventListener('click', () => go('#/dag'));
-$('date-pick').addEventListener('change', (ev) => {
-  ev.target.blur();
-  if (ev.target.value) go(`#/dag/${ev.target.value}`);
+// Egen datumväljare: en liten månadskalender under datumet
+let dpMonth = '';
+
+function renderDatePop() {
+  const [y, m] = dpMonth.split('-').map(Number);
+  const first = new Date(y, m - 1, 1);
+  const days = new Date(y, m, 0).getDate();
+  const today = todayKey();
+  const t = monthFmt.format(first);
+  $('dp-title').textContent = t.charAt(0).toUpperCase() + t.slice(1);
+  $('dp-next').disabled = dpMonth >= today.slice(0, 7);
+  let html = '<span></span>'.repeat((first.getDay() + 6) % 7);
+  for (let d = 1; d <= days; d++) {
+    const k = `${dpMonth}-${pad(d)}`;
+    const cls = [entries[k] ? 'has' : '', k === current ? 'sel' : '', k === today ? 'today' : ''].filter(Boolean).join(' ');
+    html += `<button type="button" data-key="${k}"${cls ? ` class="${cls}"` : ''}${k > today ? ' disabled' : ''} aria-label="${fmtDate(k)}">${d}</button>`;
+  }
+  $('dp-grid').innerHTML = html;
+}
+
+function toggleDatePop(open) {
+  $('date-pop').hidden = !open;
+  $('date-btn').setAttribute('aria-expanded', String(open));
+  if (!open) return;
+  dpMonth = current.slice(0, 7);
+  renderDatePop();
+}
+
+$('date-btn').addEventListener('click', () => toggleDatePop($('date-pop').hidden));
+$('dp-prev').addEventListener('click', () => { dpMonth = shiftYm(dpMonth, -1); renderDatePop(); });
+$('dp-next').addEventListener('click', () => { dpMonth = shiftYm(dpMonth, 1); renderDatePop(); });
+$('dp-grid').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-key]');
+  if (!b || b.disabled) return;
+  toggleDatePop(false);
+  go(`#/dag/${b.dataset.key}`);
+});
+document.addEventListener('pointerdown', (ev) => {
+  if (!$('date-pop').hidden && !ev.target.closest('.date')) toggleDatePop(false);
+});
+// Esc stänger bara väljaren, inte dagen
+document.addEventListener('keydown', (ev) => {
+  if (ev.key !== 'Escape' || $('date-pop').hidden) return;
+  ev.stopImmediatePropagation();
+  toggleDatePop(false);
+  $('date-btn').focus();
 });
 
 $('delete').addEventListener('click', () => {
@@ -1115,6 +1157,7 @@ function splitAt(q) {
 
 // Förslag under sökfältet medan man skriver efter @
 function renderAtSuggest() {
+  $('search-clear').hidden = !$('search').value;
   const box = $('at-suggest');
   const v = $('search').value;
   const i = v.lastIndexOf('@');
@@ -1236,6 +1279,19 @@ $('list').addEventListener('click', (ev) => {
   if (!ev.target.closest('#show-more')) return;
   shownCount += PAGE;
   renderList();
+});
+
+$('search-clear').addEventListener('click', () => {
+  $('search').value = '';
+  shownCount = PAGE;
+  renderAtSuggest();
+  renderList();
+  $('search').focus();
+});
+
+// Långt tryck på en bild ska inte öppna webbläsarens meny
+document.addEventListener('contextmenu', (ev) => {
+  if (ev.target.closest('img')) ev.preventDefault();
 });
 
 const sortBtn = $('sort-btn');

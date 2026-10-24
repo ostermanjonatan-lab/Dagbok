@@ -47,7 +47,10 @@
       </div>
       <div class="feed" id="feed-panel" role="tabpanel" aria-labelledby="seg-feed">
         <div class="search-row">
-          <input type="search" id="search" placeholder="Sök, eller @ för datum" aria-label="Sök. Skriv @ för att söka på datum och helgdagar.">
+          <div class="search-field">
+            <input type="search" id="search" placeholder="Sök, eller @ för datum" aria-label="Sök. Skriv @ för att söka på datum och helgdagar.">
+            <button type="button" class="search-clear" id="search-clear" aria-label="Rensa sökningen" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg></button>
+          </div>
           <div class="sorter" id="sorter">
             <button type="button" class="hd-btn" id="sort-btn" aria-haspopup="true" aria-expanded="false"
               aria-controls="sort-pop" aria-label="Sortera">
@@ -203,10 +206,19 @@
         <section id="view-day">
           <div class="daynav">
             <button type="button" class="icon" id="prev" aria-label="Föregående dag">&#8249;</button>
-            <label class="date">
-              <span id="date-label"></span>
-              <input type="date" id="date-pick" aria-label="Välj datum">
-            </label>
+            <div class="date">
+              <button type="button" class="date-btn" id="date-btn" aria-haspopup="dialog" aria-expanded="false"
+                aria-controls="date-pop"><span id="date-label"></span></button>
+              <div class="date-pop" id="date-pop" role="dialog" aria-label="Välj datum" hidden>
+                <div class="dp-head">
+                  <button type="button" id="dp-prev" aria-label="Föregående månad">&#8249;</button>
+                  <span id="dp-title"></span>
+                  <button type="button" id="dp-next" aria-label="Nästa månad">&#8250;</button>
+                </div>
+                <div class="dp-wd" aria-hidden="true"><span>må</span><span>ti</span><span>on</span><span>to</span><span>fr</span><span>lö</span><span>sö</span></div>
+                <div class="dp-grid" id="dp-grid"></div>
+              </div>
+            </div>
             <button type="button" class="icon" id="next" aria-label="Nästa dag">&#8250;</button>
           </div>
           <button type="button" class="link" id="to-today" hidden>Gå till idag</button>

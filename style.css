@@ -28,6 +28,19 @@
 html { -webkit-text-size-adjust: 100%; }
 /* Ingen blå tryckmarkering från webbläsaren, knapparna har egen tryckeffekt */
 html { -webkit-tap-highlight-color: transparent; }
+/* Appen ska inte bete sig som en webbsida: ingen zoom vid dubbeltryck, ingen
+   markering av knappar och ingen bildmeny vid långt tryck */
+html { touch-action: manipulation; overscroll-behavior-x: none; }
+/* Installerad på hemskärmen studsar sidan inte i över- och underkant */
+@media (display-mode: standalone) { html, body { overscroll-behavior-y: none; } }
+button, a, label, .pill, .seg, .grid, .switch-row, .post-head, .post-foot, .dp-wd {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+img { -webkit-touch-callout: none; -webkit-user-drag: none; -webkit-user-select: none; user-select: none; }
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration { -webkit-appearance: none; appearance: none; }
 
 body::before {
   content: "";
@@ -108,15 +121,67 @@ button, input, textarea { font: inherit; color: inherit; }
   white-space: nowrap;
 }
 #date-label .yr { font-weight: 400; color: var(--muted); }
-/* Datumväljaren ligger osynlig ovanpå rubriken så att ett tryck öppnar den */
 #view-day, #view-cal { touch-action: pan-y; }
-#date-pick {
+/* Datumet är en knapp som öppnar en egen liten månadskalender */
+.date-btn { display: block; width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.date-pop {
   position: absolute;
-  inset: 0;
-  opacity: 0;
-  width: 100%;
+  top: calc(100% + 8px);
+  left: 50%;
+  translate: -50% 0;
+  z-index: 20;
+  width: 300px;
+  max-width: calc(100vw - 32px);
+  padding: 8px 12px 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 10px 28px rgb(0 0 0 / .16);
+  transform-origin: top center;
+  animation: pop-in .14s ease-out;
+}
+@media (prefers-reduced-motion: reduce) { .date-pop { animation: none; } }
+.dp-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+#dp-title { font-weight: 600; }
+.dp-head button {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text);
+  font-size: 22px;
+  line-height: 1;
   cursor: pointer;
 }
+.dp-head button:disabled { opacity: .3; cursor: default; }
+.dp-wd, .dp-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+.dp-wd { margin-bottom: 2px; font-size: 12px; color: var(--muted); }
+.dp-grid button {
+  position: relative;
+  height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.dp-grid .has::after {
+  content: "";
+  position: absolute;
+  left: calc(50% - 2px);
+  bottom: 4px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.dp-grid .today { color: var(--accent); font-weight: 700; }
+.dp-grid .sel { background: var(--accent); color: var(--accent-text); }
+.dp-grid .sel.has::after { background: var(--accent-text); }
+.dp-grid button:disabled { color: var(--line); cursor: default; }
 
 .link {
   border: 0;
@@ -215,7 +280,25 @@ textarea {
 
 /* Lista */
 .search-row { display: flex; gap: 8px; align-items: center; margin: 16px 0 4px; }
-#search { flex: 1; min-width: 0; margin: 0; }
+.search-field { position: relative; flex: 1; min-width: 0; }
+#search { margin: 0; padding-right: 40px; }
+.search-clear {
+  position: absolute;
+  top: 50%;
+  right: 7px;
+  translate: 0 -50%;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--line);
+  color: var(--muted);
+  cursor: pointer;
+}
+.search-clear svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; }
 .sorter { position: relative; flex: none; }
 .sorter .hd-btn { width: 44px; height: 44px; }
 .sorter .hd-btn svg { stroke-linecap: round; }

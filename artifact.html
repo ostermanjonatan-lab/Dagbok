@@ -26,6 +26,19 @@
 * { box-sizing: border-box; }
 /* Ingen blå tryckmarkering från webbläsaren, knapparna har egen tryckeffekt */
 html { -webkit-tap-highlight-color: transparent; }
+/* Appen ska inte bete sig som en webbsida: ingen zoom vid dubbeltryck, ingen
+   markering av knappar och ingen bildmeny vid långt tryck */
+html { touch-action: manipulation; overscroll-behavior-x: none; }
+/* Installerad på hemskärmen studsar sidan inte i över- och underkant */
+@media (display-mode: standalone) { html, body { overscroll-behavior-y: none; } }
+button, a, label, .pill, .seg, .grid, .switch-row, .post-head, .post-foot, .dp-wd {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+img { -webkit-touch-callout: none; -webkit-user-drag: none; -webkit-user-select: none; user-select: none; }
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration { -webkit-appearance: none; appearance: none; }
 [hidden] { display: none !important; }
 body {
   background: var(--bg);
@@ -82,7 +95,66 @@ button, input, textarea { font: inherit; color: inherit; }
 #date-label .yr { font-weight: 400; color: var(--muted); }
 /* Datumväljaren ligger osynlig ovanpå rubriken så att ett tryck öppnar den */
 #view-day, #view-cal { touch-action: pan-y; }
-#date-pick { position: absolute; inset: 0; opacity: 0; width: 100%; cursor: pointer; }
+/* Datumet är en knapp som öppnar en egen liten månadskalender */
+.date-btn { display: block; width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.date-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  translate: -50% 0;
+  z-index: 20;
+  width: 300px;
+  max-width: calc(100vw - 32px);
+  padding: 8px 12px 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 10px 28px rgb(0 0 0 / .16);
+  transform-origin: top center;
+  animation: pop-in .14s ease-out;
+}
+@media (prefers-reduced-motion: reduce) { .date-pop { animation: none; } }
+.dp-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+#dp-title { font-weight: 600; }
+.dp-head button {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.dp-head button:disabled { opacity: .3; cursor: default; }
+.dp-wd, .dp-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+.dp-wd { margin-bottom: 2px; font-size: 12px; color: var(--muted); }
+.dp-grid button {
+  position: relative;
+  height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.dp-grid .has::after {
+  content: "";
+  position: absolute;
+  left: calc(50% - 2px);
+  bottom: 4px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.dp-grid .today { color: var(--accent); font-weight: 700; }
+.dp-grid .sel { background: var(--accent); color: var(--accent-text); }
+.dp-grid .sel.has::after { background: var(--accent-text); }
+.dp-grid button:disabled { color: var(--line); cursor: default; }
 
 .link {
   border: 0; background: none; padding: 0; cursor: pointer;
@@ -253,7 +325,25 @@ textarea {
 .confirm { display: flex; gap: 14px; align-items: baseline; }
 
 .search-row { display: flex; gap: 8px; align-items: center; margin: 16px 0 4px; }
-#search { flex: 1; min-width: 0; margin: 0; }
+.search-field { position: relative; flex: 1; min-width: 0; }
+#search { margin: 0; padding-right: 40px; }
+.search-clear {
+  position: absolute;
+  top: 50%;
+  right: 7px;
+  translate: 0 -50%;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--line);
+  color: var(--muted);
+  cursor: pointer;
+}
+.search-clear svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; }
 .sorter { position: relative; flex: none; }
 .sorter .hd-btn { width: 44px; height: 44px; }
 .sorter .hd-btn svg { stroke-linecap: round; }
@@ -1219,7 +1309,10 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
     </div>
     <div class="feed" id="feed-panel" role="tabpanel" aria-labelledby="seg-feed">
       <div class="search-row">
-        <input type="search" id="search" placeholder="Sök, eller @ för datum" aria-label="Sök. Skriv @ för att söka på datum och helgdagar.">
+        <div class="search-field">
+          <input type="search" id="search" placeholder="Sök, eller @ för datum" aria-label="Sök. Skriv @ för att söka på datum och helgdagar.">
+          <button type="button" class="search-clear" id="search-clear" aria-label="Rensa sökningen" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg></button>
+        </div>
         <div class="sorter" id="sorter">
           <button type="button" class="hd-btn" id="sort-btn" aria-haspopup="true" aria-expanded="false"
             aria-controls="sort-pop" aria-label="Sortera">
@@ -1395,10 +1488,19 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
       <section id="view-day">
         <div class="daynav">
           <button type="button" class="icon" id="prev" aria-label="Föregående dag">&#8249;</button>
-          <label class="date">
-            <span id="date-label"></span>
-            <input type="date" id="date-pick" aria-label="Välj datum">
-          </label>
+          <div class="date">
+            <button type="button" class="date-btn" id="date-btn" aria-haspopup="dialog" aria-expanded="false"
+              aria-controls="date-pop"><span id="date-label"></span></button>
+            <div class="date-pop" id="date-pop" role="dialog" aria-label="Välj datum" hidden>
+              <div class="dp-head">
+                <button type="button" id="dp-prev" aria-label="Föregående månad">&#8249;</button>
+                <span id="dp-title"></span>
+                <button type="button" id="dp-next" aria-label="Nästa månad">&#8250;</button>
+              </div>
+              <div class="dp-wd" aria-hidden="true"><span>må</span><span>ti</span><span>on</span><span>to</span><span>fr</span><span>lö</span><span>sö</span></div>
+              <div class="dp-grid" id="dp-grid"></div>
+            </div>
+          </div>
           <button type="button" class="icon" id="next" aria-label="Nästa dag">&#8250;</button>
         </div>
         <button type="button" class="link" id="to-today" hidden>Gå till idag</button>
@@ -2377,8 +2479,7 @@ function showDay(key) {
   showWeather(e);
 
   setDateLabel(key);
-  $('date-pick').value = key;
-  $('date-pick').max = today;
+  toggleDatePop(false);
   $('next').disabled = key >= today;
   $('to-today').hidden = key === today;
   $('text-label').textContent = key === today ? 'Vad som hänt idag' : 'Vad som hände';
@@ -2697,7 +2798,7 @@ function attachSwipe({ area, moving, skip, canNext, step }) {
 attachSwipe({
   area: $('view-day'),
   moving: $('view-day'),
-  skip: '.photos, .fmt',
+  skip: '.photos, .fmt, .date-pop',
   canNext: () => current < todayKey(),
   step: (dir) => stepDay(dir),
 });
@@ -2705,9 +2806,52 @@ attachSwipe({
 $('prev').addEventListener('click', () => showDay(shiftKey(current, -1)));
 $('next').addEventListener('click', () => showDay(shiftKey(current, 1)));
 $('to-today').addEventListener('click', () => showDay(todayKey()));
-$('date-pick').addEventListener('change', (ev) => {
-  ev.target.blur();
-  if (ev.target.value) showDay(ev.target.value);
+// Egen datumväljare: en liten månadskalender under datumet
+let dpMonth = '';
+
+function renderDatePop() {
+  const [y, m] = dpMonth.split('-').map(Number);
+  const first = new Date(y, m - 1, 1);
+  const days = new Date(y, m, 0).getDate();
+  const today = todayKey();
+  const t = monthFmt.format(first);
+  $('dp-title').textContent = t.charAt(0).toUpperCase() + t.slice(1);
+  $('dp-next').disabled = dpMonth >= today.slice(0, 7);
+  let html = '<span></span>'.repeat((first.getDay() + 6) % 7);
+  for (let d = 1; d <= days; d++) {
+    const k = `${dpMonth}-${pad(d)}`;
+    const cls = [entries[k] ? 'has' : '', k === current ? 'sel' : '', k === today ? 'today' : ''].filter(Boolean).join(' ');
+    html += `<button type="button" data-key="${k}"${cls ? ` class="${cls}"` : ''}${k > today ? ' disabled' : ''} aria-label="${fmtDate(k)}">${d}</button>`;
+  }
+  $('dp-grid').innerHTML = html;
+}
+
+function toggleDatePop(open) {
+  $('date-pop').hidden = !open;
+  $('date-btn').setAttribute('aria-expanded', String(open));
+  if (!open) return;
+  dpMonth = current.slice(0, 7);
+  renderDatePop();
+}
+
+$('date-btn').addEventListener('click', () => toggleDatePop($('date-pop').hidden));
+$('dp-prev').addEventListener('click', () => { dpMonth = shiftYm(dpMonth, -1); renderDatePop(); });
+$('dp-next').addEventListener('click', () => { dpMonth = shiftYm(dpMonth, 1); renderDatePop(); });
+$('dp-grid').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-key]');
+  if (!b || b.disabled) return;
+  toggleDatePop(false);
+  showDay(b.dataset.key);
+});
+document.addEventListener('pointerdown', (ev) => {
+  if (!$('date-pop').hidden && !ev.target.closest('.date')) toggleDatePop(false);
+});
+// Esc stänger bara väljaren, inte dagen
+document.addEventListener('keydown', (ev) => {
+  if (ev.key !== 'Escape' || $('date-pop').hidden) return;
+  ev.stopImmediatePropagation();
+  toggleDatePop(false);
+  $('date-btn').focus();
 });
 
 $('delete').addEventListener('click', () => {
@@ -2994,6 +3138,7 @@ function splitAt(q) {
 
 // Förslag under sökfältet medan man skriver efter @
 function renderAtSuggest() {
+  $('search-clear').hidden = !$('search').value;
   const box = $('at-suggest');
   const v = $('search').value;
   const i = v.lastIndexOf('@');
@@ -3115,6 +3260,19 @@ $('list').addEventListener('click', (ev) => {
   if (!ev.target.closest('#show-more')) return;
   shownCount += PAGE;
   renderList();
+});
+
+$('search-clear').addEventListener('click', () => {
+  $('search').value = '';
+  shownCount = PAGE;
+  renderAtSuggest();
+  renderList();
+  $('search').focus();
+});
+
+// Långt tryck på en bild ska inte öppna webbläsarens meny
+document.addEventListener('contextmenu', (ev) => {
+  if (ev.target.closest('img')) ev.preventDefault();
 });
 
 const sortBtn = $('sort-btn');
