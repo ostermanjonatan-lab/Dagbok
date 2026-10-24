@@ -1571,7 +1571,7 @@ function monthMoods(ym) {
 
 const avg = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
 
-// Statistiken gäller veckan, månaden eller året som kalendern visar, eller hela dagboken
+// Statistiken gäller senaste veckan, månaden eller året som kalendern visar, eller hela dagboken
 const PERIOD_KEY = 'dagbok.statperiod';
 let statPeriod = 'month';
 try {
@@ -1579,14 +1579,8 @@ try {
   if (p === 'week' || p === 'year' || p === 'all') statPeriod = p;
 } catch {}
 
-// Veckor börjar på måndag, veckonummer enligt ISO 8601
-function mondayOf(key) {
-  return shiftKey(key, -((parseKey(key).getDay() + 6) % 7));
-}
-function weekNo(key) {
-  const thu = parseKey(shiftKey(mondayOf(key), 3));
-  return Math.floor(Math.round((thu - new Date(thu.getFullYear(), 0, 1)) / 864e5) / 7) + 1;
-}
+// Senaste veckan är de sju dagarna fram till och med idag
+const weekStart = () => shiftKey(todayKey(), -6);
 const weekMoods = (start) => Object.keys(entries)
   .filter((k) => k >= start && k <= shiftKey(start, 6) && entries[k].mood).map((k) => entries[k].mood);
 function weekRange(start) {
@@ -1595,15 +1589,13 @@ function weekRange(start) {
   return a.getMonth() === b.getMonth() ? `${a.getDate()}–${dayPartFmt.format(b)}`
     : `${dayPartFmt.format(a)}–${dayPartFmt.format(b)}`;
 }
-let statWeek = mondayOf(todayKey());
-let statWeekYm = null;
 
 const daysBetween = (a, b) => Math.round((parseKey(b) - parseKey(a)) / 864e5) + 1;
 
 function periodKeys(period, ym) {
   const all = Object.keys(entries).sort();
   if (period === 'all') return all;
-  if (period === 'week') return all.filter((k) => k >= statWeek && k <= shiftKey(statWeek, 6));
+  if (period === 'week') return all.filter((k) => k >= weekStart() && k <= todayKey());
   if (period === 'year') return all.filter((k) => k.slice(0, 4) === ym.slice(0, 4));
   return all.filter((k) => k.slice(0, 7) === ym);
 }
@@ -1612,15 +1604,6 @@ const moodsOf = (keys) => keys.map((k) => entries[k].mood).filter(Boolean);
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 function renderStats() {
-  // Veckan följer kalendern: den här veckan, eller sista veckan i en tidigare månad
-  if (statWeekYm !== calMonth) {
-    statWeekYm = calMonth;
-    if (statWeek.slice(0, 7) !== calMonth && shiftKey(statWeek, 6).slice(0, 7) !== calMonth) {
-      const [y, m] = calMonth.split('-').map(Number);
-      const last = `${calMonth}-${pad(new Date(y, m, 0).getDate())}`;
-      statWeek = mondayOf(calMonth === todayKey().slice(0, 7) ? todayKey() : last);
-    }
-  }
   const ym = calMonth;
   const year = ym.slice(0, 4);
   const keys = periodKeys(statPeriod, ym);
@@ -1631,13 +1614,10 @@ function renderStats() {
     b.tabIndex = b.dataset.period === statPeriod ? 0 : -1;
   });
 
-  const weekYear = shiftKey(statWeek, 3).slice(0, 4);
   $('month-stats-title').textContent = statPeriod === 'all' ? 'Statistik för hela dagboken'
     : statPeriod === 'year' ? `Statistik för ${year}`
-      : statPeriod === 'week' ? `Vecka ${weekNo(statWeek)}, ${weekRange(statWeek)}${weekYear === todayKey().slice(0, 4) ? '' : ` ${weekYear}`}`
+      : statPeriod === 'week' ? `Senaste veckan, ${weekRange(weekStart())}`
         : `Statistik för ${monthName}`;
-  $('week-nav').hidden = statPeriod !== 'week';
-  $('week-next').disabled = statWeek >= mondayOf(todayKey());
 
   $('stats-body').hidden = !keys.length;
   $('stats-empty').hidden = !!keys.length;
@@ -1652,7 +1632,7 @@ function renderStats() {
   if (statPeriod === 'all') {
     passed = daysBetween(keys[0], today);
   } else if (statPeriod === 'week') {
-    passed = today < shiftKey(statWeek, 6) ? daysBetween(statWeek, today) : 7;
+    passed = 7;
   } else if (statPeriod === 'year') {
     passed = year === today.slice(0, 4) ? daysBetween(`${year}-01-01`, today)
       : daysBetween(`${year}-01-01`, `${year}-12-31`);
@@ -1671,8 +1651,8 @@ function renderStats() {
     let prev = [];
     let prevName = '';
     if (statPeriod === 'week') {
-      prev = weekMoods(shiftKey(statWeek, -7));
-      prevName = 'förra veckan';
+      prev = weekMoods(shiftKey(weekStart(), -7));
+      prevName = 'veckan innan';
     } else if (statPeriod === 'month') {
       const prevYm = shiftYm(ym, -1);
       prev = monthMoods(prevYm);
@@ -1758,14 +1738,17 @@ function trendMonths() {
   return out;
 }
 
-// Punkterna i diagrammet: veckor för Vecka, annars månader
+// Punkterna i diagrammet: sjudagarsperioder bakåt från idag för Vecka, annars månader
 let trendItems = {};
 let trendCur = '';
 function trendBuckets() {
   if (statPeriod === 'week') {
     return [...Array(12)].map((_, i) => {
-      const start = shiftKey(statWeek, -7 * (11 - i));
-      return { id: start, ms: weekMoods(start), label: `v${weekNo(start)}`, name: `Vecka ${weekNo(start)}` };
+      const start = shiftKey(weekStart(), -7 * (11 - i));
+      const end = parseKey(shiftKey(start, 6));
+      // Var tredje punkt får ett datum, annars blir det trångt
+      const label = i % 3 === 2 ? `${end.getDate()} ${monthShortFmt.format(end).replace('.', '').slice(0, 3)}` : '';
+      return { id: start, ms: weekMoods(start), label, name: cap(weekRange(start)) };
     });
   }
   return trendMonths().map((ym) => ({ id: ym, ms: monthMoods(ym), name: cap(monthFmt.format(parseKey(ym + '-01'))) }));
@@ -1777,7 +1760,7 @@ function renderTrend() {
       : statPeriod === 'week' ? 'Snitthumör, senaste 12 veckorna' : 'Snitthumör, senaste 12 månaderna';
   const data = trendBuckets().map((d) => ({ ...d, avg: d.ms.length ? avg(d.ms) : null }));
   trendItems = Object.fromEntries(data.map((d) => [d.id, d]));
-  trendCur = statPeriod === 'week' ? statWeek : calMonth;
+  trendCur = statPeriod === 'week' ? weekStart() : calMonth;
   const n = data.length;
   const many = n > 12;
   const W = 340;
@@ -1811,9 +1794,9 @@ function renderTrend() {
       const r = cur ? 5.5 : many ? 3 : 4;
       svg += `<circle class="pt${cur ? ' cur' : ''}" cx="${xOf(i)}" cy="${yOf(d.avg)}" r="${r}"/>`;
     }
-    // Veckor har veckonummer. Med många månader står bara årtalet vid januari, annars månadens förkortning
+    // Veckor har slutdatum. Med många månader står bara årtalet vid januari, annars månadens förkortning
     let label = '';
-    if (d.label) label = d.label;
+    if (d.label !== undefined) label = d.label;
     else if (!many) label = monthShortFmt.format(parseKey(d.id + '-01')).replace('.', '').slice(0, 3);
     else if (d.id.endsWith('-01') || i === 0) label = d.id.slice(0, 4);
     if (label) {
@@ -1845,17 +1828,6 @@ $('stat-period').addEventListener('keydown', (ev) => {
   choosePeriod(next);
   document.querySelector(`#stat-period [data-period="${next}"]`).focus();
 });
-
-// Pilarna bläddrar en vecka i taget, och kalendern följer med till veckans månad
-function stepWeek(n) {
-  const next = shiftKey(statWeek, 7 * n);
-  if (next > mondayOf(todayKey())) return;
-  statWeek = next;
-  calMonth = statWeekYm = shiftKey(statWeek, 3).slice(0, 7);
-  renderCal();
-}
-$('week-prev').addEventListener('click', () => stepWeek(-1));
-$('week-next').addEventListener('click', () => stepWeek(1));
 
 function trendRead(id) {
   const d = trendItems[id];
