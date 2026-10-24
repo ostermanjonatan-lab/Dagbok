@@ -339,34 +339,11 @@ const Paper = (() => {
       if (document.activeElement === el) updateBar();
     });
 
-    // Bottenmenyn göms när tangentbordet är uppe på telefonen. Den synliga ytan
-    // krymper också när webbläsarens adressfält glider in vid scroll, så
-    // tangentbordet räknas bara som uppe när man skriver i ett fält.
-    function typing() {
-      const a = document.activeElement;
-      if (!a) return false;
-      if (a.isContentEditable || a.tagName === 'TEXTAREA') return true;
-      // Bara fält man skriver text i, inte datumväljare, reglage eller knappar
-      return a.tagName === 'INPUT' && /^(text|search|email|url|tel|password|number)$/.test(a.type);
-    }
-    function place() {
-      const vv = window.visualViewport;
-      if (!vv) return;
-      const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-      document.body.classList.toggle('keyboard', typing() && kb > 120);
-    }
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', place);
-      window.visualViewport.addEventListener('scroll', place);
-    }
-    document.addEventListener('focusout', () => setTimeout(place, 50));
-
     el.addEventListener('focus', () => {
       document.body.classList.add('editing');
-      place();
       updateBar();
     });
-    el.addEventListener('blur', () => document.body.classList.remove('editing', 'keyboard'));
+    el.addEventListener('blur', () => document.body.classList.remove('editing'));
 
     return {
       get: () => htmlToMd(el).replace(/\s+$/, ''),
