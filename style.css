@@ -945,6 +945,9 @@ body.sheet-open { overflow: hidden; }
   pointer-events: none;
 }
 .paper p, .prose p { margin: 0; }
+/* Lite mer luft efter Enter än vid en vanlig radbrytning */
+.paper p + p, .prose p + p { margin-top: .5em; }
+.paper li + li, .prose li + li { margin-top: .25em; }
 .paper h2, .prose h2 {
   font-size: 1.3em;
   line-height: 1.3;
