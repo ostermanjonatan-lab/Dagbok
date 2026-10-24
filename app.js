@@ -1738,7 +1738,7 @@ function trendMonths() {
   return out;
 }
 
-// Punkterna i diagrammet: veckans sju dagar för Vecka, annars månader
+// Staplarna i diagrammet: dagar för Vecka och Månad, månader för År och Totalt
 let trendItems = {};
 let trendCur = '';
 function trendBuckets() {
@@ -1750,25 +1750,36 @@ function trendBuckets() {
       return { id: k, ms: e && e.mood ? [e.mood] : [], label, name: cap(postDayFmt.format(parseKey(k))), day: true };
     });
   }
-  return trendMonths().map((ym) => ({ id: ym, ms: monthMoods(ym), name: cap(monthFmt.format(parseKey(ym + '-01'))) }));
+  if (statPeriod === 'month') {
+    const [y, m] = calMonth.split('-').map(Number);
+    return [...Array(new Date(y, m, 0).getDate())].map((_, i) => {
+      const k = `${calMonth}-${pad(i + 1)}`;
+      const e = entries[k];
+      // Datum under den första och var femte dag, annars blir det trångt
+      const label = i === 0 || (i + 1) % 5 === 0 ? String(i + 1) : '';
+      return { id: k, ms: e && e.mood ? [e.mood] : [], label, name: cap(postDayFmt.format(parseKey(k))), day: true, future: k > todayKey() };
+    });
+  }
+  return trendMonths().map((ym) => ({ id: ym, ms: monthMoods(ym), name: cap(monthFmt.format(parseKey(ym + '-01'))), future: ym > todayKey().slice(0, 7) }));
 }
 
 function renderTrend() {
   $('trend-title').textContent = statPeriod === 'year' ? `Snitthumör per månad ${calMonth.slice(0, 4)}`
     : statPeriod === 'all' ? 'Snitthumör per månad'
-      : statPeriod === 'week' ? 'Humör per dag, senaste veckan' : 'Snitthumör, senaste 12 månaderna';
+      : statPeriod === 'week' ? 'Humör per dag, senaste veckan'
+        : `Humör per dag, ${monthFmt.format(parseKey(calMonth + '-01'))}`;
   const data = trendBuckets().map((d) => ({ ...d, avg: d.ms.length ? avg(d.ms) : null }));
   trendItems = Object.fromEntries(data.map((d) => [d.id, d]));
-  trendCur = statPeriod === 'week' ? todayKey() : calMonth;
+  trendCur = statPeriod === 'week' || statPeriod === 'month' ? todayKey() : calMonth;
   const n = data.length;
-  const many = n > 12;
+  // Staplar för Vecka, Månad och År, en linje med punkter för Totalt
+  const bars = statPeriod !== 'all';
+  const many = !bars && n > 12;
   const W = 340;
   const H = 128;
   const x0 = 22;
   const x1 = W - 8;
   const yOf = (v) => 12 + (5 - v) * 22; // 5 överst, 1 nederst
-  // Staplar för veckans dagar, annars en linje med punkter
-  const bars = statPeriod === 'week';
   const xOf = bars ? (i) => x0 + ((i + 0.5) * (x1 - x0)) / n : (i) => x0 + (i * (x1 - x0)) / (n - 1);
   const step = bars ? (x1 - x0) / n : (x1 - x0) / (n - 1);
   const base = yOf(1) + 8;
@@ -1793,15 +1804,19 @@ function renderTrend() {
   data.forEach((d, i) => {
     const cur = d.id === trendCur;
     if (bars) {
-      const w = step * 0.56;
-      svg += d.avg != null
-        ? `<rect class="bar" x="${xOf(i) - w / 2}" y="${yOf(d.avg)}" width="${w}" height="${base - yOf(d.avg)}" rx="4" style="fill: var(--m${d.avg})"/>`
-        : `<line class="nobar" x1="${xOf(i) - w / 2}" x2="${xOf(i) + w / 2}" y1="${base}" y2="${base}"/>`;
+      const w = step * (n > 12 ? 0.7 : 0.56);
+      const rx = Math.min(4, w / 2);
+      // Snittets färg avrundas till närmaste humör
+      if (d.avg != null) {
+        svg += `<rect class="bar" x="${xOf(i) - w / 2}" y="${yOf(d.avg)}" width="${w}" height="${base - yOf(d.avg)}" rx="${rx}" style="fill: var(--m${Math.round(d.avg)})"/>`;
+      } else if (!d.future) {
+        svg += `<line class="nobar" x1="${xOf(i) - w / 2}" x2="${xOf(i) + w / 2}" y1="${base}" y2="${base}"/>`;
+      }
     } else if (d.avg != null) {
       const r = cur ? 5.5 : many ? 3 : 4;
       svg += `<circle class="pt${cur ? ' cur' : ''}" cx="${xOf(i)}" cy="${yOf(d.avg)}" r="${r}"/>`;
     }
-    // Dagar har veckodag. Med många månader står bara årtalet vid januari, annars månadens förkortning
+    // Dagar har veckodag eller datum. Med många månader står bara årtalet vid januari, annars månadens förkortning
     let label = '';
     if (d.label !== undefined) label = d.label;
     else if (!many) label = monthShortFmt.format(parseKey(d.id + '-01')).replace('.', '').slice(0, 3);
