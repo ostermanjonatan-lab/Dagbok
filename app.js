@@ -119,7 +119,7 @@ function fmtWeather(w) {
   const parts = [];
   if (w.code != null) parts.push(w.code === 0 ? 'Sol' : WEATHER_TEXT[w.code] || 'Okänt väder');
   if (w.temp != null) parts.push(`${String(Math.round(w.temp)).replace('-', '\u2212')}\u00a0°C`);
-  return parts.join(', ') + (w.time ? ` kl ${w.time}` : '');
+  return parts.join(', ');
 }
 
 function getPosition() {
