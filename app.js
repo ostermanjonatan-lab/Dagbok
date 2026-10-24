@@ -1767,8 +1767,11 @@ function renderTrend() {
   const x0 = 22;
   const x1 = W - 8;
   const yOf = (v) => 12 + (5 - v) * 22; // 5 överst, 1 nederst
-  const xOf = (i) => x0 + (i * (x1 - x0)) / (n - 1);
-  const step = (x1 - x0) / (n - 1);
+  // Staplar för veckans dagar, annars en linje med punkter
+  const bars = statPeriod === 'week';
+  const xOf = bars ? (i) => x0 + ((i + 0.5) * (x1 - x0)) / n : (i) => x0 + (i * (x1 - x0)) / (n - 1);
+  const step = bars ? (x1 - x0) / n : (x1 - x0) / (n - 1);
+  const base = yOf(1) + 8;
 
   let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Snitthumör per månad">`;
   for (const v of [1, 3, 5]) {
@@ -1786,10 +1789,15 @@ function renderTrend() {
     path += `${pen ? 'L' : 'M'}${xOf(i).toFixed(1)} ${yOf(d.avg).toFixed(1)}`;
     pen = true;
   });
-  if (path) svg += `<path class="ln" d="${path}"/>`;
+  if (path && !bars) svg += `<path class="ln" d="${path}"/>`;
   data.forEach((d, i) => {
     const cur = d.id === trendCur;
-    if (d.avg != null) {
+    if (bars) {
+      const w = step * 0.56;
+      svg += d.avg != null
+        ? `<rect class="bar" x="${xOf(i) - w / 2}" y="${yOf(d.avg)}" width="${w}" height="${base - yOf(d.avg)}" rx="4" style="fill: var(--m${d.avg})"/>`
+        : `<line class="nobar" x1="${xOf(i) - w / 2}" x2="${xOf(i) + w / 2}" y1="${base}" y2="${base}"/>`;
+    } else if (d.avg != null) {
       const r = cur ? 5.5 : many ? 3 : 4;
       svg += `<circle class="pt${cur ? ' cur' : ''}" cx="${xOf(i)}" cy="${yOf(d.avg)}" r="${r}"/>`;
     }
