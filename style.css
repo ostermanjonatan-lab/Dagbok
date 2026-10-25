@@ -31,7 +31,7 @@ html { -webkit-tap-highlight-color: transparent; }
 /* Appen ska inte bete sig som en webbsida: ingen zoom vid dubbeltryck, ingen
    markering av knappar och ingen bildmeny vid långt tryck */
 html { touch-action: manipulation; overscroll-behavior-x: none; }
-button, a, label, .pill, .seg, .grid, .switch-row, .post-head, .post-foot, .dp-wd {
+button, a, label, .pill, .seg, .grid, .switch-row, .post-head, .dp-wd {
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
@@ -209,7 +209,7 @@ form { margin-top: 16px; }
   padding: 0;
   font-size: 14px;
   font-weight: 500;
-  color: var(--accent);
+  color: var(--muted);
   margin-bottom: 6px;
 }
 
@@ -352,8 +352,8 @@ textarea {
 
 .month {
   font-size: 14px;
-  color: var(--accent);
-  font-weight: 400;
+  color: var(--text);
+  font-weight: 600;
   margin: 24px 0 0;
   padding-bottom: 6px;
   border-bottom: 1px solid var(--line);
@@ -470,7 +470,7 @@ mark {
 #cal-title {
   flex: 1;
   margin: 0;
-  color: var(--accent);
+  color: var(--text);
   font-family: var(--serif);
   font-size: 22px;
   font-weight: 600;
@@ -543,7 +543,8 @@ mark {
 .moods .day.has[style] .wx { color: var(--on-mood); }
 .weathers .day.has.has-wx::after { display: none; }
 .day:disabled { opacity: .35; cursor: default; }
-.day.has { background: var(--surface); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent); }
+/* Skrivna dagar har bara en prick, ingen ram */
+.day.has { background: none; }
 .day.has::after {
   content: "";
   position: absolute;
@@ -628,16 +629,18 @@ mark {
 .seg {
   display: flex;
   margin-top: 24px;
-  padding: 3px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 999px;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  gap: 24px;
+  border-bottom: 1px solid var(--line);
 }
 .seg button {
-  flex: 1;
-  padding: 8px 12px;
+  flex: none;
+  padding: 10px 0;
   border: 0;
-  border-radius: 999px;
+  border-radius: 0;
   background: none;
   color: var(--muted);
   font-size: 15px;
@@ -646,6 +649,8 @@ mark {
   align-items: center;
   justify-content: center;
   gap: 7px;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
 }
 .seg svg {
   width: 18px;
@@ -657,20 +662,23 @@ mark {
   stroke-linecap: round;
 }
 .seg button[aria-selected="true"] {
-  background: var(--accent);
-  color: var(--accent-text);
-  font-weight: 500;
+  background: none;
+  color: var(--text);
+  font-weight: 600;
+  border-bottom-color: var(--accent);
 }
 
 /* Statistik för månaden under kalendern */
 .stats { margin-top: 18px; }
-.stats .period { margin: 0 0 16px; }
-.stats .period .pill { padding: 5px 13px; font-size: 14px; }
+/* Perioderna är vanlig text, den valda är mörk och fet */
+.stats .period { display: flex; gap: 18px; margin: 0 0 14px; }
+.stats .period .pill, .stats .period .pill:hover { padding: 4px 0; border: 0; border-radius: 0; background: none; color: var(--muted); font-size: 15px; }
+.stats .period .pill[aria-checked="true"] { background: none; color: var(--text); font-weight: 600; }
 .stats h2 {
   margin: 0 0 10px;
   font-size: 14px;
-  font-weight: 500;
-  color: var(--accent);
+  font-weight: 400;
+  color: var(--muted);
 }
 .stats h2::first-letter { text-transform: uppercase; }
 .stats h3 {
@@ -730,7 +738,7 @@ mark {
   margin: 4px 0 0;
   text-align: center;
   font-size: 14px;
-  color: var(--accent);
+  color: var(--muted);
 }
 
 /* Månadens inlägg under kalendern */
@@ -742,14 +750,14 @@ mark {
   font-family: var(--serif);
   font-size: 22px;
   font-weight: 600;
-  color: var(--accent);
+  color: var(--text);
 }
 .group {
   padding: 18px 0;
   border-bottom: 1px solid var(--line);
 }
 .group:last-child { border-bottom: 0; }
-.group h2 { margin: 0 0 10px; font-size: 14px; font-weight: 500; color: var(--accent); }
+.group h2 { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--text); }
 .group .muted:last-child { margin-bottom: 0; }
 .switch-row {
   display: flex;
@@ -887,8 +895,8 @@ mark {
 .memories h2 {
   margin: 0 0 10px;
   font-size: 14px;
-  font-weight: 500;
-  color: var(--accent);
+  font-weight: 600;
+  color: var(--text);
 }
 .memory {
   display: block;
@@ -908,7 +916,7 @@ mark {
   align-items: center;
   font-size: 15px;
   font-weight: 600;
-  color: var(--accent);
+  color: var(--text);
 }
 .memory .ago .dot { margin-right: 7px; }
 .memory .on { display: block; margin-top: 1px; font-size: 13px; color: var(--muted); }
@@ -1230,38 +1238,45 @@ body.sheet-open .nav .on:not(.main) { color: color-mix(in srgb, var(--brand-text
 body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
 @media (prefers-reduced-motion: reduce) { .nav .main .bubble, .nav .main .bubble svg { transition: none; } }
 
-/* Flöde: varje dag som ett inlägg */
+/* Flöde: inläggen skiljs åt med tunna linjer, ett tryck öppnar dagen */
 .post {
-  margin-top: 12px;
-  padding: 14px 14px 10px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  overflow: hidden;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
 }
 .post-head {
   display: flex;
   align-items: center;
   gap: 11px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 .post .avatar {
   flex: none;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: var(--m);
   color: var(--on-mood);
   font-weight: 600;
-  font-size: 16px;
-  font-variant-numeric: tabular-nums;
+  font-size: 12px;
 }
 .post .avatar.none { background: var(--line); color: var(--muted); }
 .post .avatar[data-m="1"], .post .avatar[data-m="5"] { color: #fff; }
-.post .who { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
-.post .when { font-size: 15px; font-weight: 600; color: var(--text); }
+.post .who { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; line-height: 1.3; }
+.post .when {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
 .post.today .when { color: var(--accent); }
 .post .sub { display: flex; align-items: center; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
 .post .sub svg {
@@ -1287,8 +1302,10 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
   grid-template-columns: 1fr 1fr;
   grid-auto-rows: 1fr;
   gap: 2px;
-  margin: 12px -14px 0;
+  margin-top: 12px;
   aspect-ratio: 4 / 3;
+  border-radius: 10px;
+  overflow: hidden;
 }
 .post .media.n1 { grid-template-columns: 1fr; }
 .post .media.n2 { aspect-ratio: 2 / 1; }
@@ -1314,38 +1331,6 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
   font-size: 22px;
   font-weight: 600;
 }
-.post-foot {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 10px;
-  font-size: 13px;
-  color: var(--muted);
-}
-.post .mood-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 10px 3px 8px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--m) 28%, transparent);
-  color: var(--text);
-}
-.post .mood-chip::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--m); }
-.post .edit {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 6px 2px;
-  border: 0;
-  background: none;
-  color: var(--accent);
-  font-size: 14px;
-  text-decoration: none;
-  cursor: pointer;
-}
-.post .edit svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
 /* Mjuka övergångar när en vy visas och när flödet byter månad */
 #view-cal:not([hidden]), #view-set:not([hidden]), .list-in { animation: view-in .22s ease-out; }
@@ -1401,7 +1386,20 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
 .link.quiet { color: var(--muted); }
 
 /* Daglig påminnelse och Om Daysake i inställningarna */
-.remind-time { margin: 10px 0 12px; }
+.remind-row { display: flex; align-items: center; gap: 4px; margin: 4px 0 12px; }
+.remind-row .lbl { margin-right: auto; }
+.remind-row button {
+  width: 40px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+#remind-label { min-width: 64px; text-align: center; font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; }
 #remind-msg:empty { display: none; }
 #remind-msg { margin: 8px 0 0; }
 .about { display: flex; align-items: center; gap: 12px; }

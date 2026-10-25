@@ -124,12 +124,11 @@
 
       <div class="group">
         <h2>Daglig påminnelse</h2>
-        <p class="muted">Blir en händelse varje dag i telefonens kalender.</p>
-        <div class="pills remind-time" id="remind-time" role="radiogroup" aria-label="Tid för påminnelsen">
-          <button type="button" class="pill" role="radio" data-t="19:00" aria-checked="false">19:00</button>
-          <button type="button" class="pill" role="radio" data-t="20:00" aria-checked="false">20:00</button>
-          <button type="button" class="pill" role="radio" data-t="21:00" aria-checked="false">21:00</button>
-          <button type="button" class="pill" role="radio" data-t="22:00" aria-checked="false">22:00</button>
+        <div class="remind-row">
+          <span class="lbl">Tid</span>
+          <button type="button" id="remind-earlier" aria-label="Tidigare">&#8249;</button>
+          <span id="remind-label" aria-live="polite"></span>
+          <button type="button" id="remind-later" aria-label="Senare">&#8250;</button>
         </div>
         <div class="buttons">
           <button type="button" id="remind-add">Lägg till i kalendern</button>
@@ -139,7 +138,7 @@
       <div class="group">
         <h2>Kodlås</h2>
         <label class="switch-row">
-          <span>Lås med kod<small>Fyra siffror när appen öppnas.</small></span>
+          <span>Lås med kod</span>
           <input type="checkbox" role="switch" id="set-lock">
         </label>
         <button type="button" class="link" id="change-code" hidden>Byt kod</button>

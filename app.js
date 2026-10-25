@@ -96,6 +96,13 @@ const monthFmt = new Intl.DateTimeFormat('sv-SE', { month: 'long', year: 'numeri
 const timeFmt = new Intl.DateTimeFormat('sv-SE', { hour: '2-digit', minute: '2-digit', hour12: false });
 
 function fmtDate(key) { return dateFmt.format(parseKey(key)); }
+// Kort datum som används överallt: 22 oktober, med år om det inte är i år
+function shortDate(key) {
+  const d = parseKey(key);
+  const s = `${d.getDate()} ${MONTH_NAMES[d.getMonth()]}`;
+  return key.slice(0, 4) === todayKey().slice(0, 4) ? s : `${s} ${key.slice(0, 4)}`;
+}
+const MONTH_NAMES = ['januari', 'februari', 'mars', 'april', 'maj', 'juni', 'juli', 'augusti', 'september', 'oktober', 'november', 'december'];
 
 /* Väder från Open-Meteo, utan konto eller nyckel */
 
@@ -230,7 +237,7 @@ function renderSettings() {
   const keys = Object.keys(entries).sort();
   const pics = keys.reduce((n, k) => n + entries[k].photos.length, 0);
   $('stats').textContent = keys.length
-    ? `${keys.length} ${keys.length === 1 ? 'dag' : 'dagar'} och ${pics} ${pics === 1 ? 'bild' : 'bilder'}, sedan ${fmtDate(keys[0])}.`
+    ? `${keys.length} ${keys.length === 1 ? 'dag' : 'dagar'} och ${pics} ${pics === 1 ? 'bild' : 'bilder'}, sedan ${shortDate(keys[0])}.`
     : 'Inget skrivet ännu.';
   $('wipe').hidden = !keys.length;
   $('set-lock').checked = !!lockData;
@@ -509,7 +516,7 @@ function showDay(key) {
 function savedText(iso) {
   const d = new Date(iso);
   const time = timeFmt.format(d);
-  return keyOf(d) === todayKey() ? `Sparad ${time}` : `Sparad ${fmtDate(keyOf(d))}, ${time}`;
+  return keyOf(d) === todayKey() ? `Sparad ${time}` : `Sparad ${shortDate(keyOf(d))}`;
 }
 
 function setStatus(text) { $('status').textContent = text; }
@@ -739,18 +746,24 @@ const REMIND_KEY = 'dagbok.paminnelse';
 let remindAt = '21:00';
 try { remindAt = localStorage.getItem(REMIND_KEY) || '21:00'; } catch {}
 
+// Tider varje halvtimme mellan 06:00 och 23:30
+const REMIND_TIMES = [...Array(36)].map((_, i) => `${String(6 + Math.floor(i / 2)).padStart(2, '0')}:${i % 2 ? '30' : '00'}`);
+if (!REMIND_TIMES.includes(remindAt)) remindAt = '21:00';
+
 function syncRemind() {
-  document.querySelectorAll('#remind-time .pill').forEach((b) => {
-    b.setAttribute('aria-checked', String(b.dataset.t === remindAt));
-  });
+  const i = REMIND_TIMES.indexOf(remindAt);
+  $('remind-label').textContent = remindAt;
+  $('remind-earlier').disabled = i === 0;
+  $('remind-later').disabled = i === REMIND_TIMES.length - 1;
 }
-document.querySelectorAll('#remind-time .pill').forEach((b) => {
-  b.addEventListener('click', () => {
-    remindAt = b.dataset.t;
-    try { localStorage.setItem(REMIND_KEY, remindAt); } catch {}
-    syncRemind();
-  });
-});
+function stepRemind(n) {
+  const i = Math.min(REMIND_TIMES.length - 1, Math.max(0, REMIND_TIMES.indexOf(remindAt) + n));
+  remindAt = REMIND_TIMES[i];
+  try { localStorage.setItem(REMIND_KEY, remindAt); } catch {}
+  syncRemind();
+}
+$('remind-earlier').addEventListener('click', () => stepRemind(-1));
+$('remind-later').addEventListener('click', () => stepRemind(1));
 
 function reminderIcs(url) {
   const now = new Date();
@@ -1001,7 +1014,7 @@ function renderMemories(key) {
       `<img src="${escapeHtml(photoUrl(id))}" data-id="${escapeHtml(id)}" alt="" loading="lazy">`).join('');
     return `<button type="button" class="memory" data-key="${k}">
       <span class="ago">${dot}För ${n} år sedan</span>
-      <span class="on">${fmtDate(k)}${e.weather ? `, ${escapeHtml(fmtWeather(e.weather))}` : ''}</span>
+      <span class="on">${shortDate(k)}${e.weather ? `, ${escapeHtml(fmtWeather(e.weather))}` : ''}</span>
       ${text ? `<span class="excerpt">${escapeHtml(text)}</span>` : ''}
       ${pics ? `<span class="mthumbs">${pics}</span>` : ''}
     </button>`;
@@ -1021,11 +1034,8 @@ function escapeHtml(s) {
   }[c]));
 }
 
-/* Flöde: varje dag som ett inlägg, med större bilder och en rad längst ner */
+/* Flöde: varje dag som ett inlägg med datum, väder, text och stora bilder */
 
-const postDayFmt = new Intl.DateTimeFormat('sv-SE', { weekday: 'long', day: 'numeric', month: 'long' });
-const postDayYearFmt = new Intl.DateTimeFormat('sv-SE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-const PEN_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13 7l4 4"/></svg>';
 
 function postMedia(list) {
   if (!list || !list.length) return '';
@@ -1039,31 +1049,23 @@ function postMedia(list) {
 
 function postHtml(k, e, today, searching) {
   const d = parseKey(k);
-  const name = (k.slice(0, 4) === today.slice(0, 4) ? postDayFmt : postDayYearFmt).format(d);
   const yesterday = shiftKey(today, -1);
   const rel = k === today ? 'Idag' : k === yesterday ? 'Igår' : '';
   const g = e.weather ? weatherGroup(e.weather.code) : null;
   const icon = g != null ? `<svg viewBox="0 0 24 24" aria-hidden="true">${WEATHER_ICONS[g]}</svg>` : '';
   const wx = e.weather ? icon + escapeHtml(fmtWeather(e.weather)) : '';
   const sub = [rel, wx].filter(Boolean).join('<span class="sep" aria-hidden="true">·</span>');
-  const words = wordCount(e);
-  const mood = e.mood
-    ? `<span class="mood-chip" style="--m: var(--m${e.mood})">Humör ${e.mood}</span>` : '';
-  return `<article class="post${k === today ? ' today' : ''}">
+  return `<article class="post${k === today ? ' today' : ''}" data-key="${k}">
     <header class="post-head">
-      <span class="avatar${e.mood ? '' : ' none'}" data-m="${e.mood || ''}" style="--m: var(--m${e.mood || 3})" aria-hidden="true">${d.getDate()}</span>
+      <span class="avatar${e.mood ? '' : ' none'}" data-m="${e.mood || ''}" style="--m: var(--m${e.mood || 3})" aria-hidden="true">${['sön', 'mån', 'tis', 'ons', 'tor', 'fre', 'lör'][d.getDay()]}</span>
       <div class="who">
-        <span class="when">${name.charAt(0).toUpperCase() + name.slice(1)}</span>
+        <a class="when" href="#/dag/${k}">${shortDate(k)}</a>
         ${sub ? `<span class="sub">${sub}</span>` : ''}
       </div>
     </header>
     ${e.text ? `<div class="prose${searching ? '' : ' clamp'}">${Paper.mdToHtml(e.text)}</div>
     <button type="button" class="link more" hidden>Visa mer</button>` : ''}
     ${postMedia(e.photos)}
-    <footer class="post-foot">
-      ${mood}${words ? `<span class="words">${words} ord</span>` : ''}
-      <a class="edit" href="#/dag/${k}">${PEN_ICON}Redigera</a>
-    </footer>
   </article>`;
 }
 
@@ -1076,6 +1078,9 @@ function markLongPosts(list) {
 }
 
 $('list').addEventListener('click', (ev) => {
+  // Ett tryck var som helst på inlägget öppnar dagen, utom på knappar och bilder
+  const post = ev.target.closest('.post');
+  if (post && !ev.target.closest('button, a') && window.getSelection().isCollapsed) go(`#/dag/${post.dataset.key}`);
   const more = ev.target.closest('.more');
   if (!more) return;
   more.previousElementSibling.classList.remove('clamp');
@@ -1177,7 +1182,7 @@ function parseAt(raw) {
   }
   if ((m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/))) {
     const k = `${m[1]}-${pad2(m[2])}-${pad2(m[3])}`;
-    return { label: fmtDate(k), test: (x) => x === k };
+    return { label: shortDate(k), test: (x) => x === k };
   }
   if ((m = s.match(/^(\d{4})-(\d{1,2})$/))) {
     const p = `${m[1]}-${pad2(m[2])}`;
@@ -1613,7 +1618,7 @@ function showReaderDay(key) {
   track.innerHTML = keys.map(readerPane).join('');
   // Panelen för dagen läggs i mitten så att man kan svepa åt båda hållen
   track.scrollLeft = keys.indexOf(key) * track.clientWidth;
-  $('reader-title').textContent = fmtDate(key);
+  $('reader-title').textContent = shortDate(key);
   $('reader-prev').disabled = !prev;
   $('reader-next').disabled = !next;
 
@@ -1765,10 +1770,9 @@ function renderStats() {
     b.tabIndex = b.dataset.period === statPeriod ? 0 : -1;
   });
 
-  $('month-stats-title').textContent = statPeriod === 'all' ? 'Statistik för hela dagboken'
-    : statPeriod === 'year' ? `Statistik för ${year}`
-      : statPeriod === 'week' ? `Senaste veckan, ${weekRange(weekStart())}`
-        : `Statistik för ${monthName}`;
+  // Perioden syns redan i valet och i kalendern, bara veckans datum behöver stå ut
+  $('month-stats-title').hidden = statPeriod !== 'week';
+  $('month-stats-title').textContent = statPeriod === 'week' ? weekRange(weekStart()) : '';
 
   $('stats-body').hidden = !keys.length;
   $('stats-empty').hidden = !!keys.length;
@@ -1898,7 +1902,7 @@ function trendBuckets() {
       const k = shiftKey(weekStart(), i);
       const e = entries[k];
       const label = weekdayFmt.format(parseKey(k)).slice(0, 3);
-      return { id: k, ms: e && e.mood ? [e.mood] : [], label, name: cap(postDayFmt.format(parseKey(k))), day: true };
+      return { id: k, ms: e && e.mood ? [e.mood] : [], label, name: shortDate(k), day: true };
     });
   }
   if (statPeriod === 'month') {
@@ -1908,7 +1912,7 @@ function trendBuckets() {
       const e = entries[k];
       // Datum under den första och var femte dag, annars blir det trångt
       const label = i === 0 || (i + 1) % 5 === 0 ? String(i + 1) : '';
-      return { id: k, ms: e && e.mood ? [e.mood] : [], label, name: cap(postDayFmt.format(parseKey(k))), day: true, future: k > todayKey() };
+      return { id: k, ms: e && e.mood ? [e.mood] : [], label, name: shortDate(k), day: true, future: k > todayKey() };
     });
   }
   return trendMonths().map((ym) => ({ id: ym, ms: monthMoods(ym), name: cap(monthFmt.format(parseKey(ym + '-01'))), future: ym > todayKey().slice(0, 7) }));
@@ -2442,7 +2446,7 @@ function renderBackupNotice() {
   }
   if (backupInfo.last) {
     const d = new Date(backupInfo.last);
-    $('backup-last').textContent = `Senaste kopian sparades ${fmtDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`)}.`;
+    $('backup-last').textContent = `Senaste kopian sparades ${shortDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`)}.`;
   } else {
     $('backup-last').textContent = 'Ingen kopia sparad än.';
   }
