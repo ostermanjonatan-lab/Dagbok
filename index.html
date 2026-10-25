@@ -40,7 +40,7 @@
         <div class="layers" id="layers">
           <button type="button" class="hd-btn" id="layers-btn" aria-haspopup="true" aria-expanded="false"
             aria-controls="layers-pop" aria-label="Visa i kalendern">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 3 9l9 5 9-5z"/><path d="m3 14 9 5 9-5"/></svg>
+            <svg class="fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 2.8 8.6a.5.5 0 0 0 0 .8l9.2 5.1 9.2-5.1a.5.5 0 0 0 0-.8z"/><path d="m2.8 13.6 9.2 5.1 9.2-5.1v2.3L12 21l-9.2-5.1z"/></svg>
           </button>
           <div class="layers-pop" id="layers-pop" hidden>
             <label class="switch-row">
@@ -310,16 +310,14 @@
   <div class="toast" id="toast" role="status" aria-live="polite" hidden><span id="toast-text"></span><button type="button" id="toast-action"></button></div>
 
   <nav class="nav" aria-label="Vyer">
-    <a id="tab-cal" href="#/kalender">
+    <a id="tab-cal" href="#/kalender" aria-label="Hem">
       <svg class="fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2 3.2 10.6c-.3.2-.4.5-.4.9V20a1 1 0 0 0 1 1H9.5v-6.2h5V21h5.7a1 1 0 0 0 1-1v-8.5c0-.4-.1-.7-.4-.9z"/></svg>
-      <span>Hem</span>
     </a>
     <a id="tab-day" class="main" href="#/dag" aria-label="Dag">
       <span class="bubble"><svg class="fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path class="cut" d="M13 7l4 4"/></svg><svg class="shut" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span>
     </a>
-    <a id="tab-set" href="#/installningar">
+    <a id="tab-set" href="#/installningar" aria-label="Inställningar">
       <svg class="fill" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1zM15 12a3 3 0 1 0-6 0 3 3 0 0 0 6 0z"/></svg>
-      <span>Inställningar</span>
     </a>
   </nav>
 

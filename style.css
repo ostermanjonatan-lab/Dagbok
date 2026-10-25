@@ -574,6 +574,7 @@ mark {
   stroke-width: 1.8;
   stroke-linejoin: round;
 }
+.hd-btn svg.fill { fill: currentColor; stroke: none; }
 .hd-btn.on {
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 12%, var(--surface));
@@ -1179,7 +1180,7 @@ body.sheet-open { overflow: hidden; }
 .nav a:not(.main):active, .nav button:not(.main):active { opacity: .6; }
 .nav .on svg { stroke-width: 2.2; }
 /* Ifyllda ikoner i bottenmenyn */
-.nav svg.fill, .nav .on svg.fill { fill: currentColor; stroke: none; width: 25px; height: 25px; }
+.nav svg.fill, .nav .on svg.fill { fill: currentColor; stroke: none; width: 27px; height: 27px; }
 .nav .main svg.fill { width: 31px; height: 31px; }
 .nav .bubble svg.fill .cut { fill: none; stroke: var(--brand-text); stroke-width: 1.6; }
 /* Dag är huvudknappen: en större rund knapp i mitten som sticker upp ur menyn */
