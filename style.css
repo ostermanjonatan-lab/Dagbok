@@ -1412,3 +1412,53 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
 .about svg { width: 44px; height: 44px; flex: none; }
 .about strong { display: block; font-weight: 600; }
 .about span { font-size: 13px; color: var(--muted); }
+
+/* Personer i dagen */
+.people {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 46px;
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: text;
+}
+#people-list { display: contents; }
+.person {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 2px 3px 10px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  border-radius: 6px;
+  font-size: 15px;
+}
+.person button {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.person svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; }
+#people-input {
+  flex: 1;
+  min-width: 140px;
+  padding: 6px;
+  border: 0;
+  background: none;
+  font-size: 16px;
+  outline: none;
+}
+.people:focus-within { border-color: var(--muted); }
+.people-suggest { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.people-suggest .pill { padding: 5px 12px; font-size: 14px; }
+.post-people { margin: 8px 0 0; font-size: 14px; color: var(--muted); }

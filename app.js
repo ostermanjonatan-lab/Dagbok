@@ -12,6 +12,7 @@ let entries = normalizeAll(load());
 let current = todayKey();
 let saveTimer = null;
 let photos = [];        // bilderna för dagen som visas
+let people = [];        // personerna som är taggade i dagen
 
 /* Lagring */
 
@@ -51,6 +52,7 @@ function normalize(e) {
       }
       : null,
     photos: Array.isArray(e.photos) ? e.photos.filter((id) => /^[A-Za-z0-9_-]{8,64}$/.test(id)) : [],
+    people: cleanPeople(e.people),
     updated: typeof e.updated === 'string' ? e.updated : new Date().toISOString(),
   };
 }
@@ -470,6 +472,7 @@ function readForm() {
     text: editor.get(),
     mood: checked ? Number(checked.dataset.v) : null,
     photos: photos.slice(),
+    people: people.slice(),
   };
 }
 
@@ -499,6 +502,9 @@ function showDay(key) {
   photos = e ? e.photos.slice() : [];
   renderPhotos();
   $('photo-msg').textContent = '';
+  people = e && e.people ? e.people.slice() : [];
+  $('people-input').value = '';
+  renderPeople();
   setMood(e ? e.mood : null);
   showWeather(e);
 
@@ -524,7 +530,7 @@ function setStatus(text) { $('status').textContent = text; }
 function save() {
   saveTimer = null;
   const data = readForm();
-  if (!data.text && data.mood == null && !data.photos.length) {
+  if (!data.text && data.mood == null && !data.photos.length && !data.people.length) {
     if (!entries[current]) return;
     delete entries[current];
     persist();
@@ -656,7 +662,7 @@ function attachSwipe({ area, moving, skip, canNext, step }) {
 attachSwipe({
   area: $('view-day'),
   moving: $('view-day'),
-  skip: '.photos, .fmt, .date-pop',
+  skip: '.photos, .fmt, .date-pop, .people, .people-suggest',
   canNext: () => current < todayKey(),
   step: (dir) => stepDay(dir),
 });
@@ -710,6 +716,107 @@ document.addEventListener('keydown', (ev) => {
   ev.stopImmediatePropagation();
   toggleDatePop(false);
   $('date-btn').focus();
+});
+
+/* Personer som taggas i dagen, separat från texten */
+
+function cleanName(s) {
+  return String(s).replace(/\s+/g, ' ').trim().slice(0, 40);
+}
+function cleanPeople(list) {
+  const out = [];
+  for (const n of Array.isArray(list) ? list : []) {
+    const c = cleanName(n);
+    if (c && !out.some((x) => x.toLowerCase() === c.toLowerCase())) out.push(c);
+  }
+  return out.slice(0, 30);
+}
+// Sara, Erik och Anna
+function joinNames(list) {
+  return list.length > 1 ? `${list.slice(0, -1).join(', ')} och ${list[list.length - 1]}` : list[0] || '';
+}
+
+// Alla namn i dagboken, de vanligaste först
+function knownPeople() {
+  const count = {};
+  for (const e of Object.values(entries)) {
+    for (const n of e.people || []) count[n] = (count[n] || 0) + 1;
+  }
+  return Object.keys(count).sort((a, b) => count[b] - count[a] || a.localeCompare(b, 'sv'));
+}
+
+function renderPeople() {
+  $('people-list').innerHTML = people.map((n, i) =>
+    `<span class="person">${escapeHtml(n)}<button type="button" data-i="${i}" aria-label="Ta bort ${escapeHtml(n)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg></button></span>`).join('');
+}
+
+function renderPeopleSuggest() {
+  const input = $('people-input');
+  const q = input.value.trim().toLowerCase();
+  const list = document.activeElement === input
+    ? knownPeople().filter((n) => n.toLowerCase().startsWith(q)
+      && !people.some((p) => p.toLowerCase() === n.toLowerCase())).slice(0, 6)
+    : [];
+  $('people-suggest').hidden = !list.length;
+  $('people-suggest').innerHTML = list.map((n) =>
+    `<button type="button" class="pill" data-name="${escapeHtml(n)}">${escapeHtml(n)}</button>`).join('');
+}
+
+function addPerson(raw) {
+  const name = cleanName(raw);
+  $('people-input').value = '';
+  if (name && !people.some((p) => p.toLowerCase() === name.toLowerCase())) {
+    // Samma stavning som tidigare om namnet redan finns i dagboken
+    people.push(knownPeople().find((n) => n.toLowerCase() === name.toLowerCase()) || name);
+    renderPeople();
+    scheduleSave();
+  }
+  renderPeopleSuggest();
+}
+
+$('people-input').addEventListener('keydown', (ev) => {
+  const input = ev.target;
+  if (ev.key === 'Enter') {
+    ev.preventDefault();
+    addPerson(input.value);
+  } else if (ev.key === 'Backspace' && !input.value && people.length) {
+    people.pop();
+    renderPeople();
+    renderPeopleSuggest();
+    scheduleSave();
+  }
+});
+$('people-input').addEventListener('input', (ev) => {
+  // Komma lägger till namnet, som Enter
+  const parts = ev.target.value.split(',');
+  if (parts.length > 1) {
+    parts.slice(0, -1).forEach(addPerson);
+    ev.target.value = parts[parts.length - 1].trimStart();
+  }
+  renderPeopleSuggest();
+});
+$('people-input').addEventListener('focus', renderPeopleSuggest);
+$('people-input').addEventListener('blur', () => {
+  setTimeout(() => {
+    if ($('people-input').value.trim()) addPerson($('people-input').value);
+    renderPeopleSuggest();
+  }, 0);
+});
+// Ett tryck på ett förslag ska inte ta fokus från fältet
+$('people-suggest').addEventListener('pointerdown', (ev) => ev.preventDefault());
+$('people-suggest').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-name]');
+  if (b) addPerson(b.dataset.name);
+});
+$('people-list').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-i]');
+  if (!b) return;
+  people.splice(Number(b.dataset.i), 1);
+  renderPeople();
+  scheduleSave();
+});
+$('people').addEventListener('click', (ev) => {
+  if (ev.target === $('people') || ev.target === $('people-list')) $('people-input').focus();
 });
 
 /* Kort meddelande längst ner, med en knapp för att ångra */
@@ -1065,6 +1172,7 @@ function postHtml(k, e, today, searching) {
     </header>
     ${e.text ? `<div class="prose${searching ? '' : ' clamp'}">${Paper.mdToHtml(e.text)}</div>
     <button type="button" class="link more" hidden>Visa mer</button>` : ''}
+    ${e.people && e.people.length ? `<p class="post-people">Med ${escapeHtml(joinNames(e.people))}</p>` : ''}
     ${postMedia(e.photos)}
   </article>`;
 }
@@ -1315,7 +1423,7 @@ function renderList() {
     if (sort.keep && !sort.keep(e)) return false;
     if (isAt && !(at && at.test(k))) return false;
     if (!lt) return true;
-    return [Paper.mdToText(e.text), fmtDate(k), e.weather ? fmtWeather(e.weather) : '']
+    return [Paper.mdToText(e.text), fmtDate(k), e.weather ? fmtWeather(e.weather) : '', (e.people || []).join(' ')]
       .some((t) => t.toLowerCase().includes(lt));
   }).sort(sort.order);
 
@@ -1600,6 +1708,7 @@ function readerPane(key) {
   const meta = [];
   if (e.mood) meta.push(`<span class="dot" style="--m: var(--m${e.mood})"></span>Humör ${e.mood}`);
   if (e.weather) meta.push(escapeHtml(fmtWeather(e.weather)));
+  if (e.people && e.people.length) meta.push(`med ${escapeHtml(joinNames(e.people))}`);
   return `<div class="reader-pane" data-key="${key}">
     ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
     ${bigPhotos(e.photos)}
@@ -1855,6 +1964,14 @@ function renderStats() {
     }
 
   }
+
+  // Den man oftast har varit med under perioden, om någon finns med minst två dagar
+  const met = {};
+  for (const k of keys) {
+    for (const n of entries[k].people || []) met[n] = (met[n] || 0) + 1;
+  }
+  const top = Object.entries(met).sort((a, b) => b[1] - a[1])[0];
+  if (top && top[1] >= 2) facts.push(['Oftast med', `${top[0]}, ${dagar(top[1])}`]);
 
   const s = streaks();
   if (s.longest >= 2) {
