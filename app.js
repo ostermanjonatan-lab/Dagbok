@@ -1835,7 +1835,7 @@ function renderStats() {
       if (best) {
         const d = parseKey(best[0] + '-01');
         const label = statPeriod === 'year' ? monthOnlyFmt.format(d) : monthFmt.format(d);
-        facts.push(['Bästa månad', `${label}, ${fmtDec(best[1])}`]);
+        facts.push(['Bästa månad', `${cap(label)}, snitt ${fmtDec(best[1])}`]);
       }
     }
 
@@ -1851,14 +1851,14 @@ function renderStats() {
       .map(([wd, v]) => [Number(wd), avg(v)]).sort((x, y) => y[1] - x[1])[0];
     if (bestDay) {
       const sample = new Date(2026, 0, 4 + bestDay[0]);
-      facts.push(['Bästa veckodag', `${weekdayFmt.format(sample)}, ${fmtDec(bestDay[1])}`]);
+      facts.push(['Bästa veckodag', `${cap(weekdayFmt.format(sample))}ar, snitt ${fmtDec(bestDay[1])}`]);
     }
 
   }
 
   const s = streaks();
   if (s.longest >= 2) {
-    facts.push(['Svit', `${dagar(s.current)} nu, längsta ${dagar(s.longest)}`]);
+    facts.push(['Svit', s.current ? `${dagar(s.current)} i rad, längsta ${dagar(s.longest)}` : `Längsta ${dagar(s.longest)}`]);
   }
 
   $('facts').innerHTML = facts.map(([k, v]) => `<dt>${k}</dt><dd>${escapeHtml(v)}</dd>`).join('');

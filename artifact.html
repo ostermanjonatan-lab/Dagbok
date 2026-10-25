@@ -65,14 +65,14 @@ button, input, textarea { font: inherit; color: inherit; }
 }
 .icon:active { background: var(--line); }
 .icon:disabled { opacity: .3; cursor: default; }
-.date { position: relative; flex: 1; min-width: 0; }
+.date { position: relative; flex: 1; min-width: 0; order: -1; margin-right: 8px; }
 /* Datumet i två rader: veckodagen liten överst, datum och månad stort under.
    Storleken följer skärmens bredd. */
 #date-label {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
+  align-items: flex-start;
+  text-align: left;
   line-height: 1.1;
 }
 #date-label .wd {
@@ -98,8 +98,8 @@ button, input, textarea { font: inherit; color: inherit; }
 .date-pop {
   position: absolute;
   top: calc(100% + 8px);
-  left: 50%;
-  translate: -50% 0;
+  left: 0;
+  translate: none;
   z-index: 20;
   width: 300px;
   max-width: calc(100vw - 32px);
@@ -108,7 +108,7 @@ button, input, textarea { font: inherit; color: inherit; }
   border: 1px solid var(--line);
   border-radius: 14px;
   box-shadow: 0 10px 28px rgb(0 0 0 / .16);
-  transform-origin: top center;
+  transform-origin: top left;
   animation: pop-in .14s ease-out;
 }
 @media (prefers-reduced-motion: reduce) { .date-pop { animation: none; } }
@@ -159,7 +159,7 @@ button, input, textarea { font: inherit; color: inherit; }
   color: var(--accent);
   text-decoration: underline; text-underline-offset: 3px;
 }
-#to-today { margin: 4px auto 0; font-size: 14px; display: block; }
+#to-today { margin: 4px 0 0; font-size: 14px; display: block; }
 .danger { color: var(--danger); }
 
 form { margin-top: 16px; }
@@ -172,7 +172,7 @@ input:not([type]), input[type="search"], textarea {
   width: 100%;
   border: 1px solid var(--line);
   background: var(--surface);
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 10px 12px;
   font-size: 16px;
   outline: none;
@@ -266,7 +266,7 @@ textarea {
   margin-top: 8px;
   border: 1px dashed var(--accent);
   background: none;
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 10px 14px;
   cursor: pointer;
   color: var(--accent);
@@ -308,7 +308,7 @@ textarea {
 .scale { display: flex; gap: 4px; }
 .scale button {
   flex: 1; height: 44px; cursor: pointer;
-  border: 1px solid transparent; border-radius: 8px;
+  border: 1px solid transparent; border-radius: 6px;
   background: color-mix(in srgb, var(--m) 22%, var(--surface));
 }
 .scale button[aria-checked="true"] {
@@ -407,7 +407,7 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
 .buttons { display: flex; gap: 8px; flex-wrap: wrap; }
 .buttons button {
   border: 1px solid var(--line); background: var(--surface);
-  border-radius: 8px; padding: 9px 14px; cursor: pointer;
+  border-radius: 6px; padding: 9px 14px; cursor: pointer;
 }
 .buttons button:active { background: var(--line); }
 #backup-msg { margin: 10px 0 0; }
@@ -522,7 +522,7 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   width: 40px;
   height: 40px;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--surface);
   color: var(--muted);
   cursor: pointer;
@@ -689,7 +689,7 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
 /* Svit i dagvyn */
 .streak {
   margin: 4px 0 0;
-  text-align: center;
+  text-align: left;
   font-size: 14px;
   color: var(--muted);
 }
@@ -754,7 +754,7 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
 .wipe-confirm p { margin: 10px 0; }
 .danger-btn {
   border: 0;
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 9px 14px;
   background: var(--danger);
   color: var(--paper);
@@ -1348,7 +1348,7 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
   width: 40px;
   height: 36px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 6px;
   background: var(--surface);
   color: var(--text);
   font-size: 20px;
@@ -3912,7 +3912,7 @@ function renderStats() {
       if (best) {
         const d = parseKey(best[0] + '-01');
         const label = statPeriod === 'year' ? monthOnlyFmt.format(d) : monthFmt.format(d);
-        facts.push(['Bästa månad', `${label}, ${fmtDec(best[1])}`]);
+        facts.push(['Bästa månad', `${cap(label)}, snitt ${fmtDec(best[1])}`]);
       }
     }
 
@@ -3928,14 +3928,14 @@ function renderStats() {
       .map(([wd, v]) => [Number(wd), avg(v)]).sort((x, y) => y[1] - x[1])[0];
     if (bestDay) {
       const sample = new Date(2026, 0, 4 + bestDay[0]);
-      facts.push(['Bästa veckodag', `${weekdayFmt.format(sample)}, ${fmtDec(bestDay[1])}`]);
+      facts.push(['Bästa veckodag', `${cap(weekdayFmt.format(sample))}ar, snitt ${fmtDec(bestDay[1])}`]);
     }
 
   }
 
   const s = streaks();
   if (s.longest >= 2) {
-    facts.push(['Svit', `${dagar(s.current)} nu, längsta ${dagar(s.longest)}`]);
+    facts.push(['Svit', s.current ? `${dagar(s.current)} i rad, längsta ${dagar(s.longest)}` : `Längsta ${dagar(s.longest)}`]);
   }
 
   $('facts').innerHTML = facts.map(([k, v]) => `<dt>${k}</dt><dd>${escapeHtml(v)}</dd>`).join('');
