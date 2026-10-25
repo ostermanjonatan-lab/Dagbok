@@ -259,6 +259,15 @@ textarea {
   font-weight: 600;
   border-color: color-mix(in srgb, var(--m) 70%, var(--text));
 }
+.scale button { transition: background-color .18s, border-color .18s; }
+/* Det valda humöret studsar till när man trycker */
+.scale button.pop { animation: mood-pop .32s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes mood-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) { .scale button.pop { animation: none; } }
 .ends {
   display: flex;
   justify-content: space-between;
@@ -707,6 +716,10 @@ mark {
 .trend .ln { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
 .trend .pt { fill: var(--accent); stroke: var(--bg); stroke-width: 2; }
 .trend .pt.cur { fill: var(--accent); stroke: var(--bg); stroke-width: 2.5; }
+/* Staplarna växer upp från botten, en i taget */
+.trend .bar { transform-box: fill-box; transform-origin: bottom; animation: bar-grow .45s cubic-bezier(.2, .8, .2, 1) backwards; }
+@keyframes bar-grow { from { transform: scaleY(0); } }
+@media (prefers-reduced-motion: reduce) { .trend .bar { animation: none; } }
 .trend .nobar { stroke: var(--line); stroke-width: 2; stroke-linecap: round; }
 .trend .hit { fill: transparent; outline: none; }
 .trend .hit:hover, .trend .hit:focus-visible { fill: color-mix(in srgb, var(--accent) 8%, transparent); }
@@ -818,10 +831,16 @@ mark {
   border-radius: 50%;
 }
 .dots i.on { background: var(--accent); }
-.dots.shake { animation: shake .32s; }
+/* Fel kod: prickarna blir röda och skakar, allt mindre */
+.dots.shake { animation: shake .45s ease-out; }
+.dots.shake i { border-color: var(--danger); background: var(--danger); transition: none; }
 @keyframes shake {
-  20%, 60% { transform: translateX(-8px); }
-  40%, 80% { transform: translateX(8px); }
+  15% { transform: translateX(-12px); }
+  30% { transform: translateX(10px); }
+  45% { transform: translateX(-7px); }
+  60% { transform: translateX(5px); }
+  75% { transform: translateX(-2px); }
+  100% { transform: none; }
 }
 @media (prefers-reduced-motion: reduce) { .dots.shake { animation: none; } }
 .lock-msg { min-height: 1.5em; margin: 14px 0 10px; font-size: 14px; color: var(--danger); }
@@ -1200,12 +1219,13 @@ body.sheet-open { overflow: hidden; }
 .nav .main:active .bubble { transform: scale(.95); }
 .nav .main:focus-visible { outline: none; }
 .nav .main:focus-visible .bubble { outline: 2px solid var(--brand-text); outline-offset: 3px; }
-.nav .main .bubble svg { grid-area: 1 / 1; transition: opacity .2s; }
-.nav .main .bubble .shut { opacity: 0; }
+/* Pennan vrider sig och blir nedåtpilen när dagen öppnas */
+.nav .main .bubble svg { grid-area: 1 / 1; transition: opacity .2s, transform .32s cubic-bezier(.3, 1.3, .5, 1); }
+.nav .main .bubble .shut { opacity: 0; transform: rotate(-90deg) scale(.5); }
 /* När dagen är öppen smälter knappen ihop med arket och stänger den */
 .nav .main.on .bubble { border-color: var(--bg); box-shadow: none; }
-.nav .main.on .bubble svg { opacity: 0; }
-.nav .main.on .bubble .shut { opacity: 1; }
+.nav .main.on .bubble svg { opacity: 0; transform: rotate(90deg) scale(.5); }
+.nav .main.on .bubble .shut { opacity: 1; transform: none; }
 body.sheet-open .nav .on:not(.main) { color: color-mix(in srgb, var(--brand-text) 70%, transparent); font-weight: 400; }
 body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
 @media (prefers-reduced-motion: reduce) { .nav .main .bubble, .nav .main .bubble svg { transition: none; } }

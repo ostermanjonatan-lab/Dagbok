@@ -337,10 +337,12 @@ function lockError(text) {
   dots.classList.remove('shake');
   void dots.offsetWidth;
   dots.classList.add('shake');
+  buzz([40, 60, 40]);
   setTimeout(() => {
+    dots.classList.remove('shake');
     entered = '';
     renderDots();
-  }, 320);
+  }, 450);
 }
 
 async function submitCode() {
@@ -559,6 +561,11 @@ moodButtons.forEach((b) => {
     const on = b.getAttribute('aria-checked') === 'true';
     setMood(on ? null : Number(b.dataset.v));
     buzz(8);
+    if (!on) {
+      b.classList.remove('pop');
+      void b.offsetWidth;
+      b.classList.add('pop');
+    }
     scheduleSave();
   });
 });
@@ -1952,7 +1959,7 @@ function renderTrend() {
       const rx = Math.min(4, w / 2);
       // Snittets färg avrundas till närmaste humör
       if (d.avg != null) {
-        svg += `<rect class="bar" x="${xOf(i) - w / 2}" y="${yOf(d.avg)}" width="${w}" height="${base - yOf(d.avg)}" rx="${rx}" style="fill: var(--m${Math.round(d.avg)})"/>`;
+        svg += `<rect class="bar" x="${xOf(i) - w / 2}" y="${yOf(d.avg)}" width="${w}" height="${base - yOf(d.avg)}" rx="${rx}" style="fill: var(--m${Math.round(d.avg)}); animation-delay: ${Math.round(i * Math.min(40, 360 / n))}ms"/>`;
       } else if (!d.future) {
         svg += `<line class="nobar" x1="${xOf(i) - w / 2}" x2="${xOf(i) + w / 2}" y1="${base}" y2="${base}"/>`;
       }
