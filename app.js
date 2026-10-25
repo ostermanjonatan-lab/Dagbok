@@ -1166,7 +1166,7 @@ function postHtml(k, e, today, searching) {
     <header class="post-head">
       <span class="avatar${e.mood ? '' : ' none'}" data-m="${e.mood || ''}" style="--m: var(--m${e.mood || 3})" aria-hidden="true">${['sön', 'mån', 'tis', 'ons', 'tor', 'fre', 'lör'][d.getDay()]}</span>
       <div class="who">
-        <a class="when" href="#/dag/${k}">${shortDate(k)}</a>
+        <button type="button" class="when">${shortDate(k)}</button>
         ${sub ? `<span class="sub">${sub}</span>` : ''}
       </div>
     </header>
@@ -1185,9 +1185,11 @@ function markLongPosts(list) {
 }
 
 $('list').addEventListener('click', (ev) => {
-  // Ett tryck var som helst på inlägget öppnar dagen, utom på knappar och bilder
+  // Ett tryck var som helst på inlägget öppnar det för läsning, utom på bilder och Visa mer
   const post = ev.target.closest('.post');
-  if (post && !ev.target.closest('button, a') && window.getSelection().isCollapsed) go(`#/dag/${post.dataset.key}`);
+  if (post && (ev.target.closest('.when') || !ev.target.closest('button, a')) && window.getSelection().isCollapsed) {
+    openReader(post.dataset.key);
+  }
   const more = ev.target.closest('.more');
   if (!more) return;
   more.previousElementSibling.classList.remove('clamp');
