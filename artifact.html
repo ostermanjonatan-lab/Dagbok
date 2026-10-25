@@ -29,8 +29,6 @@ html { -webkit-tap-highlight-color: transparent; }
 /* Appen ska inte bete sig som en webbsida: ingen zoom vid dubbeltryck, ingen
    markering av knappar och ingen bildmeny vid långt tryck */
 html { touch-action: manipulation; overscroll-behavior-x: none; }
-/* Installerad på hemskärmen studsar sidan inte i över- och underkant */
-@media (display-mode: standalone) { html, body { overscroll-behavior-y: none; } }
 button, a, label, .pill, .seg, .grid, .switch-row, .post-head, .post-foot, .dp-wd {
   -webkit-user-select: none;
   user-select: none;
