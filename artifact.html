@@ -1410,7 +1410,6 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
 .people:focus-within { border-color: var(--muted); }
 .people-suggest { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .people-suggest .pill { padding: 5px 12px; font-size: 14px; }
-.post-people { margin: 8px 0 0; font-size: 14px; color: var(--muted); }
 </style>
 
 
@@ -1690,7 +1689,7 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
               aria-describedby="weather-label">Välj väder</button>
           </div>
           <div class="field">
-            <span id="people-label">Personer</span>
+            <span id="people-label">Taggade personer</span>
             <div class="people" id="people">
               <span id="people-list"></span>
               <input type="text" id="people-input" placeholder="Lägg till person" autocomplete="off"
@@ -3304,7 +3303,6 @@ function postHtml(k, e, today, searching) {
     </header>
     ${e.text ? `<div class="prose${searching ? '' : ' clamp'}">${Paper.mdToHtml(e.text)}</div>
     <button type="button" class="link more" hidden>Visa mer</button>` : ''}
-    ${e.people && e.people.length ? `<p class="post-people">Med ${escapeHtml(joinNames(e.people))}</p>` : ''}
     ${postMedia(e.photos)}
   </article>`;
 }
@@ -3843,11 +3841,11 @@ function readerPane(key) {
   const meta = [];
   if (e.mood) meta.push(`<span class="dot" style="--m: var(--m${e.mood})"></span>Humör ${e.mood}`);
   if (e.weather) meta.push(escapeHtml(fmtWeather(e.weather)));
-  if (e.people && e.people.length) meta.push(`med ${escapeHtml(joinNames(e.people))}`);
   return `<div class="reader-pane" data-key="${key}">
     ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
     ${bigPhotos(e.photos)}
     ${meta.length ? `<div class="meta">${meta.join(', ')}</div>` : ''}
+    ${e.people && e.people.length ? `<div class="meta">Taggade personer: ${escapeHtml(joinNames(e.people))}</div>` : ''}
     <div class="reader-foot"><button type="button" class="link reader-edit" data-key="${key}">Redigera dagen</button></div>
   </div>`;
 }

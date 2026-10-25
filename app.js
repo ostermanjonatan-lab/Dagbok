@@ -1172,7 +1172,6 @@ function postHtml(k, e, today, searching) {
     </header>
     ${e.text ? `<div class="prose${searching ? '' : ' clamp'}">${Paper.mdToHtml(e.text)}</div>
     <button type="button" class="link more" hidden>Visa mer</button>` : ''}
-    ${e.people && e.people.length ? `<p class="post-people">Med ${escapeHtml(joinNames(e.people))}</p>` : ''}
     ${postMedia(e.photos)}
   </article>`;
 }
@@ -1708,11 +1707,11 @@ function readerPane(key) {
   const meta = [];
   if (e.mood) meta.push(`<span class="dot" style="--m: var(--m${e.mood})"></span>Humör ${e.mood}`);
   if (e.weather) meta.push(escapeHtml(fmtWeather(e.weather)));
-  if (e.people && e.people.length) meta.push(`med ${escapeHtml(joinNames(e.people))}`);
   return `<div class="reader-pane" data-key="${key}">
     ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
     ${bigPhotos(e.photos)}
     ${meta.length ? `<div class="meta">${meta.join(', ')}</div>` : ''}
+    ${e.people && e.people.length ? `<div class="meta">Taggade personer: ${escapeHtml(joinNames(e.people))}</div>` : ''}
     <div class="reader-foot"><button type="button" class="link reader-edit" data-key="${key}">Redigera dagen</button></div>
   </div>`;
 }

@@ -1461,4 +1461,3 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
 .people:focus-within { border-color: var(--muted); }
 .people-suggest { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .people-suggest .pill { padding: 5px 12px; font-size: 14px; }
-.post-people { margin: 8px 0 0; font-size: 14px; color: var(--muted); }
