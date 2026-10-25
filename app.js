@@ -236,6 +236,8 @@ function renderSettings() {
   $('set-lock').checked = !!lockData;
   $('change-code').hidden = !lockData;
   $('wipe-confirm').hidden = true;
+  syncRemind();
+  renderBackupNotice();
 }
 
 $('set-memories').addEventListener('change', (ev) => {
@@ -556,6 +558,7 @@ moodButtons.forEach((b) => {
   b.addEventListener('click', () => {
     const on = b.getAttribute('aria-checked') === 'true';
     setMood(on ? null : Number(b.dataset.v));
+    buzz(8);
     scheduleSave();
   });
 });
@@ -695,14 +698,90 @@ document.addEventListener('keydown', (ev) => {
   $('date-btn').focus();
 });
 
+/* Kort meddelande längst ner, med en knapp för att ångra */
+let toastTimer = 0;
+let toastDone = null;
+function hideToast() {
+  clearTimeout(toastTimer);
+  $('toast').hidden = true;
+  const done = toastDone;
+  toastDone = null;
+  if (done) done();
+}
+function showToast(text, action, onAction, onDone) {
+  hideToast();
+  $('toast-text').textContent = text;
+  $('toast-action').textContent = action;
+  $('toast-action').onclick = () => {
+    toastDone = null;
+    hideToast();
+    onAction();
+  };
+  toastDone = onDone || null;
+  $('toast').hidden = false;
+  toastTimer = setTimeout(hideToast, 6000);
+}
+
+// Lätt vibration där telefonen stöder det. Safari gör det inte.
+function buzz(ms = 10) {
+  try { if (navigator.vibrate) navigator.vibrate(ms); } catch {}
+}
+
+/* Daglig påminnelse som en återkommande händelse i telefonens kalender */
+const REMIND_KEY = 'dagbok.paminnelse';
+let remindAt = '21:00';
+try { remindAt = localStorage.getItem(REMIND_KEY) || '21:00'; } catch {}
+
+function syncRemind() {
+  document.querySelectorAll('#remind-time .pill').forEach((b) => {
+    b.setAttribute('aria-checked', String(b.dataset.t === remindAt));
+  });
+}
+document.querySelectorAll('#remind-time .pill').forEach((b) => {
+  b.addEventListener('click', () => {
+    remindAt = b.dataset.t;
+    try { localStorage.setItem(REMIND_KEY, remindAt); } catch {}
+    syncRemind();
+  });
+});
+
+function reminderIcs(url) {
+  const now = new Date();
+  const [h, m] = remindAt.split(':').map(Number);
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
+  if (start <= now) start.setDate(start.getDate() + 1);
+  const p2 = (n) => String(n).padStart(2, '0');
+  const local = (d) => `${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}T${p2(d.getHours())}${p2(d.getMinutes())}00`;
+  const stamp = now.toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+  return [
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Daysake//Daysake//SV', 'CALSCALE:GREGORIAN',
+    'BEGIN:VEVENT', `UID:daysake-paminnelse-${stamp}@daysake`, `DTSTAMP:${stamp}`,
+    `DTSTART:${local(start)}`, 'DURATION:PT5M', 'RRULE:FREQ=DAILY', 'SUMMARY:Skriv i Daysake',
+    ...(url ? [`URL:${url}`] : []),
+    'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:Skriv i Daysake', 'TRIGGER:PT0M', 'END:VALARM',
+    'END:VEVENT', 'END:VCALENDAR', '',
+  ].join('\r\n');
+}
+syncRemind();
+
 $('delete').addEventListener('click', () => {
-  if (!confirm(`Ta bort allt du skrivit för ${fmtDate(current)}?`)) return;
+  const key = current;
+  const entry = entries[key];
+  if (!entry) return;
   clearTimeout(saveTimer);
   saveTimer = null;
-  (entries[current] ? entries[current].photos : []).forEach(removeAsset);
-  delete entries[current];
+  delete entries[key];
   persist();
-  showDay(current);
+  showDay(key);
+  buzz(15);
+  // Bilderna tas bort först när det inte längre går att ångra
+  showToast(`${cap(dayPartFmt.format(parseKey(key)))} är borttagen.`, 'Ångra', () => {
+    if (entries[key]) return;
+    entries[key] = entry;
+    persist();
+    if (current === key) showDay(key);
+    buzz(10);
+  }, () => entry.photos.forEach(removeAsset));
 });
 
 document.addEventListener('visibilitychange', () => {
@@ -1200,6 +1279,7 @@ const SORTS = {
 const PAGE = 30;
 let sortBy = 'newest';
 let shownCount = PAGE;
+let listMonth = '';
 
 function wordCount(e) {
   return e.text ? Paper.mdToText(e.text).split(/\s+/).filter(Boolean).length : 0;
@@ -1235,6 +1315,13 @@ function renderList() {
   $('sort-note').textContent = note;
 
   const list = $('list');
+  // Flödet tonar in när kalendern byter månad
+  if (!whole && listMonth && listMonth !== calMonth) {
+    list.classList.remove('list-in');
+    void list.offsetWidth;
+    list.classList.add('list-in');
+  }
+  if (!whole) listMonth = calMonth;
   // Bara @ visar förslagen och inget annat
   if (isAt && !at && !sp.after) {
     list.innerHTML = '';
@@ -1466,6 +1553,7 @@ function renderCal() {
   $('cal-grid').innerHTML = html;
   renderList();
   renderStats();
+  renderBackupNotice();
 }
 
 // Visar dagen i ett fönster ovanpå kalendern. Man bläddrar mellan dagar man skrivit,
@@ -2042,6 +2130,10 @@ $('export').addEventListener('click', async () => {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  backupInfo.last = Date.now();
+  delete backupInfo.later;
+  saveBackupInfo();
+  renderBackupNotice();
 });
 
 $('import').addEventListener('click', () => $('import-file').click());
@@ -2318,6 +2410,63 @@ document.addEventListener('keydown', (ev) => {
   grab.addEventListener('pointerup', end);
   grab.addEventListener('pointercancel', end);
 })();
+
+/* Påminnelse om säkerhetskopia, högst en gång i månaden */
+const BACKUP_KEY = 'dagbok.kopia';
+const DAY_MS = 864e5;
+let backupInfo = {};
+try { backupInfo = JSON.parse(localStorage.getItem(BACKUP_KEY)) || {}; } catch {}
+
+function saveBackupInfo() {
+  try { localStorage.setItem(BACKUP_KEY, JSON.stringify(backupInfo)); } catch {}
+}
+
+function renderBackupNotice() {
+  const keys = Object.keys(entries).sort();
+  const now = Date.now();
+  const since = backupInfo.last || (keys.length ? parseKey(keys[0]).getTime() : now);
+  const days = Math.floor((now - since) / DAY_MS);
+  const show = keys.length >= 5 && days >= 30 && now > (backupInfo.later || 0);
+  $('backup-notice').hidden = !show;
+  if (show) {
+    $('backup-text').textContent = backupInfo.last
+      ? `Det var ${days} dagar sedan du sparade en kopia av dagboken.`
+      : 'Du har inte sparat någon kopia av dagboken än.';
+  }
+  if (backupInfo.last) {
+    const d = new Date(backupInfo.last);
+    $('backup-last').textContent = `Senaste kopian sparades ${fmtDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`)}.`;
+  } else {
+    $('backup-last').textContent = 'Ingen kopia sparad än.';
+  }
+}
+
+$('backup-now').addEventListener('click', () => $('export').click());
+$('backup-later').addEventListener('click', () => {
+  backupInfo.later = Date.now() + 7 * DAY_MS;
+  saveBackupInfo();
+  renderBackupNotice();
+});
+
+$('remind-add').addEventListener('click', () => {
+  const blob = new Blob([reminderIcs(location.href.split('#')[0])], { type: 'text/calendar' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'daysake-paminnelse.ics';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  $('remind-msg').textContent = `Öppna filen för att lägga in påminnelsen kl. ${remindAt}.`;
+});
+
+// Startskärmen tonar bort när appen har ritats upp
+setTimeout(() => {
+  const s = $('splash');
+  if (!s) return;
+  s.classList.add('gone');
+  setTimeout(() => s.remove(), 350);
+}, Math.max(0, 450 - performance.now()));
 
 window.addEventListener('hashchange', route);
 route();

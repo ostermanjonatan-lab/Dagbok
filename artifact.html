@@ -1275,6 +1275,68 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
   cursor: pointer;
 }
 .post .edit svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Mjuka övergångar när en vy visas och när flödet byter månad */
+#view-cal:not([hidden]), #view-set:not([hidden]), .list-in { animation: view-in .22s ease-out; }
+@keyframes view-in { from { opacity: 0; transform: translateY(6px); } }
+@media (prefers-reduced-motion: reduce) {
+  #view-cal:not([hidden]), #view-set:not([hidden]), .list-in, .toast { animation: none; }
+}
+
+/* Meddelande längst ner med Ångra */
+.toast {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 44px);
+  z-index: 45;
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 8px 8px 16px;
+  background: var(--text);
+  color: var(--bg);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / .25);
+  font-size: 15px;
+  animation: toast-in .2s ease-out;
+}
+.toast button {
+  flex: none;
+  padding: 8px 10px;
+  border: 0;
+  background: none;
+  color: var(--bg);
+  font-weight: 600;
+  cursor: pointer;
+}
+@keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
+
+/* Påminnelse om säkerhetskopia */
+.notice {
+  margin: 8px 0 14px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  font-size: 14px;
+}
+.notice p { margin: 0 0 6px; }
+.notice-actions { display: flex; gap: 20px; }
+.link.quiet { color: var(--muted); }
+
+/* Daglig påminnelse och Om Daysake i inställningarna */
+.remind-time { margin: 10px 0 12px; }
+#remind-msg:empty { display: none; }
+#remind-msg { margin: 8px 0 0; }
+.about { display: flex; align-items: center; gap: 12px; }
+.about svg { width: 44px; height: 44px; flex: none; }
+.about strong { display: block; font-weight: 600; }
+.about span { font-size: 13px; color: var(--muted); }
 </style>
 
 
@@ -1367,6 +1429,20 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
     </div>
 
     <div class="group">
+      <h2>Daglig påminnelse</h2>
+      <p class="muted">Blir en händelse varje dag i telefonens kalender.</p>
+      <div class="pills remind-time" id="remind-time" role="radiogroup" aria-label="Tid för påminnelsen">
+        <button type="button" class="pill" role="radio" data-t="19:00" aria-checked="false">19:00</button>
+        <button type="button" class="pill" role="radio" data-t="20:00" aria-checked="false">20:00</button>
+        <button type="button" class="pill" role="radio" data-t="21:00" aria-checked="false">21:00</button>
+        <button type="button" class="pill" role="radio" data-t="22:00" aria-checked="false">22:00</button>
+      </div>
+      <div class="buttons">
+        <button type="button" id="remind-add" hidden>Lägg till i kalendern</button>
+      </div>
+      <p class="muted" id="remind-msg" aria-live="polite"></p>
+    </div>
+    <div class="group">
       <h2>Kodlås</h2>
       <label class="switch-row">
         <span>Lås med kod<small>Fyra siffror när appen öppnas.</small></span>
@@ -1398,6 +1474,10 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
         </div>
       </div>
       <p class="muted" id="wipe-msg" aria-live="polite"></p>
+    </div>
+    <div class="group about">
+      <svg viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="112" fill="#800020"/><path d="M140 100h120a140 140 0 0 1 0 280H140z" fill="#F3E6D5"/><rect x="140" y="100" width="40" height="280" fill="#e3cdb3"/><path d="M236 168h96M236 214h120M236 260h112M236 306h84" stroke="#800020" stroke-width="12" stroke-linecap="round" opacity=".3"/><path d="M188 100h30v330l-15-15-15 15z" fill="#5c0017" stroke="#F3E6D5" stroke-width="6" stroke-linejoin="round"/></svg>
+      <div><strong>Daysake</strong><span>Version 1.0</span></div>
     </div>
   </section>
 
@@ -1548,10 +1628,6 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
         <div class="foot">
           <span id="status" aria-live="polite"></span>
           <button type="button" class="link danger" id="delete" hidden>Ta bort dagen</button>
-          <span class="confirm" id="confirm" hidden>
-            <button type="button" class="link danger" id="delete-yes">Ta bort</button>
-            <button type="button" class="link" id="delete-no">Avbryt</button>
-          </span>
         </div>
         <section class="memories" id="memories" aria-labelledby="memories-title" hidden>
           <h2 id="memories-title">Den här dagen</h2>
@@ -1561,6 +1637,8 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
     </div>
   </div>
 </div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden><span id="toast-text"></span><button type="button" id="toast-action"></button></div>
 
 <nav class="nav" aria-label="Vyer">
   <button type="button" id="tab-cal" class="on">
@@ -2104,6 +2182,7 @@ async function connect() {
   assets = as;
   $('add-photo').hidden = !assets;
   $('export').hidden = !downloads;
+  $('remind-add').hidden = !downloads;
   const uid = user ? await user.id() : null;
   if (!db || !uid) return;
 
@@ -2171,6 +2250,7 @@ function renderSettings() {
   $('set-lock').checked = !!lockData;
   $('change-code').hidden = !lockData;
   $('wipe-confirm').hidden = true;
+  syncRemind();
 }
 
 $('set-memories').addEventListener('change', (ev) => {
@@ -2483,7 +2563,6 @@ function showDay(key) {
   $('next').disabled = key >= today;
   $('to-today').hidden = key === today;
   $('text-label').textContent = key === today ? 'Vad som hänt idag' : 'Vad som hände';
-  $('confirm').hidden = true;
   $('delete').hidden = !entries[key];
   setStatus(e ? savedText(e.updated) : '');
   renderMemories(key);
@@ -2518,7 +2597,7 @@ function save() {
   remoteSet(current, data);
   setStatus(savedText(data.updated));
   $('weather-auto').hidden = !(data.weather && data.weather.time);
-  if ($('confirm').hidden) $('delete').hidden = false;
+  $('delete').hidden = false;
   renderStreak();
 }
 
@@ -2535,6 +2614,7 @@ moodButtons.forEach((b) => {
   b.addEventListener('click', () => {
     const on = b.getAttribute('aria-checked') === 'true';
     setMood(on ? null : Number(b.dataset.v));
+    buzz(8);
     scheduleSave();
   });
 });
@@ -2854,22 +2934,92 @@ document.addEventListener('keydown', (ev) => {
   $('date-btn').focus();
 });
 
+/* Kort meddelande längst ner, med en knapp för att ångra */
+let toastTimer = 0;
+let toastDone = null;
+function hideToast() {
+  clearTimeout(toastTimer);
+  $('toast').hidden = true;
+  const done = toastDone;
+  toastDone = null;
+  if (done) done();
+}
+function showToast(text, action, onAction, onDone) {
+  hideToast();
+  $('toast-text').textContent = text;
+  $('toast-action').textContent = action;
+  $('toast-action').onclick = () => {
+    toastDone = null;
+    hideToast();
+    onAction();
+  };
+  toastDone = onDone || null;
+  $('toast').hidden = false;
+  toastTimer = setTimeout(hideToast, 6000);
+}
+
+// Lätt vibration där telefonen stöder det. Safari gör det inte.
+function buzz(ms = 10) {
+  try { if (navigator.vibrate) navigator.vibrate(ms); } catch {}
+}
+
+/* Daglig påminnelse som en återkommande händelse i telefonens kalender */
+const REMIND_KEY = 'dagbok.paminnelse';
+let remindAt = '21:00';
+try { remindAt = localStorage.getItem(REMIND_KEY) || '21:00'; } catch {}
+
+function syncRemind() {
+  document.querySelectorAll('#remind-time .pill').forEach((b) => {
+    b.setAttribute('aria-checked', String(b.dataset.t === remindAt));
+  });
+}
+document.querySelectorAll('#remind-time .pill').forEach((b) => {
+  b.addEventListener('click', () => {
+    remindAt = b.dataset.t;
+    try { localStorage.setItem(REMIND_KEY, remindAt); } catch {}
+    syncRemind();
+  });
+});
+
+function reminderIcs(url) {
+  const now = new Date();
+  const [h, m] = remindAt.split(':').map(Number);
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
+  if (start <= now) start.setDate(start.getDate() + 1);
+  const p2 = (n) => String(n).padStart(2, '0');
+  const local = (d) => `${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}T${p2(d.getHours())}${p2(d.getMinutes())}00`;
+  const stamp = now.toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+  return [
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Daysake//Daysake//SV', 'CALSCALE:GREGORIAN',
+    'BEGIN:VEVENT', `UID:daysake-paminnelse-${stamp}@daysake`, `DTSTAMP:${stamp}`,
+    `DTSTART:${local(start)}`, 'DURATION:PT5M', 'RRULE:FREQ=DAILY', 'SUMMARY:Skriv i Daysake',
+    ...(url ? [`URL:${url}`] : []),
+    'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:Skriv i Daysake', 'TRIGGER:PT0M', 'END:VALARM',
+    'END:VEVENT', 'END:VCALENDAR', '',
+  ].join('\r\n');
+}
+syncRemind();
+
 $('delete').addEventListener('click', () => {
-  $('delete').hidden = true;
-  $('confirm').hidden = false;
-});
-$('delete-no').addEventListener('click', () => {
-  $('confirm').hidden = true;
-  $('delete').hidden = false;
-});
-$('delete-yes').addEventListener('click', () => {
+  const key = current;
+  const entry = entries[key];
+  if (!entry) return;
   clearTimeout(saveTimer);
   saveTimer = null;
-  (entries[current] ? entries[current].photos : []).forEach(removeAsset);
-  delete entries[current];
+  delete entries[key];
   writeCache();
-  remoteDelete(current);
-  showDay(current);
+  remoteDelete(key);
+  showDay(key);
+  buzz(15);
+  // Bilderna tas bort först när det inte längre går att ångra
+  showToast(`${cap(dayPartFmt.format(parseKey(key)))} är borttagen.`, 'Ångra', () => {
+    if (entries[key]) return;
+    entries[key] = entry;
+    writeCache();
+    remoteSet(key, entry);
+    if (current === key) showDay(key);
+    buzz(10);
+  }, () => entry.photos.forEach(removeAsset));
 });
 
 document.addEventListener('visibilitychange', () => {
@@ -3181,6 +3331,7 @@ const SORTS = {
 const PAGE = 30;
 let sortBy = 'newest';
 let shownCount = PAGE;
+let listMonth = '';
 
 function wordCount(e) {
   return e.text ? Paper.mdToText(e.text).split(/\s+/).filter(Boolean).length : 0;
@@ -3216,6 +3367,13 @@ function renderList() {
   $('sort-note').textContent = note;
 
   const list = $('list');
+  // Flödet tonar in när kalendern byter månad
+  if (!whole && listMonth && listMonth !== calMonth) {
+    list.classList.remove('list-in');
+    void list.offsetWidth;
+    list.classList.add('list-in');
+  }
+  if (!whole) listMonth = calMonth;
   // Bara @ visar förslagen och inget annat
   if (isAt && !at && !sp.after) {
     list.innerHTML = '';
@@ -4268,6 +4426,19 @@ document.addEventListener('keydown', (ev) => {
 })();
 
 // Dag-knappen stänger dagen när den är öppen
+$('remind-add').addEventListener('click', async () => {
+  if (!downloads) {
+    $('remind-msg').textContent = 'Det går inte att spara filer här.';
+    return;
+  }
+  try {
+    await downloads.save({ filename: 'daysake-paminnelse.ics', data: reminderIcs('') });
+    $('remind-msg').textContent = `Öppna filen för att lägga in påminnelsen kl. ${remindAt}.`;
+  } catch (err) {
+    $('remind-msg').textContent = err && err.code === 'declined' ? '' : 'Filen kunde inte sparas här.';
+  }
+});
+
 $('tab-day').addEventListener('click', () => (daySheet.hidden ? openSheet(todayKey()) : hideSheet()));
 $('tab-cal').addEventListener('click', () => { hideSheet(); setView('cal'); });
 $('tab-set').addEventListener('click', () => { hideSheet(); setView('set'); });

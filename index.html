@@ -13,12 +13,26 @@
   <link rel="icon" href="icons/icon-192.png" type="image/png">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
+  <!-- Startskärmen ritas direkt, innan resten av appen har laddats -->
+  <style>
+    .splash { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: #800020; transition: opacity .3s ease-out; }
+    .splash svg { width: 132px; height: 132px; }
+    .splash.gone { opacity: 0; pointer-events: none; }
+  </style>
 </head>
 <body>
+  <div class="splash" id="splash"><svg viewBox="0 0 512 512" aria-hidden="true"><path d="M140 100h120a140 140 0 0 1 0 280H140z" fill="#F3E6D5"/><rect x="140" y="100" width="40" height="280" fill="#e3cdb3"/><path d="M236 168h96M236 214h120M236 260h112M236 306h84" stroke="#800020" stroke-width="12" stroke-linecap="round" opacity=".3"/><path d="M188 100h30v330l-15-15-15 15z" fill="#5c0017" stroke="#F3E6D5" stroke-width="6" stroke-linejoin="round"/></svg></div>
 
   <main>
 
     <section id="view-cal" hidden>
+      <div class="notice" id="backup-notice" hidden>
+        <p id="backup-text"></p>
+        <div class="notice-actions">
+          <button type="button" class="link" id="backup-now">Exportera nu</button>
+          <button type="button" class="link quiet" id="backup-later">Senare</button>
+        </div>
+      </div>
       <div class="cal-head">
         <button type="button" class="icon" id="cal-prev" aria-label="Föregående månad">&#8249;</button>
         <h2 id="cal-title"></h2>
@@ -109,6 +123,20 @@
       </div>
 
       <div class="group">
+        <h2>Daglig påminnelse</h2>
+        <p class="muted">Blir en händelse varje dag i telefonens kalender.</p>
+        <div class="pills remind-time" id="remind-time" role="radiogroup" aria-label="Tid för påminnelsen">
+          <button type="button" class="pill" role="radio" data-t="19:00" aria-checked="false">19:00</button>
+          <button type="button" class="pill" role="radio" data-t="20:00" aria-checked="false">20:00</button>
+          <button type="button" class="pill" role="radio" data-t="21:00" aria-checked="false">21:00</button>
+          <button type="button" class="pill" role="radio" data-t="22:00" aria-checked="false">22:00</button>
+        </div>
+        <div class="buttons">
+          <button type="button" id="remind-add">Lägg till i kalendern</button>
+        </div>
+        <p class="muted" id="remind-msg" aria-live="polite"></p>
+      </div>
+      <div class="group">
         <h2>Kodlås</h2>
         <label class="switch-row">
           <span>Lås med kod<small>Fyra siffror när appen öppnas.</small></span>
@@ -125,6 +153,7 @@
           <button type="button" id="import">Importera fil</button>
           <input type="file" id="import-file" accept="application/json,.json" hidden>
         </div>
+        <p class="muted" id="backup-last"></p>
       </div>
 
       <div class="group">
@@ -139,6 +168,10 @@
           </div>
         </div>
         <p class="muted" id="wipe-msg" aria-live="polite"></p>
+      </div>
+      <div class="group about">
+        <svg viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="112" fill="#800020"/><path d="M140 100h120a140 140 0 0 1 0 280H140z" fill="#F3E6D5"/><rect x="140" y="100" width="40" height="280" fill="#e3cdb3"/><path d="M236 168h96M236 214h120M236 260h112M236 306h84" stroke="#800020" stroke-width="12" stroke-linecap="round" opacity=".3"/><path d="M188 100h30v330l-15-15-15 15z" fill="#5c0017" stroke="#F3E6D5" stroke-width="6" stroke-linejoin="round"/></svg>
+        <div><strong>Daysake</strong><span>Version 1.0</span></div>
       </div>
     </section>
 
@@ -273,6 +306,8 @@
       </div>
     </div>
   </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden><span id="toast-text"></span><button type="button" id="toast-action"></button></div>
 
   <nav class="nav" aria-label="Vyer">
     <a id="tab-cal" href="#/kalender">
