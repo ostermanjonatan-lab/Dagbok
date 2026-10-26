@@ -1,5 +1,5 @@
 // Höj versionen när filerna ändras så att telefonen hämtar de nya.
-const CACHE = 'dagbok-v74';
+const CACHE = 'dagbok-v75';
 const FILES = [
   './',
   'index.html',
@@ -11,8 +11,16 @@ const FILES = [
   'icons/icon-512.png',
   'icons/apple-touch-icon.png',
   'icons/icon-maskable-512.png',
-  'fonts/bricolage-latin.woff2',
-  'fonts/bricolage-latin-ext.woff2',
+  'fonts/alegreya-italic-latin-ext.woff2',
+  'fonts/alegreya-italic-latin.woff2',
+  'fonts/alegreya-latin-ext.woff2',
+  'fonts/alegreya-latin.woff2',
+  'fonts/alegreya-sans-400-latin-ext.woff2',
+  'fonts/alegreya-sans-400-latin.woff2',
+  'fonts/alegreya-sans-500-latin-ext.woff2',
+  'fonts/alegreya-sans-500-latin.woff2',
+  'fonts/alegreya-sans-700-latin-ext.woff2',
+  'fonts/alegreya-sans-700-latin.woff2',
 ];
 
 self.addEventListener('install', (event) => {
