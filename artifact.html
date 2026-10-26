@@ -1,7 +1,7 @@
 <title>Daysake</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..800&family=Inter:opsz,wght@14..32,300..700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&display=swap">
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
 /* Layout: en smal skrivspalt, meny längst ner, datumet är det största på dagvyn.
@@ -21,10 +21,10 @@
   --m1: #d2483c; --m2: #e8893c; --m3: #e2c23d; --m4: #95c65c; --m5: #3d9c5a;
   --on-mood: #2a1418;
   --nav-h: 58px;
-  /* Fraunces för datum, rubriker och dagbokstexten, Inter för resten. Systemets typsnitt för pilarna. */
+  /* Bricolage Grotesque i hela appen. Systemets typsnitt för pilarna, som blir för små annars. */
   --system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --serif: "Fraunces", "Iowan Old Style", Georgia, serif;
-  --sans: "Inter", var(--system);
+  --serif: "Bricolage Grotesque", var(--system);
+  --sans: "Bricolage Grotesque", var(--system);
   color-scheme: light;
 }
 
@@ -92,9 +92,11 @@ button, input, textarea { font: inherit; color: inherit; }
   margin-top: 4px;
   font-family: var(--serif);
   font-size: clamp(26px, 7.5vw, 38px);
-  font-weight: 600;
+  font-weight: 800;
   color: var(--accent);
   white-space: nowrap;
+  font-stretch: 85%;
+  letter-spacing: -.01em;
 }
 #date-label .yr { font-weight: 400; color: var(--muted); }
 /* Datumväljaren ligger osynlig ovanpå rubriken så att ett tryck öppnar den */
@@ -431,8 +433,10 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   color: var(--text);
   font-family: var(--serif);
   font-size: 22px;
-  font-weight: 600;
+  font-weight: 800;
   text-align: center;
+  font-stretch: 85%;
+  letter-spacing: -.01em;
 }
 #cal-title::first-letter { text-transform: uppercase; }
 .grid {
@@ -709,8 +713,10 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   margin: 12px 0 4px;
   font-family: var(--serif);
   font-size: 22px;
-  font-weight: 600;
+  font-weight: 800;
   color: var(--text);
+  font-stretch: 85%;
+  letter-spacing: -.01em;
 }
 .group {
   padding: 18px 0;
@@ -996,8 +1002,10 @@ body.sheet-open { overflow: hidden; }
   color: var(--accent);
   font-family: var(--serif);
   font-size: 19px;
-  font-weight: 600;
+  font-weight: 800;
   text-align: center;
+  font-stretch: 85%;
+  letter-spacing: -.01em;
 }
 .close-x svg {
   width: 22px;

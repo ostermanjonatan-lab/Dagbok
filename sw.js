@@ -1,5 +1,5 @@
 // Höj versionen när filerna ändras så att telefonen hämtar de nya.
-const CACHE = 'dagbok-v73';
+const CACHE = 'dagbok-v72';
 const FILES = [
   './',
   'index.html',
@@ -11,10 +11,8 @@ const FILES = [
   'icons/icon-512.png',
   'icons/apple-touch-icon.png',
   'icons/icon-maskable-512.png',
-  'fonts/fraunces-latin.woff2',
-  'fonts/fraunces-latin-ext.woff2',
-  'fonts/inter-latin.woff2',
-  'fonts/inter-latin-ext.woff2',
+  'fonts/bricolage-latin.woff2',
+  'fonts/bricolage-latin-ext.woff2',
 ];
 
 self.addEventListener('install', (event) => {
