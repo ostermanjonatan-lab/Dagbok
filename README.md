@@ -35,4 +35,4 @@ python3 -m http.server
 
 När du ändrar filerna, höj `CACHE` i `sw.js` så att installerade appar hämtar den nya versionen.
 
-Typsnittet är Bricolage Grotesque av Mathieu Triay, under SIL Open Font License. Filerna ligger i `fonts/`.
+Typsnitten är Fraunces av Undercase Type och Inter av Rasmus Andersson, båda under SIL Open Font License. Filerna ligger i `fonts/`.
