@@ -1,3 +1,23 @@
+/* Bricolage Grotesque (SIL Open Font License), sparad i appen så att den fungerar offline */
+@font-face {
+  font-family: "Bricolage Grotesque";
+  font-style: normal;
+  font-weight: 200 800;
+  font-stretch: 75% 100%;
+  font-display: swap;
+  src: url(fonts/bricolage-latin-ext.woff2) format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Bricolage Grotesque";
+  font-style: normal;
+  font-weight: 200 800;
+  font-stretch: 75% 100%;
+  font-display: swap;
+  src: url(fonts/bricolage-latin.woff2) format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 :root {
   --bg: #f3e6d5;
   --surface: #fbf5ec;
@@ -17,8 +37,10 @@
   --m5: #3d9c5a;
   --on-mood: #2a1418;
   --nav-h: 58px;
-  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Bricolage Grotesque i hela appen. Systemets typsnitt för pilarna, som blir för små annars. */
+  --system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --serif: "Bricolage Grotesque", var(--system);
+  --sans: "Bricolage Grotesque", var(--system);
   color-scheme: light;
 }
 
@@ -85,6 +107,7 @@ button, input, textarea { font: inherit; color: inherit; }
   color: var(--muted);
   border-radius: 8px;
   cursor: pointer;
+  font-family: var(--system);
 }
 .icon:active { background: var(--line); }
 .icon:disabled { opacity: .3; }
@@ -116,9 +139,11 @@ button, input, textarea { font: inherit; color: inherit; }
   margin-top: 4px;
   font-family: var(--serif);
   font-size: clamp(26px, 7.5vw, 38px);
-  font-weight: 600;
+  font-weight: 800;
   color: var(--accent);
   white-space: nowrap;
+  font-stretch: 85%;
+  letter-spacing: -.01em;
 }
 #date-label .yr { font-weight: 400; color: var(--muted); }
 #view-day, #view-cal { touch-action: pan-y; }
@@ -153,6 +178,7 @@ button, input, textarea { font: inherit; color: inherit; }
   font-size: 22px;
   line-height: 1;
   cursor: pointer;
+  font-family: var(--system);
 }
 .dp-head button:disabled { opacity: .3; cursor: default; }
 .dp-wd, .dp-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
@@ -475,8 +501,10 @@ mark {
   color: var(--text);
   font-family: var(--serif);
   font-size: 22px;
-  font-weight: 600;
+  font-weight: 800;
   text-align: center;
+  font-stretch: 85%;
+  letter-spacing: -.01em;
 }
 #cal-title::first-letter { text-transform: uppercase; }
 .grid {
@@ -751,8 +779,10 @@ mark {
   margin: 12px 0 4px;
   font-family: var(--serif);
   font-size: 22px;
-  font-weight: 600;
+  font-weight: 800;
   color: var(--text);
+  font-stretch: 85%;
+  letter-spacing: -.01em;
 }
 .group {
   padding: 18px 0;
@@ -1038,8 +1068,10 @@ body.sheet-open { overflow: hidden; }
   color: var(--accent);
   font-family: var(--serif);
   font-size: 19px;
-  font-weight: 600;
+  font-weight: 800;
   text-align: center;
+  font-stretch: 85%;
+  letter-spacing: -.01em;
 }
 .close-x svg {
   width: 22px;
@@ -1404,6 +1436,7 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
   font-size: 20px;
   line-height: 1;
   cursor: pointer;
+  font-family: var(--system);
 }
 #remind-label { min-width: 64px; text-align: center; font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; }
 #remind-msg:empty { display: none; }

@@ -34,3 +34,5 @@ python3 -m http.server
 Öppna sedan http://localhost:8000.
 
 När du ändrar filerna, höj `CACHE` i `sw.js` så att installerade appar hämtar den nya versionen.
+
+Typsnittet är Bricolage Grotesque av Mathieu Triay, under SIL Open Font License. Filerna ligger i `fonts/`.
