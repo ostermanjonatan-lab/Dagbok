@@ -1,7 +1,4 @@
 <title>Daysake</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400..900;1,400..900&family=Alegreya+Sans:wght@400;500;700&display=swap">
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
 /* Layout: en smal skrivspalt, meny längst ner, datumet är det största på dagvyn.
@@ -21,11 +18,10 @@
   --m1: #d2483c; --m2: #e8893c; --m3: #e2c23d; --m4: #95c65c; --m5: #3d9c5a;
   --on-mood: #2a1418;
   --nav-h: 58px;
-  /* Alegreya för datum, rubriker och dagbokstexten, Alegreya Sans för resten.
-     Systemets typsnitt för pilarna. */
+  /* Telefonens eget typsnitt i hela appen: San Francisco på iPhone, Roboto på Android */
   --system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --serif: "Alegreya", "Iowan Old Style", Georgia, serif;
-  --sans: "Alegreya Sans", var(--system);
+  --serif: var(--system);
+  --sans: var(--system);
   color-scheme: light;
 }
 
@@ -35,8 +31,6 @@ html { -webkit-tap-highlight-color: transparent; }
 /* Appen ska inte bete sig som en webbsida: ingen zoom vid dubbeltryck, ingen
    markering av knappar och ingen bildmeny vid långt tryck */
 html { touch-action: manipulation; overscroll-behavior-x: none; }
-/* Alegreya har små gemener. Storleken justeras så att texten blir lika lätt att läsa som förut. */
-html { font-size-adjust: .5; font-variant-numeric: lining-nums; }
 button, a, label, .pill, .seg, .grid, .switch-row, .post-head, .dp-wd {
   -webkit-user-select: none;
   user-select: none;
@@ -95,9 +89,10 @@ button, input, textarea { font: inherit; color: inherit; }
   margin-top: 4px;
   font-family: var(--serif);
   font-size: clamp(26px, 7.5vw, 38px);
-  font-weight: 800;
+  font-weight: 700;
   color: var(--accent);
   white-space: nowrap;
+  letter-spacing: -.02em;
 }
 #date-label .yr { font-weight: 400; color: var(--muted); }
 /* Datumväljaren ligger osynlig ovanpå rubriken så att ett tryck öppnar den */
@@ -434,8 +429,9 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   color: var(--text);
   font-family: var(--serif);
   font-size: 22px;
-  font-weight: 800;
+  font-weight: 700;
   text-align: center;
+  letter-spacing: -.02em;
 }
 #cal-title::first-letter { text-transform: uppercase; }
 .grid {
@@ -712,8 +708,9 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   margin: 12px 0 4px;
   font-family: var(--serif);
   font-size: 22px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--text);
+  letter-spacing: -.02em;
 }
 .group {
   padding: 18px 0;
@@ -999,8 +996,9 @@ body.sheet-open { overflow: hidden; }
   color: var(--accent);
   font-family: var(--serif);
   font-size: 19px;
-  font-weight: 800;
+  font-weight: 700;
   text-align: center;
+  letter-spacing: -.02em;
 }
 .close-x svg {
   width: 22px;

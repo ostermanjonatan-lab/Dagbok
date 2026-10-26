@@ -34,5 +34,3 @@ python3 -m http.server
 Öppna sedan http://localhost:8000.
 
 När du ändrar filerna, höj `CACHE` i `sw.js` så att installerade appar hämtar den nya versionen.
-
-Typsnitten är Alegreya och Alegreya Sans av Juan Pablo del Peral (Huerta Tipográfica), under SIL Open Font License. Filerna ligger i `fonts/`.
