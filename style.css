@@ -1218,6 +1218,15 @@ body.sheet-open { overflow: hidden; }
 .nav svg.fill, .nav .on svg.fill { fill: currentColor; stroke: none; width: 27px; height: 27px; }
 .nav .main svg.fill { width: 31px; height: 31px; }
 .nav .bubble svg.fill .cut { fill: none; stroke: var(--brand-text); stroke-width: 1.6; }
+/* Ikonerna är tomma, och ifyllda bara när de är valda */
+.ico-f { display: none; }
+.nav .on .ico-o, .hd-btn.on .ico-o, .seg [aria-selected="true"] .ico-o { display: none; }
+.nav .on .ico-f, .hd-btn.on .ico-f, .seg [aria-selected="true"] .ico-f { display: block; }
+.nav svg.ico-o { width: 26px; height: 26px; stroke-width: 1.7; }
+.seg svg.fill { fill: currentColor; stroke: none; }
+/* Medan dagen är öppen är Hem och Inställningar inte valda */
+body.sheet-open .nav .on:not(.main) .ico-o { display: block; }
+body.sheet-open .nav .on:not(.main) .ico-f { display: none; }
 /* Dag är huvudknappen: en större rund knapp i mitten som sticker upp ur menyn */
 .nav .main { position: relative; }
 .nav .main .bubble {
