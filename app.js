@@ -6,6 +6,15 @@ const POS_KEY = 'dagbok.plats';
 const $ = (id) => document.getElementById(id);
 
 const editor = Paper.createEditor($('f-text'), $('fmt'), () => scheduleSave());
+
+// Linjerna i skrivfältet fortsätter nedanför sista raden
+const paperEl = $('f-text');
+function syncPaperLines() {
+  const last = paperEl.lastElementChild;
+  paperEl.style.setProperty('--fill', `${last ? last.offsetTop + last.offsetHeight : 14}px`);
+}
+new MutationObserver(syncPaperLines).observe(paperEl, { childList: true, subtree: true, characterData: true });
+if (window.ResizeObserver) new ResizeObserver(syncPaperLines).observe(paperEl);
 const moodButtons = [...$('f-mood').querySelectorAll('button')];
 
 let entries = normalizeAll(load());
