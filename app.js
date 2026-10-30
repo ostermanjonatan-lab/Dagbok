@@ -2300,7 +2300,7 @@ function renderStats() {
   }
   const seenText = Object.entries(seen).filter(([, n]) => n)
     .map(([kind, n]) => `${n} ${KIND_COUNT[kind][n === 1 ? 0 : 1]}`);
-  if (seenText.length) facts.push(['Sett och läst', joinNames(seenText)]);
+  if (seenText.length) facts.push(['Sett & läst', joinNames(seenText)]);
 
   const s = streaks();
   if (s.longest >= 2) {
