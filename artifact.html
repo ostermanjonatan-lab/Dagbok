@@ -1458,20 +1458,6 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
   outline: none;
 }
 #film-title:focus { border-color: var(--muted); }
-.rate-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 0;
-  border: 0;
-  background: none;
-  color: var(--muted);
-  font-size: 16px;
-  cursor: pointer;
-}
-.rate-btn svg { width: 20px; height: 20px; fill: var(--line); }
-.rate-btn.on { color: var(--text); font-weight: 600; }
-.rate-btn.on svg { fill: #e2a43d; }
 /* Betyget väljs i ett hjul som man sveper i sidled. Siffran i ringen är vald. */
 .film-rating { position: relative; margin-top: 12px; }
 .film-rating::before {
@@ -1509,7 +1495,9 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
   cursor: pointer;
 }
 .rw-track [aria-selected="true"] { color: var(--text); font-size: 26px; font-weight: 700; }
-#film-review { margin-top: 12px; min-height: 96px; resize: vertical; }
+/* Recensionen ligger under titeln och fyller ut höjden bredvid omslaget */
+#film-review { flex: 1; width: 100%; min-height: 104px; resize: none; }
+.film { align-items: stretch; }
 #film-clear { margin-top: 6px; }
 .stars svg { width: 100%; height: 100%; fill: currentColor; display: block; }
 .stars .on { color: #e2a43d; }
@@ -1882,13 +1870,12 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
     <div class="film-info">
       <input type="text" id="film-title" placeholder="Vilken film?" autocomplete="off"
         enterkeyhint="done" aria-labelledby="film-dialog-title">
-      <button type="button" class="rate-btn" id="film-rate-btn" aria-expanded="false" aria-controls="film-rating"></button>
+      <textarea id="film-review" rows="3" placeholder="Vad tyckte du?" aria-label="Recension"></textarea>
     </div>
   </div>
-  <div class="film-rating" id="film-rating" hidden>
+  <div class="film-rating" id="film-rating">
     <div class="rw-track" id="rw-track" role="listbox" aria-label="Betyg från 1 till 10"></div>
   </div>
-  <textarea id="film-review" rows="4" placeholder="Vad tyckte du?" aria-label="Recension"></textarea>
   <div class="fd-foot">
     <button type="button" class="link danger" id="film-clear" hidden>Ta bort filmen</button>
     <div class="buttons"><button type="button" id="film-done">Klar</button></div>
@@ -3257,21 +3244,10 @@ function renderFilmCover() {
   box.setAttribute('aria-label', film.cover ? 'Byt omslag' : 'Lägg till omslag');
 }
 
-// Betyget visas som en stjärna och 7/10. Ett tryck visar siffrorna 1 till 10.
 function renderFilmRating() {
   $('rw-track').querySelectorAll('button').forEach((b) => {
     b.setAttribute('aria-selected', String(Number(b.dataset.r) === (film.rating || 0)));
   });
-  const btn = $('film-rate-btn');
-  btn.classList.toggle('on', !!film.rating);
-  btn.innerHTML = `${STAR}<span>${film.rating ? `${film.rating}/10` : 'Sätt betyg'}</span>`;
-  btn.setAttribute('aria-label', film.rating ? `Betyg ${film.rating} av 10, ändra` : 'Sätt betyg');
-}
-
-function toggleRatingPick(open) {
-  $('film-rating').hidden = !open;
-  $('film-rate-btn').setAttribute('aria-expanded', String(open));
-  if (open) wheelTo(film.rating || 0, false);
 }
 
 // Hjulet: siffran i mitten är betyget, längst till vänster är inget betyg
@@ -3309,7 +3285,6 @@ function setFilm(f) {
   film = f ? { ...EMPTY_FILM, ...f } : { ...EMPTY_FILM };
   $('film-title').value = film.title;
   $('film-review').value = film.review;
-  toggleRatingPick(false);
   renderFilmCover();
   renderFilmRating();
   syncFilmClear();
@@ -3319,9 +3294,10 @@ function setFilm(f) {
 // Filmen fylls i i ett eget fönster. Allt sparas medan man ändrar, Klar stänger bara.
 const filmDialog = $('film-dialog');
 function openFilm() {
-  toggleRatingPick(false);
   if (filmDialog.showModal) filmDialog.showModal();
   else filmDialog.setAttribute('open', '');
+  // Hjulet står på betyget när fönstret öppnas
+  wheelTo(film.rating || 0, false);
   if (!film.title) $('film-title').focus();
 }
 function closeFilm() {
@@ -3340,7 +3316,6 @@ filmDialog.addEventListener('click', (ev) => { if (ev.target === filmDialog) clo
 
 $('rw-track').innerHTML = [...Array(11)].map((_, i) =>
   `<button type="button" role="option" data-r="${i}" aria-label="${i ? `${i} av 10` : 'Inget betyg'}">${i || '–'}</button>`).join('');
-$('film-rate-btn').addEventListener('click', () => toggleRatingPick($('film-rating').hidden));
 $('rw-track').addEventListener('scroll', () => {
   clearTimeout(wheelTimer);
   wheelTimer = setTimeout(wheelSettled, 120);

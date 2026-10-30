@@ -762,21 +762,10 @@ function renderFilmCover() {
   box.setAttribute('aria-label', film.cover ? 'Byt omslag' : 'Lägg till omslag');
 }
 
-// Betyget visas som en stjärna och 7/10. Ett tryck visar siffrorna 1 till 10.
 function renderFilmRating() {
   $('rw-track').querySelectorAll('button').forEach((b) => {
     b.setAttribute('aria-selected', String(Number(b.dataset.r) === (film.rating || 0)));
   });
-  const btn = $('film-rate-btn');
-  btn.classList.toggle('on', !!film.rating);
-  btn.innerHTML = `${STAR}<span>${film.rating ? `${film.rating}/10` : 'Sätt betyg'}</span>`;
-  btn.setAttribute('aria-label', film.rating ? `Betyg ${film.rating} av 10, ändra` : 'Sätt betyg');
-}
-
-function toggleRatingPick(open) {
-  $('film-rating').hidden = !open;
-  $('film-rate-btn').setAttribute('aria-expanded', String(open));
-  if (open) wheelTo(film.rating || 0, false);
 }
 
 // Hjulet: siffran i mitten är betyget, längst till vänster är inget betyg
@@ -814,7 +803,6 @@ function setFilm(f) {
   film = f ? { ...EMPTY_FILM, ...f } : { ...EMPTY_FILM };
   $('film-title').value = film.title;
   $('film-review').value = film.review;
-  toggleRatingPick(false);
   renderFilmCover();
   renderFilmRating();
   syncFilmClear();
@@ -824,9 +812,10 @@ function setFilm(f) {
 // Filmen fylls i i ett eget fönster. Allt sparas medan man ändrar, Klar stänger bara.
 const filmDialog = $('film-dialog');
 function openFilm() {
-  toggleRatingPick(false);
   if (filmDialog.showModal) filmDialog.showModal();
   else filmDialog.setAttribute('open', '');
+  // Hjulet står på betyget när fönstret öppnas
+  wheelTo(film.rating || 0, false);
   if (!film.title) $('film-title').focus();
 }
 function closeFilm() {
@@ -845,7 +834,6 @@ filmDialog.addEventListener('click', (ev) => { if (ev.target === filmDialog) clo
 
 $('rw-track').innerHTML = [...Array(11)].map((_, i) =>
   `<button type="button" role="option" data-r="${i}" aria-label="${i ? `${i} av 10` : 'Inget betyg'}">${i || '–'}</button>`).join('');
-$('film-rate-btn').addEventListener('click', () => toggleRatingPick($('film-rating').hidden));
 $('rw-track').addEventListener('scroll', () => {
   clearTimeout(wheelTimer);
   wheelTimer = setTimeout(wheelSettled, 120);
