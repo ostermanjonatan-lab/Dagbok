@@ -761,12 +761,20 @@ function renderFilmCover() {
   box.setAttribute('aria-label', film.cover ? 'Byt omslag' : 'Lägg till omslag');
 }
 
+// Betyget visas som en stjärna och 7/10. Ett tryck visar siffrorna 1 till 10.
 function renderFilmRating() {
   $('film-rating').querySelectorAll('button').forEach((b) => {
-    const n = Number(b.dataset.r);
-    b.classList.toggle('on', film.rating != null && n <= film.rating);
-    b.setAttribute('aria-checked', String(n === film.rating));
-  });  $('film-score').textContent = film.rating ? `Betyg ${film.rating}/10` : '';
+    b.setAttribute('aria-checked', String(Number(b.dataset.r) === film.rating));
+  });
+  const btn = $('film-rate-btn');
+  btn.classList.toggle('on', !!film.rating);
+  btn.innerHTML = `${STAR}<span>${film.rating ? `${film.rating}/10` : 'Sätt betyg'}</span>`;
+  btn.setAttribute('aria-label', film.rating ? `Betyg ${film.rating} av 10, ändra` : 'Sätt betyg');
+}
+
+function toggleRatingPick(open) {
+  $('film-rating').hidden = !open;
+  $('film-rate-btn').setAttribute('aria-expanded', String(open));
 }
 
 function syncFilmClear() {
@@ -776,18 +784,21 @@ function syncFilmClear() {
 function setFilm(f) {
   film = f ? { ...EMPTY_FILM, ...f } : { ...EMPTY_FILM };
   $('film-title').value = film.title;
+  toggleRatingPick(false);
   renderFilmCover();
   renderFilmRating();
   syncFilmClear();
 }
 
 $('film-rating').innerHTML = [...Array(10)].map((_, i) =>
-  `<button type="button" role="radio" data-r="${i + 1}" aria-label="${i + 1} av 10">${STAR}</button>`).join('');
+  `<button type="button" role="radio" data-r="${i + 1}" aria-label="${i + 1} av 10">${i + 1}</button>`).join('');
+$('film-rate-btn').addEventListener('click', () => toggleRatingPick($('film-rating').hidden));
 $('film-rating').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-r]');
   if (!b) return;
   const n = Number(b.dataset.r);
   film.rating = film.rating === n ? null : n;
+  toggleRatingPick(false);
   renderFilmRating();
   syncFilmClear();
   buzz(8);

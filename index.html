@@ -301,10 +301,10 @@
                 <div class="film-info">
                   <input type="text" id="film-title" placeholder="Vilken film?" autocomplete="off"
                     enterkeyhint="done" aria-labelledby="film-label">
-                  <span class="film-score" id="film-score"></span>
+                  <button type="button" class="rate-btn" id="film-rate-btn" aria-expanded="false" aria-controls="film-rating"></button>
                 </div>
               </div>
-              <div class="film-rating" id="film-rating" role="radiogroup" aria-label="Betyg från 1 till 10"></div>
+              <div class="film-rating" id="film-rating" role="radiogroup" aria-label="Betyg från 1 till 10" hidden></div>
               <button type="button" class="link danger" id="film-clear" hidden>Ta bort filmen</button>
             </div>
             <div class="field">

@@ -1448,7 +1448,6 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
 .film-cover.has { padding: 0; border: 0; }
 .film-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .film-info { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
-.film-score { font-size: 15px; color: var(--muted); }
 #film-title {
   width: 100%;
   padding: 10px 12px;
@@ -1459,19 +1458,37 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
   outline: none;
 }
 #film-title:focus { border-color: var(--muted); }
-.film-rating { display: flex; justify-content: space-between; margin-top: 8px; }
-#film-clear { margin-top: 6px; }
-.film-rating button {
-  width: 34px;
-  height: 34px;
-  padding: 4px;
+.rate-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
   border: 0;
   background: none;
-  color: var(--line);
+  color: var(--muted);
+  font-size: 16px;
   cursor: pointer;
 }
-.film-rating svg, .stars svg { width: 100%; height: 100%; fill: currentColor; display: block; }
-.film-rating .on, .stars .on { color: #e2a43d; }
+.rate-btn svg { width: 20px; height: 20px; fill: var(--line); }
+.rate-btn.on { color: var(--text); font-weight: 600; }
+.rate-btn.on svg { fill: #e2a43d; }
+/* Siffrorna 1 till 10 när man sätter betyg */
+.film-rating { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; margin-top: 10px; }
+#film-clear { margin-top: 6px; }
+.film-rating button {
+  height: 38px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.film-rating [aria-checked="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
+.stars svg { width: 100%; height: 100%; fill: currentColor; display: block; }
+.stars .on { color: #e2a43d; }
 .stars { display: inline-flex; align-items: center; gap: 4px; font-size: 14px; color: var(--muted); }
 .stars > span { width: 16px; height: 16px; }
 .reader-film { display: flex; gap: 12px; align-items: center; margin-top: 14px; }
@@ -1772,10 +1789,10 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
               <div class="film-info">
                 <input type="text" id="film-title" placeholder="Vilken film?" autocomplete="off"
                   enterkeyhint="done" aria-labelledby="film-label">
-                <span class="film-score" id="film-score"></span>
+                <button type="button" class="rate-btn" id="film-rate-btn" aria-expanded="false" aria-controls="film-rating"></button>
               </div>
             </div>
-            <div class="film-rating" id="film-rating" role="radiogroup" aria-label="Betyg från 1 till 10"></div>
+            <div class="film-rating" id="film-rating" role="radiogroup" aria-label="Betyg från 1 till 10" hidden></div>
             <button type="button" class="link danger" id="film-clear" hidden>Ta bort filmen</button>
           </div>
           <div class="field">
@@ -3162,12 +3179,20 @@ function renderFilmCover() {
   box.setAttribute('aria-label', film.cover ? 'Byt omslag' : 'Lägg till omslag');
 }
 
+// Betyget visas som en stjärna och 7/10. Ett tryck visar siffrorna 1 till 10.
 function renderFilmRating() {
   $('film-rating').querySelectorAll('button').forEach((b) => {
-    const n = Number(b.dataset.r);
-    b.classList.toggle('on', film.rating != null && n <= film.rating);
-    b.setAttribute('aria-checked', String(n === film.rating));
-  });  $('film-score').textContent = film.rating ? `Betyg ${film.rating}/10` : '';
+    b.setAttribute('aria-checked', String(Number(b.dataset.r) === film.rating));
+  });
+  const btn = $('film-rate-btn');
+  btn.classList.toggle('on', !!film.rating);
+  btn.innerHTML = `${STAR}<span>${film.rating ? `${film.rating}/10` : 'Sätt betyg'}</span>`;
+  btn.setAttribute('aria-label', film.rating ? `Betyg ${film.rating} av 10, ändra` : 'Sätt betyg');
+}
+
+function toggleRatingPick(open) {
+  $('film-rating').hidden = !open;
+  $('film-rate-btn').setAttribute('aria-expanded', String(open));
 }
 
 function syncFilmClear() {
@@ -3177,18 +3202,21 @@ function syncFilmClear() {
 function setFilm(f) {
   film = f ? { ...EMPTY_FILM, ...f } : { ...EMPTY_FILM };
   $('film-title').value = film.title;
+  toggleRatingPick(false);
   renderFilmCover();
   renderFilmRating();
   syncFilmClear();
 }
 
 $('film-rating').innerHTML = [...Array(10)].map((_, i) =>
-  `<button type="button" role="radio" data-r="${i + 1}" aria-label="${i + 1} av 10">${STAR}</button>`).join('');
+  `<button type="button" role="radio" data-r="${i + 1}" aria-label="${i + 1} av 10">${i + 1}</button>`).join('');
+$('film-rate-btn').addEventListener('click', () => toggleRatingPick($('film-rating').hidden));
 $('film-rating').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-r]');
   if (!b) return;
   const n = Number(b.dataset.r);
   film.rating = film.rating === n ? null : n;
+  toggleRatingPick(false);
   renderFilmRating();
   syncFilmClear();
   buzz(8);
