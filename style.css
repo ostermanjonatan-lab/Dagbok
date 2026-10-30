@@ -1499,7 +1499,8 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
 }
 .film-cover.has { padding: 0; border: 0; }
 .film-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.film-info { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.film-info { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.film-score { font-size: 15px; color: var(--muted); }
 #film-title {
   width: 100%;
   padding: 10px 12px;
@@ -1510,11 +1511,12 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
   outline: none;
 }
 #film-title:focus { border-color: var(--muted); }
-.film-rating { display: flex; }
+.film-rating { display: flex; justify-content: space-between; margin-top: 8px; }
+#film-clear { margin-top: 6px; }
 .film-rating button {
-  width: 38px;
-  height: 38px;
-  padding: 5px;
+  width: 34px;
+  height: 34px;
+  padding: 4px;
   border: 0;
   background: none;
   color: var(--line);
@@ -1522,7 +1524,7 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
 }
 .film-rating svg, .stars svg { width: 100%; height: 100%; fill: currentColor; display: block; }
 .film-rating .on, .stars .on { color: #e2a43d; }
-.stars { display: inline-flex; gap: 1px; color: var(--line); }
+.stars { display: inline-flex; align-items: center; gap: 4px; font-size: 14px; color: var(--muted); }
 .stars > span { width: 16px; height: 16px; }
 .reader-film { display: flex; gap: 12px; align-items: center; margin-top: 14px; }
 .reader-film img { width: 56px; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 4px; }

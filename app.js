@@ -727,16 +727,18 @@ const canUploadCover = () => true;
 const uploadCover = (blob) => photoStore.upload(blob);
 
 const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.7 5.6 6.1.8-4.5 4.2 1.2 6.1L12 16.5l-5.5 3 1.2-6.1-4.5-4.2 6.1-.8z"/></svg>';
-const EMPTY_FILM = { title: '', rating: null, cover: null };
+const EMPTY_FILM = { title: '', rating: null, cover: null, scale: 10 };
 let film = { ...EMPTY_FILM };
 let coverUploading = false;
 
 function cleanFilm(f) {
   if (!f || typeof f !== 'object') return null;
   const title = typeof f.title === 'string' ? f.title.replace(/\s+/g, ' ').trim().slice(0, 120) : '';
-  const rating = Number.isInteger(f.rating) && f.rating >= 1 && f.rating <= 5 ? f.rating : null;
+  // Betyget är 1 till 10. Filmer som fick betyg på den tidigare skalan 1 till 5 räknas om.
+  let rating = Number.isInteger(f.rating) && f.rating >= 1 && f.rating <= 10 ? f.rating : null;
+  if (rating && f.scale !== 10) rating = Math.min(10, rating * 2);
   const cover = typeof f.cover === 'string' && /^[A-Za-z0-9_-]{8,64}$/.test(f.cover) ? f.cover : null;
-  return title || rating || cover ? { title, rating, cover } : null;
+  return title || rating || cover ? { title, rating, cover, scale: 10 } : null;
 }
 
 // Alla bilder som hör till ett inlägg: dagens bilder och filmens omslag
@@ -744,10 +746,9 @@ function entryAssets(e) {
   return e.film && e.film.cover ? [...e.photos, e.film.cover] : e.photos;
 }
 
-// Stjärnor att visa, inte att trycka på
+// Betyget att visa, en stjärna och siffran
 function starsHtml(rating) {
-  return `<span class="stars" role="img" aria-label="Betyg ${rating} av 5">${
-    [1, 2, 3, 4, 5].map((n) => `<span class="${n <= rating ? 'on' : ''}">${STAR}</span>`).join('')}</span>`;
+  return `<span class="stars" aria-label="Betyg ${rating} av 10"><span class="on">${STAR}</span>${rating}/10</span>`;
 }
 
 function renderFilmCover() {
@@ -765,7 +766,7 @@ function renderFilmRating() {
     const n = Number(b.dataset.r);
     b.classList.toggle('on', film.rating != null && n <= film.rating);
     b.setAttribute('aria-checked', String(n === film.rating));
-  });
+  });  $('film-score').textContent = film.rating ? `Betyg ${film.rating}/10` : '';
 }
 
 function syncFilmClear() {
@@ -780,8 +781,8 @@ function setFilm(f) {
   syncFilmClear();
 }
 
-$('film-rating').innerHTML = [1, 2, 3, 4, 5].map((n) =>
-  `<button type="button" role="radio" data-r="${n}" aria-label="${n} av 5">${STAR}</button>`).join('');
+$('film-rating').innerHTML = [...Array(10)].map((_, i) =>
+  `<button type="button" role="radio" data-r="${i + 1}" aria-label="${i + 1} av 10">${STAR}</button>`).join('');
 $('film-rating').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-r]');
   if (!b) return;
