@@ -1908,6 +1908,7 @@ function renderCal() {
   $('cal-grid').innerHTML = html;
   renderList();
   renderStats();
+  if (calPanel === 'media') renderMediaAll();
   renderBackupNotice();
 }
 
@@ -2383,20 +2384,23 @@ $('trend').addEventListener('focusin', (ev) => {
   if (r) trendRead(r.dataset.id);
 });
 
-/* Flöde eller statistik under kalendern */
+/* Flöde, statistik eller sett och läst under kalendern */
 
 const PANEL_KEY = 'dagbok.kalenderpanel';
+const PANELS = [['feed', 'seg-feed', 'feed-panel'], ['stats', 'seg-stats', 'month-stats'], ['media', 'seg-media', 'media-panel']];
 let calPanel = 'feed';
-try { if (localStorage.getItem(PANEL_KEY) === 'stats') calPanel = 'stats'; } catch {}
+try {
+  const saved = localStorage.getItem(PANEL_KEY);
+  if (PANELS.some(([p]) => p === saved)) calPanel = saved;
+} catch {}
 
 function syncPanel() {
-  const stats = calPanel === 'stats';
-  $('seg-feed').setAttribute('aria-selected', String(!stats));
-  $('seg-stats').setAttribute('aria-selected', String(stats));
-  $('seg-feed').tabIndex = stats ? -1 : 0;
-  $('seg-stats').tabIndex = stats ? 0 : -1;
-  $('feed-panel').hidden = stats;
-  $('month-stats').hidden = !stats;
+  for (const [p, tab, panel] of PANELS) {
+    $(tab).setAttribute('aria-selected', String(p === calPanel));
+    $(tab).tabIndex = p === calPanel ? 0 : -1;
+    $(panel).hidden = p !== calPanel;
+  }
+  if (calPanel === 'media') renderMediaAll();
 }
 
 function choosePanel(p) {
@@ -2405,13 +2409,48 @@ function choosePanel(p) {
   syncPanel();
 }
 
-$('seg-feed').addEventListener('click', () => choosePanel('feed'));
-$('seg-stats').addEventListener('click', () => choosePanel('stats'));
+for (const [p, tab] of PANELS) $(tab).addEventListener('click', () => choosePanel(p));
 document.querySelector('.seg').addEventListener('keydown', (ev) => {
-  if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') return;
+  const step = { ArrowRight: 1, ArrowLeft: -1 }[ev.key];
+  if (!step) return;
   ev.preventDefault();
-  choosePanel(calPanel === 'stats' ? 'feed' : 'stats');
-  $(calPanel === 'stats' ? 'seg-stats' : 'seg-feed').focus();
+  const i = PANELS.findIndex(([p]) => p === calPanel);
+  const [p, tab] = PANELS[(i + step + PANELS.length) % PANELS.length];
+  choosePanel(p);
+  $(tab).focus();
+});
+
+/* Sett och läst i hela dagboken, en typ i taget, det senaste först */
+
+let mediaKind = 'film';
+const KIND_COUNT = { film: ['film', 'filmer'], serie: ['serie', 'serier'], bok: ['bok', 'böcker'] };
+
+function renderMediaAll() {
+  document.querySelectorAll('#media-kind [data-kind]').forEach((b) => {
+    b.setAttribute('aria-checked', String(b.dataset.kind === mediaKind));
+  });
+  const rows = [];
+  for (const k of Object.keys(entries).sort().reverse()) {
+    for (const f of entries[k].media || []) if (f.kind === mediaKind) rows.push([k, f]);
+  }
+  const [one, many] = KIND_COUNT[mediaKind];
+  $('media-count').textContent = rows.length ? `${rows.length} ${rows.length === 1 ? one : many}` : `Inga ${many} ännu.`;
+  $('media-all').innerHTML = rows.map(([k, f]) => `<button type="button" class="media-row" data-key="${k}">
+    ${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : '<span class="mr-blank" aria-hidden="true"></span>'}
+    <span class="fs-text"><span class="fs-title">${escapeHtml(f.title || 'Utan titel')}</span>
+      <span class="mr-meta">${shortDate(k)}${f.rating ? starsHtml(f.rating) : ''}</span>
+      ${f.review ? `<span class="fs-review">${escapeHtml(f.review)}</span>` : ''}</span></button>`).join('');
+}
+
+$('media-kind').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-kind]');
+  if (!b) return;
+  mediaKind = b.dataset.kind;
+  renderMediaAll();
+});
+$('media-all').addEventListener('click', (ev) => {
+  const b = ev.target.closest('.media-row');
+  if (b) openReader(b.dataset.key);
 });
 syncPanel();
 
@@ -2425,7 +2464,7 @@ function shiftMonth(n) {
 attachSwipe({
   area: $('view-cal'),
   moving: $('cal-grid'),
-  skip: '.seg, #feed-panel, #month-stats, .layers',
+  skip: '.seg, #feed-panel, #month-stats, #media-panel, .layers',
   canNext: () => calMonth < todayKey().slice(0, 7),
   step: (dir) => shiftMonth(dir),
 });

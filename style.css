@@ -1621,3 +1621,30 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
 .fd-kind [aria-checked="true"] { color: var(--text); font-weight: 700; }
 .pf-kind { flex: none; font-size: 13px; color: var(--muted); }
 .post-film + .post-film { margin-top: 6px; padding-top: 6px; }
+
+/* Sett och läst under kalendern */
+.media-panel { margin-top: 18px; }
+.media-panel .period { display: flex; gap: 18px; margin: 0 0 6px; }
+.media-panel .period .pill, .media-panel .period .pill:hover { padding: 4px 0; border: 0; border-radius: 0; background: none; color: var(--muted); font-size: 15px; }
+.media-panel .period .pill[aria-checked="true"] { background: none; color: var(--text); font-weight: 600; }
+.media-count { margin: 0 0 10px; font-size: 14px; color: var(--muted); }
+.media-all { display: flex; flex-direction: column; gap: 8px; }
+.media-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.media-row img, .mr-blank { width: 44px; aspect-ratio: 2 / 3; border-radius: 4px; flex: none; }
+.media-row img { object-fit: cover; }
+.mr-blank { background: color-mix(in srgb, var(--accent) 8%, var(--line)); }
+.mr-meta { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
+.seg svg path[stroke-linejoin] { stroke-width: 1.7; }
