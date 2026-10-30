@@ -1602,8 +1602,6 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
 .film-summary img { width: 40px; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 3px; flex: none; }
 .fs-text { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .fs-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fs-review { font-size: 14px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rf-review { margin: 8px 0 0; white-space: pre-wrap; }
 .film-dialog { max-height: 90vh; overflow-y: auto; }
 
 /* Filmen i flödet: litet omslag, titel och betyg */

@@ -828,7 +828,7 @@ function renderMediaList() {
     aria-label="${KINDS[f.kind]}: ${escapeHtml(f.title || 'utan titel')}${f.rating ? `, betyg ${f.rating} av 10` : ''}. Ändra">
     ${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
     <span class="fs-text"><span class="fs-kind">${KINDS[f.kind]}</span><span class="fs-title">${escapeHtml(f.title || 'Utan titel')}</span>${
-      f.rating ? starsHtml(f.rating) : ''}${f.review ? `<span class="fs-review">${escapeHtml(f.review)}</span>` : ''}</span></button>`).join('');
+      f.rating ? starsHtml(f.rating) : ''}</span></button>`).join('');
 }
 
 function setDayMedia(list) {
@@ -1948,7 +1948,7 @@ function readerPane(key) {
     ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
     ${(e.media || []).map((f) => `<div class="reader-film">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
       <div><div class="fs-kind">${KINDS[f.kind]}</div><div class="rf-title">${escapeHtml(f.title || 'Utan titel')}</div>${f.rating ? starsHtml(f.rating) : ''}</div></div>
-    ${f.review ? `<p class="rf-review">${escapeHtml(f.review)}</p>` : ''}`).join('')}
+`).join('')}
     ${bigPhotos(e.photos)}
     ${meta.length ? `<div class="meta">${meta.join(', ')}</div>` : ''}
     ${e.people && e.people.length ? `<div class="meta">Taggade personer: ${escapeHtml(joinNames(e.people))}</div>` : ''}
@@ -2431,15 +2431,14 @@ function renderMediaAll() {
   });
   const rows = [];
   for (const k of Object.keys(entries).sort().reverse()) {
-    for (const f of entries[k].media || []) if (f.kind === mediaKind) rows.push([k, f]);
+    (entries[k].media || []).forEach((f, i) => { if (f.kind === mediaKind) rows.push([k, f, i]); });
   }
   const [one, many] = KIND_COUNT[mediaKind];
   $('media-count').textContent = rows.length ? `${rows.length} ${rows.length === 1 ? one : many}` : `Inga ${many} ännu.`;
-  $('media-all').innerHTML = rows.map(([k, f]) => `<button type="button" class="media-row" data-key="${k}">
+  $('media-all').innerHTML = rows.map(([k, f, i]) => `<button type="button" class="media-row" data-key="${k}" data-i="${i}">
     ${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : '<span class="mr-blank" aria-hidden="true"></span>'}
     <span class="fs-text"><span class="fs-title">${escapeHtml(f.title || 'Utan titel')}</span>
-      <span class="mr-meta">${shortDate(k)}${f.rating ? starsHtml(f.rating) : ''}</span>
-      ${f.review ? `<span class="fs-review">${escapeHtml(f.review)}</span>` : ''}</span></button>`).join('');
+      <span class="mr-meta">${shortDate(k)}${f.rating ? starsHtml(f.rating) : ''}</span></span></button>`).join('');
 }
 
 $('media-kind').addEventListener('click', (ev) => {
@@ -2450,7 +2449,10 @@ $('media-kind').addEventListener('click', (ev) => {
 });
 $('media-all').addEventListener('click', (ev) => {
   const b = ev.target.closest('.media-row');
-  if (b) openReader(b.dataset.key);
+  // Ett tryck öppnar dagen och filmen, serien eller boken i sitt fönster
+  if (!b) return;
+  go(`#/dag/${b.dataset.key}`);
+  setTimeout(() => openFilm(Number(b.dataset.i)), 60);
 });
 syncPanel();
 
