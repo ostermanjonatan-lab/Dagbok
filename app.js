@@ -766,6 +766,18 @@ function renderFilmRating() {
   $('rw-track').querySelectorAll('button').forEach((b) => {
     b.setAttribute('aria-selected', String(Number(b.dataset.r) === (film.rating || 0)));
   });
+  placeRing();
+}
+
+// Ringen läggs exakt runt den valda siffran, oavsett hur telefonen rundar av
+function placeRing() {
+  const box = $('film-rating');
+  const b = $('rw-track').querySelector('[aria-selected="true"]');
+  if (!b || !b.offsetWidth) return;
+  const f = box.getBoundingClientRect();
+  const r = b.getBoundingClientRect();
+  box.style.setProperty('--ring-x', `${r.left - f.left + r.width / 2}px`);
+  box.style.setProperty('--ring-y', `${r.top - f.top + r.height / 2}px`);
 }
 
 // Hjulet: siffran i mitten är betyget, längst till vänster är inget betyg
@@ -776,7 +788,10 @@ function wheelTo(n, smooth) {
 let wheelTimer = 0;
 function wheelSettled() {
   const n = Math.max(0, Math.min(10, Math.round($('rw-track').scrollLeft / RW_ITEM())));
-  if ((film.rating || 0) === n) return;
+  if ((film.rating || 0) === n) {
+    placeRing();
+    return;
+  }
   film.rating = n || null;
   renderFilmRating();
   syncFilmClear();
@@ -816,6 +831,7 @@ function openFilm() {
   else filmDialog.setAttribute('open', '');
   // Hjulet står på betyget när fönstret öppnas
   wheelTo(film.rating || 0, false);
+  requestAnimationFrame(placeRing);
   if (!film.title) $('film-title').focus();
 }
 function closeFilm() {
@@ -833,7 +849,7 @@ filmDialog.addEventListener('close', () => {
 filmDialog.addEventListener('click', (ev) => { if (ev.target === filmDialog) closeFilm(); });
 
 $('rw-track').innerHTML = [...Array(11)].map((_, i) =>
-  `<button type="button" role="option" data-r="${i}" aria-label="${i ? `${i} av 10` : 'Inget betyg'}">${i || '–'}</button>`).join('');
+  `<button type="button" role="option" data-r="${i}" aria-label="${i ? `${i} av 10` : 'Inget betyg'}"><span>${i || '–'}</span></button>`).join('');
 $('rw-track').addEventListener('scroll', () => {
   clearTimeout(wheelTimer);
   wheelTimer = setTimeout(wheelSettled, 120);
