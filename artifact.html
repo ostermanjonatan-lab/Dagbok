@@ -1590,6 +1590,15 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
 .mr-blank { background: color-mix(in srgb, var(--accent) 8%, var(--line)); }
 .mr-meta { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
 .seg svg path[stroke-linejoin] { stroke-width: 1.7; }
+/* Läsrutan för en film, serie eller bok */
+.fv-top { display: flex; gap: 14px; align-items: flex-start; }
+.fv-top img { width: 96px; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 6px; flex: none; }
+.fv-info { min-width: 0; }
+.fv-info h2 { margin: 0 0 4px; font-size: 20px; font-weight: 700; }
+.fv-date { margin: 0 0 6px; font-size: 14px; color: var(--muted); }
+.fv-review { margin: 14px 0 0; white-space: pre-wrap; line-height: 1.5; }
+.film-view .fd-head { margin-bottom: 12px; }
+button.reader-film { width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 </style>
 
 
@@ -1914,6 +1923,24 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
   </div>
 </div>
 
+<dialog class="film-dialog film-view" id="film-view" aria-label="Sett och läst">
+  <div class="fd-head">
+    <span class="fs-kind" id="fv-kind"></span>
+    <button type="button" class="icon close-x" id="fv-close" aria-label="Stäng"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+  <div class="fv-top">
+    <img id="fv-cover" alt="" hidden>
+    <div class="fv-info">
+      <h2 id="fv-title"></h2>
+      <p class="fv-date" id="fv-date"></p>
+      <div id="fv-rating"></div>
+    </div>
+  </div>
+  <p class="fv-review" id="fv-review"></p>
+  <div class="fd-foot">
+    <div class="buttons"><button type="button" id="fv-edit">Ändra</button></div>
+  </div>
+</dialog>
 <dialog class="film-dialog" id="film-dialog" aria-label="Sett och läst">
   <div class="fd-head">
     <div class="fd-kind" id="film-kind" role="radiogroup" aria-label="Typ"><button type="button" role="radio" data-kind="film">Film</button><button type="button" role="radio" data-kind="serie">Serie</button><button type="button" role="radio" data-kind="bok">Bok</button></div>
@@ -3401,7 +3428,7 @@ function closeFilm() {
 $('film-add').addEventListener('click', () => openFilm(media.length));
 $('film-list').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-i]');
-  if (b) openFilm(Number(b.dataset.i));
+  if (b) openFilmView(current, Number(b.dataset.i), currentMedia()[Number(b.dataset.i)]);
 });
 $('film-kind').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-kind]');
@@ -4302,8 +4329,8 @@ function readerPane(key) {
   if (e.weather) meta.push(escapeHtml(fmtWeather(e.weather)));
   return `<div class="reader-pane" data-key="${key}">
     ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
-    ${(e.media || []).map((f) => `<div class="reader-film">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
-      <div><div class="fs-kind">${KINDS[f.kind]}</div><div class="rf-title">${escapeHtml(f.title || 'Utan titel')}</div>${f.rating ? starsHtml(f.rating) : ''}</div></div>
+    ${(e.media || []).map((f, i) => `<button type="button" class="reader-film" data-key="${key}" data-i="${i}">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
+      <div><div class="fs-kind">${KINDS[f.kind]}</div><div class="rf-title">${escapeHtml(f.title || 'Utan titel')}</div>${f.rating ? starsHtml(f.rating) : ''}</div></button>
 `).join('')}
     ${bigPhotos(e.photos)}
     ${meta.length ? `<div class="meta">${meta.join(', ')}</div>` : ''}
@@ -4363,6 +4390,46 @@ function onReaderScroll() {
     if (pane && pane.dataset.key !== readerKey) showReaderDay(pane.dataset.key);
   }, 120);
 }
+
+// Ett tryck på en film, serie eller bok visar den för läsning. Ändra öppnar fönstret för att redigera.
+const filmView = $('film-view');
+let filmViewing = null;
+function openFilmView(key, i, item) {
+  const f = item || ((entries[key] && entries[key].media) || [])[i];
+  if (!f) return;
+  filmViewing = { key, i };
+  $('fv-kind').textContent = KINDS[f.kind];
+  $('fv-title').textContent = f.title || 'Utan titel';
+  $('fv-date').textContent = shortDate(key);
+  $('fv-rating').innerHTML = f.rating ? starsHtml(f.rating) : '';
+  $('fv-review').textContent = f.review;
+  $('fv-review').hidden = !f.review;
+  $('fv-cover').hidden = !f.cover;
+  if (f.cover) $('fv-cover').src = photoUrl(f.cover);
+  if (filmView.showModal) filmView.showModal();
+  else filmView.setAttribute('open', '');
+}
+function closeFilmView() {
+  if (filmView.close) filmView.close();
+  else filmView.removeAttribute('open');
+}
+$('fv-close').addEventListener('click', closeFilmView);
+filmView.addEventListener('click', (ev) => { if (ev.target === filmView) closeFilmView(); });
+$('fv-edit').addEventListener('click', () => {
+  const { key, i } = filmViewing;
+  closeFilmView();
+  if ($('reader').open) closeReader();
+  if (!daySheet.hidden && current === key) {
+    openFilm(i);
+  } else {
+    openSheet(key);
+    openFilm(i);
+  }
+});
+document.addEventListener('click', (ev) => {
+  const b = ev.target.closest('.reader-film[data-i]');
+  if (b) openFilmView(b.dataset.key, Number(b.dataset.i));
+});
 
 function closeReader() {
   const reader = $('reader');
@@ -4567,6 +4634,15 @@ function renderStats() {
   }
   const top = Object.entries(met).sort((a, b) => b[1] - a[1])[0];
   if (top && top[1] >= 2) facts.push(['Oftast med', `${top[0]}, ${dagar(top[1])}`]);
+
+  // Filmer, serier och böcker under perioden
+  const seen = { film: 0, serie: 0, bok: 0 };
+  for (const k of keys) {
+    for (const f of entries[k].media || []) seen[f.kind]++;
+  }
+  const seenText = Object.entries(seen).filter(([, n]) => n)
+    .map(([kind, n]) => `${n} ${KIND_COUNT[kind][n === 1 ? 0 : 1]}`);
+  if (seenText.length) facts.push(['Sett och läst', joinNames(seenText)]);
 
   const s = streaks();
   if (s.longest >= 2) {
@@ -4805,10 +4881,7 @@ $('media-kind').addEventListener('click', (ev) => {
 });
 $('media-all').addEventListener('click', (ev) => {
   const b = ev.target.closest('.media-row');
-  // Ett tryck öppnar dagen och filmen, serien eller boken i sitt fönster
-  if (!b) return;
-  openSheet(b.dataset.key);
-  openFilm(Number(b.dataset.i));
+  if (b) openFilmView(b.dataset.key, Number(b.dataset.i));
 });
 syncPanel();
 

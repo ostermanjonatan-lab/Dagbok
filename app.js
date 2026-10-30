@@ -864,7 +864,7 @@ function closeFilm() {
 $('film-add').addEventListener('click', () => openFilm(media.length));
 $('film-list').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-i]');
-  if (b) openFilm(Number(b.dataset.i));
+  if (b) openFilmView(current, Number(b.dataset.i), currentMedia()[Number(b.dataset.i)]);
 });
 $('film-kind').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-kind]');
@@ -1946,8 +1946,8 @@ function readerPane(key) {
   if (e.weather) meta.push(escapeHtml(fmtWeather(e.weather)));
   return `<div class="reader-pane" data-key="${key}">
     ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
-    ${(e.media || []).map((f) => `<div class="reader-film">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
-      <div><div class="fs-kind">${KINDS[f.kind]}</div><div class="rf-title">${escapeHtml(f.title || 'Utan titel')}</div>${f.rating ? starsHtml(f.rating) : ''}</div></div>
+    ${(e.media || []).map((f, i) => `<button type="button" class="reader-film" data-key="${key}" data-i="${i}">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
+      <div><div class="fs-kind">${KINDS[f.kind]}</div><div class="rf-title">${escapeHtml(f.title || 'Utan titel')}</div>${f.rating ? starsHtml(f.rating) : ''}</div></button>
 `).join('')}
     ${bigPhotos(e.photos)}
     ${meta.length ? `<div class="meta">${meta.join(', ')}</div>` : ''}
@@ -2007,6 +2007,46 @@ function onReaderScroll() {
     if (pane && pane.dataset.key !== readerKey) showReaderDay(pane.dataset.key);
   }, 120);
 }
+
+// Ett tryck på en film, serie eller bok visar den för läsning. Ändra öppnar fönstret för att redigera.
+const filmView = $('film-view');
+let filmViewing = null;
+function openFilmView(key, i, item) {
+  const f = item || ((entries[key] && entries[key].media) || [])[i];
+  if (!f) return;
+  filmViewing = { key, i };
+  $('fv-kind').textContent = KINDS[f.kind];
+  $('fv-title').textContent = f.title || 'Utan titel';
+  $('fv-date').textContent = shortDate(key);
+  $('fv-rating').innerHTML = f.rating ? starsHtml(f.rating) : '';
+  $('fv-review').textContent = f.review;
+  $('fv-review').hidden = !f.review;
+  $('fv-cover').hidden = !f.cover;
+  if (f.cover) $('fv-cover').src = photoUrl(f.cover);
+  if (filmView.showModal) filmView.showModal();
+  else filmView.setAttribute('open', '');
+}
+function closeFilmView() {
+  if (filmView.close) filmView.close();
+  else filmView.removeAttribute('open');
+}
+$('fv-close').addEventListener('click', closeFilmView);
+filmView.addEventListener('click', (ev) => { if (ev.target === filmView) closeFilmView(); });
+$('fv-edit').addEventListener('click', () => {
+  const { key, i } = filmViewing;
+  closeFilmView();
+  if ($('reader').open) closeReader();
+  if (!daySheet.hidden && current === key) {
+    openFilm(i);
+  } else {
+    go(`#/dag/${key}`);
+    setTimeout(() => openFilm(i), 60);
+  }
+});
+document.addEventListener('click', (ev) => {
+  const b = ev.target.closest('.reader-film[data-i]');
+  if (b) openFilmView(b.dataset.key, Number(b.dataset.i));
+});
 
 function closeReader() {
   const reader = $('reader');
@@ -2211,6 +2251,15 @@ function renderStats() {
   }
   const top = Object.entries(met).sort((a, b) => b[1] - a[1])[0];
   if (top && top[1] >= 2) facts.push(['Oftast med', `${top[0]}, ${dagar(top[1])}`]);
+
+  // Filmer, serier och böcker under perioden
+  const seen = { film: 0, serie: 0, bok: 0 };
+  for (const k of keys) {
+    for (const f of entries[k].media || []) seen[f.kind]++;
+  }
+  const seenText = Object.entries(seen).filter(([, n]) => n)
+    .map(([kind, n]) => `${n} ${KIND_COUNT[kind][n === 1 ? 0 : 1]}`);
+  if (seenText.length) facts.push(['Sett och läst', joinNames(seenText)]);
 
   const s = streaks();
   if (s.longest >= 2) {
@@ -2449,10 +2498,7 @@ $('media-kind').addEventListener('click', (ev) => {
 });
 $('media-all').addEventListener('click', (ev) => {
   const b = ev.target.closest('.media-row');
-  // Ett tryck öppnar dagen och filmen, serien eller boken i sitt fönster
-  if (!b) return;
-  go(`#/dag/${b.dataset.key}`);
-  setTimeout(() => openFilm(Number(b.dataset.i)), 60);
+  if (b) openFilmView(b.dataset.key, Number(b.dataset.i));
 });
 syncPanel();
 

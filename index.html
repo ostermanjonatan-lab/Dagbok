@@ -330,6 +330,24 @@
     </div>
   </div>
 
+  <dialog class="film-dialog film-view" id="film-view" aria-label="Sett och läst">
+    <div class="fd-head">
+      <span class="fs-kind" id="fv-kind"></span>
+      <button type="button" class="icon close-x" id="fv-close" aria-label="Stäng"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="fv-top">
+      <img id="fv-cover" alt="" hidden>
+      <div class="fv-info">
+        <h2 id="fv-title"></h2>
+        <p class="fv-date" id="fv-date"></p>
+        <div id="fv-rating"></div>
+      </div>
+    </div>
+    <p class="fv-review" id="fv-review"></p>
+    <div class="fd-foot">
+      <div class="buttons"><button type="button" id="fv-edit">Ändra</button></div>
+    </div>
+  </dialog>
   <dialog class="film-dialog" id="film-dialog" aria-label="Sett och läst">
     <div class="fd-head">
       <div class="fd-kind" id="film-kind" role="radiogroup" aria-label="Typ"><button type="button" role="radio" data-kind="film">Film</button><button type="button" role="radio" data-kind="serie">Serie</button><button type="button" role="radio" data-kind="bok">Bok</button></div>

@@ -1646,3 +1646,13 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
 .mr-blank { background: color-mix(in srgb, var(--accent) 8%, var(--line)); }
 .mr-meta { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
 .seg svg path[stroke-linejoin] { stroke-width: 1.7; }
+
+/* Läsrutan för en film, serie eller bok */
+.fv-top { display: flex; gap: 14px; align-items: flex-start; }
+.fv-top img { width: 96px; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 6px; flex: none; }
+.fv-info { min-width: 0; }
+.fv-info h2 { margin: 0 0 4px; font-size: 20px; font-weight: 700; }
+.fv-date { margin: 0 0 6px; font-size: 14px; color: var(--muted); }
+.fv-review { margin: 14px 0 0; white-space: pre-wrap; line-height: 1.5; }
+.film-view .fd-head { margin-bottom: 12px; }
+button.reader-film { width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
