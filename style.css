@@ -1708,18 +1708,17 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 
 /* Dagbokskänsla */
 
-/* Linjerat som i ett skrivhäfte. Varje stycke har en linje under varje rad,
-   och nedanför texten fortsätter linjerna från sista raden (--fill sätts i koden). */
+/* Linjerat som i ett skrivhäfte. Alla rader är lika höga, även efter Enter,
+   rubriker och listor, så att texten alltid står på linjerna. */
 .paper {
   --rule: color-mix(in srgb, var(--line) 80%, transparent);
-  --fill: 14px;
   background:
-    linear-gradient(var(--paper), var(--paper)) 0 0 / 100% var(--fill) no-repeat,
-    linear-gradient(to bottom, transparent calc(1lh - 1px), var(--rule) 0) 16px var(--fill) / calc(100% - 32px) 1lh repeat-y;
+    linear-gradient(var(--paper), var(--paper)) 0 0 / 100% 14px no-repeat,
+    linear-gradient(to bottom, transparent calc(1lh - 1px), var(--rule) 0) 16px 14px / calc(100% - 32px) 1lh repeat-y;
 }
-.paper p, .paper li, .paper h2, .paper h3 {
-  background: linear-gradient(to bottom, transparent calc(1lh - 1px), var(--rule) 0) 0 0 / 100% 1lh;
-}
+.paper p + p, .paper li + li { margin-top: 0; }
+.paper h2, .paper h3 { margin: 0; line-height: 30.4px; }
+.paper ul, .paper ol { margin: 0; }
 
 /* Bokmärkesband som hänger från dagens överkant */
 .sheet-grab::before {
