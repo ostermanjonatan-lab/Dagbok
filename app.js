@@ -1353,6 +1353,8 @@ function postHtml(k, e, today, searching) {
     </header>
     ${e.text ? `<div class="prose${searching ? '' : ' clamp'}">${Paper.mdToHtml(e.text)}</div>
     <button type="button" class="link more" hidden>Visa mer</button>` : ''}
+    ${e.film ? `<div class="post-film">${e.film.cover ? `<img src="${escapeHtml(photoUrl(e.film.cover))}" data-id="${escapeHtml(e.film.cover)}" alt="">` : ''}
+      <span class="pf-title">${escapeHtml(e.film.title || 'Film')}</span>${e.film.rating ? starsHtml(e.film.rating) : ''}</div>` : ''}
     ${postMedia(e.photos)}
   </article>`;
 }

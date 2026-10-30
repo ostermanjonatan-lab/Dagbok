@@ -1552,6 +1552,11 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
 .fs-review { font-size: 14px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rf-review { margin: 8px 0 0; white-space: pre-wrap; }
 .film-dialog { max-height: 90vh; overflow-y: auto; }
+/* Filmen i flödet: litet omslag, titel och betyg */
+.post-film { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.post-film img { width: 30px; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 3px; flex: none; }
+.pf-title { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.post-film .stars { margin-left: auto; flex: none; }
 </style>
 
 
@@ -3658,6 +3663,8 @@ function postHtml(k, e, today, searching) {
     </header>
     ${e.text ? `<div class="prose${searching ? '' : ' clamp'}">${Paper.mdToHtml(e.text)}</div>
     <button type="button" class="link more" hidden>Visa mer</button>` : ''}
+    ${e.film ? `<div class="post-film">${e.film.cover ? `<img src="${escapeHtml(photoUrl(e.film.cover))}" data-id="${escapeHtml(e.film.cover)}" alt="">` : ''}
+      <span class="pf-title">${escapeHtml(e.film.title || 'Film')}</span>${e.film.rating ? starsHtml(e.film.rating) : ''}</div>` : ''}
     ${postMedia(e.photos)}
   </article>`;
 }
