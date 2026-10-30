@@ -734,6 +734,13 @@ const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.7 5
 const KINDS = { film: 'Film', serie: 'Serie', bok: 'Bok' };
 const ASK = { film: 'Vilken film?', serie: 'Vilken serie?', bok: 'Vilken bok?' };
 const THE = { film: 'filmen', serie: 'serien', bok: 'boken' };
+// Små ikoner för typen, samma som i valet av typ
+const KIND_SVG = {
+  film: '<path stroke-linejoin="round" d="M4 10h16v8.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5zM4 10L3.3 7.2 18.8 3.1l.8 2.9zM8.2 6l2.6 2.8M13.2 4.7l2.6 2.8"/>',
+  serie: '<rect x="3" y="6.5" width="18" height="13" rx="2.2"/><path stroke-linejoin="round" d="M8.5 2.8 12 6.3l3.5-3.5"/>',
+  bok: '<path stroke-linejoin="round" d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5zM12 6.5v13"/>',
+};
+const kindIcon = (k) => `<svg class="ki-s" viewBox="0 0 24 24" aria-hidden="true">${KIND_SVG[k] || KIND_SVG.film}</svg>`;
 const EMPTY_FILM = { kind: 'film', title: '', rating: null, cover: null, review: '', scale: 10 };
 let film = { ...EMPTY_FILM };   // det som är öppet i fönstret
 let media = [];                 // allt för dagen som visas
@@ -859,7 +866,7 @@ function renderMediaList() {
   $('film-list').innerHTML = currentMedia().map((f, i) => `<button type="button" class="film-summary" data-i="${i}"
     aria-label="${KINDS[f.kind]}: ${escapeHtml(f.title || 'utan titel')}${f.rating ? `, betyg ${f.rating} av 10` : ''}. Ändra">
     ${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
-    <span class="fs-text"><span class="fs-kind">${KINDS[f.kind]}</span><span class="fs-title">${escapeHtml(f.title || 'Utan titel')}</span>${
+    <span class="fs-text"><span class="fs-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</span><span class="fs-title">${escapeHtml(f.title || 'Utan titel')}</span>${
       f.rating ? starsHtml(f.rating) : ''}</span></button>`).join('');
 }
 
@@ -1481,7 +1488,7 @@ function postHtml(k, e, today, searching) {
     ${e.text ? `<div class="prose${searching ? '' : ' clamp'}">${Paper.mdToHtml(e.text)}</div>
     <button type="button" class="link more" hidden>Visa mer</button>` : ''}
     ${(e.media || []).map((f) => `<div class="post-film">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
-      <span class="pf-kind">${KINDS[f.kind]}</span><span class="pf-title">${escapeHtml(f.title || 'Utan titel')}</span>${f.rating ? starsHtml(f.rating) : ''}</div>`).join('')}
+      <span class="pf-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</span><span class="pf-title">${escapeHtml(f.title || 'Utan titel')}</span>${f.rating ? starsHtml(f.rating) : ''}</div>`).join('')}
     ${postMedia(e.photos)}
   </article>`;
 }
@@ -1828,7 +1835,7 @@ function renderMediaSearch(at, text, oldest) {
   list.innerHTML = `<div class="media-all">${rows.map(([k, f, i, id]) => `<button type="button" class="media-row" data-key="${k}" data-i="${i}"${id ? ` data-shelf="${id}"` : ''}>
     ${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : '<span class="mr-blank" aria-hidden="true"></span>'}
     <span class="fs-text"><span class="fs-title">${escapeHtml(f.title || 'Utan titel')}</span>
-      <span class="mr-meta">${id ? '' : shortDate(k)}${f.rating ? starsHtml(f.rating) : ''}</span>
+      <span class="mr-meta">${kindIcon(f.kind)}${id ? '' : `<span>${shortDate(k)}</span>`}${f.rating ? starsHtml(f.rating) : ''}</span>
       ${f.review ? `<span class="mr-review">${escapeHtml(f.review)}</span>` : ''}</span></button>`).join('')}</div>`;
   if (text) list.querySelectorAll('.fs-title, .mr-review').forEach((el) => Paper.highlight(el, text));
 }
@@ -2068,7 +2075,7 @@ function readerPane(key) {
   return `<div class="reader-pane" data-key="${key}">
     ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
     ${(e.media || []).map((f, i) => `<button type="button" class="reader-film" data-key="${key}" data-i="${i}">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
-      <div><div class="fs-kind">${KINDS[f.kind]}</div><div class="rf-title">${escapeHtml(f.title || 'Utan titel')}</div>${f.rating ? starsHtml(f.rating) : ''}</div></button>
+      <div><div class="fs-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</div><div class="rf-title">${escapeHtml(f.title || 'Utan titel')}</div>${f.rating ? starsHtml(f.rating) : ''}</div></button>
 `).join('')}
     ${bigPhotos(e.photos)}
     ${meta.length ? `<div class="meta">${meta.join(', ')}</div>` : ''}
@@ -2136,7 +2143,7 @@ function openFilmView(key, i, item, id) {
   const f = item || ((entries[key] && entries[key].media) || [])[i];
   if (!f) return;
   filmViewing = { key, i, id };
-  $('fv-kind').textContent = KINDS[f.kind];
+  $('fv-kind').innerHTML = kindIcon(f.kind) + KINDS[f.kind];
   $('fv-title').textContent = f.title || 'Utan titel';
   $('fv-date').textContent = key ? shortDate(key) : '';
   $('fv-date').hidden = !key;
@@ -2646,7 +2653,7 @@ function renderMediaAll() {
     : rows.map(([k, f, i, id]) => `<button type="button" class="media-row" data-key="${k}" data-i="${i}"${id ? ` data-shelf="${id}"` : ''}>
     ${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : '<span class="mr-blank" aria-hidden="true"></span>'}
     <span class="fs-text"><span class="fs-title">${escapeHtml(f.title || 'Utan titel')}</span>
-      <span class="mr-meta">${id ? '' : shortDate(k)}${f.rating ? starsHtml(f.rating) : ''}</span></span></button>`).join('');
+      <span class="mr-meta">${kindIcon(f.kind)}${id ? '' : `<span>${shortDate(k)}</span>`}${f.rating ? starsHtml(f.rating) : ''}</span></span></button>`).join('');
 }
 
 function setMediaOpt(key, value) {
