@@ -1546,3 +1546,40 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
 .reader-film { display: flex; gap: 12px; align-items: center; margin-top: 14px; }
 .reader-film img { width: 56px; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 4px; }
 .rf-title { font-weight: 600; margin-bottom: 2px; }
+
+/* Fönstret för filmen och raden i dagen */
+.film-dialog {
+  width: calc(100% - 32px);
+  max-width: 440px;
+  margin: auto;
+  padding: 14px 16px 16px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 12px 40px rgb(0 0 0 / .25);
+}
+.film-dialog::backdrop { background: rgb(0 0 0 / .4); }
+.film-dialog[open] { animation: pop .15s ease-out; }
+@media (prefers-reduced-motion: reduce) { .film-dialog[open] { animation: none; } }
+.fd-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.fd-head h2 { margin: 0; font-size: 18px; font-weight: 700; }
+.fd-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; }
+.fd-foot .buttons { margin-left: auto; }
+.film-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.film-summary img { width: 40px; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 3px; flex: none; }
+.fs-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.fs-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

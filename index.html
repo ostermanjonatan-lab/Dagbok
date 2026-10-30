@@ -295,17 +295,8 @@
             </div>
             <div class="field">
               <span id="film-label">Film</span>
-              <div class="film">
-                <button type="button" class="film-cover" id="film-cover"></button>
-                <input type="file" id="film-file" accept="image/*" hidden>
-                <div class="film-info">
-                  <input type="text" id="film-title" placeholder="Vilken film?" autocomplete="off"
-                    enterkeyhint="done" aria-labelledby="film-label">
-                  <button type="button" class="rate-btn" id="film-rate-btn" aria-expanded="false" aria-controls="film-rating"></button>
-                </div>
-              </div>
-              <div class="film-rating" id="film-rating" role="radiogroup" aria-label="Betyg från 1 till 10" hidden></div>
-              <button type="button" class="link danger" id="film-clear" hidden>Ta bort filmen</button>
+              <button type="button" class="add-photo" id="film-add">Lägg till film</button>
+              <button type="button" class="film-summary" id="film-summary" hidden></button>
             </div>
             <div class="field">
               <span>Bilder</span>
@@ -329,6 +320,26 @@
     </div>
   </div>
 
+  <dialog class="film-dialog" id="film-dialog" aria-labelledby="film-dialog-title">
+    <div class="fd-head">
+      <h2 id="film-dialog-title">Film</h2>
+      <button type="button" class="icon close-x" id="film-close" aria-label="Stäng"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="film">
+      <button type="button" class="film-cover" id="film-cover"></button>
+      <input type="file" id="film-file" accept="image/*" hidden>
+      <div class="film-info">
+        <input type="text" id="film-title" placeholder="Vilken film?" autocomplete="off"
+          enterkeyhint="done" aria-labelledby="film-dialog-title">
+        <button type="button" class="rate-btn" id="film-rate-btn" aria-expanded="false" aria-controls="film-rating"></button>
+      </div>
+    </div>
+    <div class="film-rating" id="film-rating" role="radiogroup" aria-label="Betyg från 1 till 10" hidden></div>
+    <div class="fd-foot">
+      <button type="button" class="link danger" id="film-clear" hidden>Ta bort filmen</button>
+      <div class="buttons"><button type="button" id="film-done">Klar</button></div>
+    </div>
+  </dialog>
   <div class="toast" id="toast" role="status" aria-live="polite" hidden><span id="toast-text"></span><button type="button" id="toast-action"></button></div>
 
   <nav class="nav" aria-label="Vyer">

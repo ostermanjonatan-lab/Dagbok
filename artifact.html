@@ -1494,6 +1494,42 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
 .reader-film { display: flex; gap: 12px; align-items: center; margin-top: 14px; }
 .reader-film img { width: 56px; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 4px; }
 .rf-title { font-weight: 600; margin-bottom: 2px; }
+/* Fönstret för filmen och raden i dagen */
+.film-dialog {
+  width: calc(100% - 32px);
+  max-width: 440px;
+  margin: auto;
+  padding: 14px 16px 16px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 12px 40px rgb(0 0 0 / .25);
+}
+.film-dialog::backdrop { background: rgb(0 0 0 / .4); }
+.film-dialog[open] { animation: pop .15s ease-out; }
+@media (prefers-reduced-motion: reduce) { .film-dialog[open] { animation: none; } }
+.fd-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.fd-head h2 { margin: 0; font-size: 18px; font-weight: 700; }
+.fd-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; }
+.fd-foot .buttons { margin-left: auto; }
+.film-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.film-summary img { width: 40px; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 3px; flex: none; }
+.fs-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.fs-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>
 
 
@@ -1783,17 +1819,8 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
           </div>
           <div class="field">
             <span id="film-label">Film</span>
-            <div class="film">
-              <button type="button" class="film-cover" id="film-cover"></button>
-              <input type="file" id="film-file" accept="image/*" hidden>
-              <div class="film-info">
-                <input type="text" id="film-title" placeholder="Vilken film?" autocomplete="off"
-                  enterkeyhint="done" aria-labelledby="film-label">
-                <button type="button" class="rate-btn" id="film-rate-btn" aria-expanded="false" aria-controls="film-rating"></button>
-              </div>
-            </div>
-            <div class="film-rating" id="film-rating" role="radiogroup" aria-label="Betyg från 1 till 10" hidden></div>
-            <button type="button" class="link danger" id="film-clear" hidden>Ta bort filmen</button>
+            <button type="button" class="add-photo" id="film-add">Lägg till film</button>
+            <button type="button" class="film-summary" id="film-summary" hidden></button>
           </div>
           <div class="field">
             <span>Bilder</span>
@@ -1817,6 +1844,26 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
   </div>
 </div>
 
+<dialog class="film-dialog" id="film-dialog" aria-labelledby="film-dialog-title">
+  <div class="fd-head">
+    <h2 id="film-dialog-title">Film</h2>
+    <button type="button" class="icon close-x" id="film-close" aria-label="Stäng"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+  <div class="film">
+    <button type="button" class="film-cover" id="film-cover"></button>
+    <input type="file" id="film-file" accept="image/*" hidden>
+    <div class="film-info">
+      <input type="text" id="film-title" placeholder="Vilken film?" autocomplete="off"
+        enterkeyhint="done" aria-labelledby="film-dialog-title">
+      <button type="button" class="rate-btn" id="film-rate-btn" aria-expanded="false" aria-controls="film-rating"></button>
+    </div>
+  </div>
+  <div class="film-rating" id="film-rating" role="radiogroup" aria-label="Betyg från 1 till 10" hidden></div>
+  <div class="fd-foot">
+    <button type="button" class="link danger" id="film-clear" hidden>Ta bort filmen</button>
+    <div class="buttons"><button type="button" id="film-done">Klar</button></div>
+  </div>
+</dialog>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden><span id="toast-text"></span><button type="button" id="toast-action"></button></div>
 
 <nav class="nav" aria-label="Vyer">
@@ -3079,7 +3126,7 @@ function attachSwipe({ area, moving, skip, canNext, step }) {
 attachSwipe({
   area: $('view-day'),
   moving: $('view-day'),
-  skip: '.photos, .fmt, .date-pop, .people, .people-suggest, .film',
+  skip: '.photos, .fmt, .date-pop, .people, .people-suggest, .film-summary',
   canNext: () => current < todayKey(),
   step: (dir) => stepDay(dir),
 });
@@ -3199,6 +3246,17 @@ function syncFilmClear() {
   $('film-clear').hidden = !(film.title.trim() || film.rating || film.cover);
 }
 
+// I dagen syns bara Lägg till film, eller en rad med omslag, titel och betyg
+function renderFilmSummary() {
+  const f = cleanFilm(film);
+  $('film-add').hidden = !!f;
+  $('film-summary').hidden = !f;
+  if (!f) return;
+  $('film-summary').innerHTML = `${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
+    <span class="fs-text"><span class="fs-title">${escapeHtml(f.title || 'Film utan titel')}</span>${f.rating ? starsHtml(f.rating) : ''}</span>`;
+  $('film-summary').setAttribute('aria-label', `Film: ${f.title || 'utan titel'}${f.rating ? `, betyg ${f.rating} av 10` : ''}. Ändra`);
+}
+
 function setFilm(f) {
   film = f ? { ...EMPTY_FILM, ...f } : { ...EMPTY_FILM };
   $('film-title').value = film.title;
@@ -3206,7 +3264,30 @@ function setFilm(f) {
   renderFilmCover();
   renderFilmRating();
   syncFilmClear();
+  renderFilmSummary();
 }
+
+// Filmen fylls i i ett eget fönster. Allt sparas medan man ändrar, Klar stänger bara.
+const filmDialog = $('film-dialog');
+function openFilm() {
+  toggleRatingPick(false);
+  if (filmDialog.showModal) filmDialog.showModal();
+  else filmDialog.setAttribute('open', '');
+  if (!film.title) $('film-title').focus();
+}
+function closeFilm() {
+  if (filmDialog.close) filmDialog.close();
+  else filmDialog.removeAttribute('open');
+}
+$('film-add').addEventListener('click', openFilm);
+$('film-summary').addEventListener('click', openFilm);
+$('film-done').addEventListener('click', closeFilm);
+$('film-close').addEventListener('click', closeFilm);
+filmDialog.addEventListener('close', () => {
+  flushSave();
+  renderFilmSummary();
+});
+filmDialog.addEventListener('click', (ev) => { if (ev.target === filmDialog) closeFilm(); });
 
 $('film-rating').innerHTML = [...Array(10)].map((_, i) =>
   `<button type="button" role="radio" data-r="${i + 1}" aria-label="${i + 1} av 10">${i + 1}</button>`).join('');
@@ -3264,6 +3345,7 @@ $('film-clear').addEventListener('click', () => {
   if (film.cover) removeAsset(film.cover);
   setFilm(null);
   scheduleSave();
+  closeFilm();
 });
 
 /* Personer som taggas i dagen, separat från texten */

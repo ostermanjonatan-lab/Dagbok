@@ -665,7 +665,7 @@ function attachSwipe({ area, moving, skip, canNext, step }) {
 attachSwipe({
   area: $('view-day'),
   moving: $('view-day'),
-  skip: '.photos, .fmt, .date-pop, .people, .people-suggest, .film',
+  skip: '.photos, .fmt, .date-pop, .people, .people-suggest, .film-summary',
   canNext: () => current < todayKey(),
   step: (dir) => stepDay(dir),
 });
@@ -781,6 +781,17 @@ function syncFilmClear() {
   $('film-clear').hidden = !(film.title.trim() || film.rating || film.cover);
 }
 
+// I dagen syns bara Lägg till film, eller en rad med omslag, titel och betyg
+function renderFilmSummary() {
+  const f = cleanFilm(film);
+  $('film-add').hidden = !!f;
+  $('film-summary').hidden = !f;
+  if (!f) return;
+  $('film-summary').innerHTML = `${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
+    <span class="fs-text"><span class="fs-title">${escapeHtml(f.title || 'Film utan titel')}</span>${f.rating ? starsHtml(f.rating) : ''}</span>`;
+  $('film-summary').setAttribute('aria-label', `Film: ${f.title || 'utan titel'}${f.rating ? `, betyg ${f.rating} av 10` : ''}. Ändra`);
+}
+
 function setFilm(f) {
   film = f ? { ...EMPTY_FILM, ...f } : { ...EMPTY_FILM };
   $('film-title').value = film.title;
@@ -788,7 +799,30 @@ function setFilm(f) {
   renderFilmCover();
   renderFilmRating();
   syncFilmClear();
+  renderFilmSummary();
 }
+
+// Filmen fylls i i ett eget fönster. Allt sparas medan man ändrar, Klar stänger bara.
+const filmDialog = $('film-dialog');
+function openFilm() {
+  toggleRatingPick(false);
+  if (filmDialog.showModal) filmDialog.showModal();
+  else filmDialog.setAttribute('open', '');
+  if (!film.title) $('film-title').focus();
+}
+function closeFilm() {
+  if (filmDialog.close) filmDialog.close();
+  else filmDialog.removeAttribute('open');
+}
+$('film-add').addEventListener('click', openFilm);
+$('film-summary').addEventListener('click', openFilm);
+$('film-done').addEventListener('click', closeFilm);
+$('film-close').addEventListener('click', closeFilm);
+filmDialog.addEventListener('close', () => {
+  flushSave();
+  renderFilmSummary();
+});
+filmDialog.addEventListener('click', (ev) => { if (ev.target === filmDialog) closeFilm(); });
 
 $('film-rating').innerHTML = [...Array(10)].map((_, i) =>
   `<button type="button" role="radio" data-r="${i + 1}" aria-label="${i + 1} av 10">${i + 1}</button>`).join('');
@@ -846,6 +880,7 @@ $('film-clear').addEventListener('click', () => {
   if (film.cover) removeAsset(film.cover);
   setFilm(null);
   scheduleSave();
+  closeFilm();
 });
 
 /* Personer som taggas i dagen, separat från texten */
