@@ -1510,21 +1510,22 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
   outline: none;
 }
 #film-title:focus { border-color: var(--muted); }
-/* Betyget väljs i ett hjul som man sveper i sidled. Siffran i ringen är vald. */
+/* Betyget väljs i ett hjul som man sveper i sidled. Siffran i det tonade fältet i mitten är
+   vald, som i telefonernas egna hjulväljare. */
 .film-rating { position: relative; margin-top: 12px; }
 .film-rating::before {
   content: "";
   position: absolute;
-  /* Ringen flyttas dit den valda siffran hamnar, se placeRing */
-  top: calc(var(--ring-y, 50%) - 26px);
-  left: calc(var(--ring-x, 50%) - 26px);
-  width: 52px;
-  height: 52px;
-  border: 2px solid var(--accent);
-  border-radius: 50%;
+  top: calc(50% - 24px);
+  left: calc(50% - 30px);
+  width: 60px;
+  height: 48px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
   pointer-events: none;
 }
 .rw-track {
+  position: relative;
   display: flex;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
@@ -1551,10 +1552,7 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
   scroll-snap-align: center;
   cursor: pointer;
 }
-.rw-track [aria-selected="true"] { color: var(--text); font-size: 26px; font-weight: 700; }
-/* Siffran centreras efter sin egen höjd, inte radens */
-.rw-track button span { text-box: trim-both cap alphabetic; }
-.rw-track .bl { display: inline-block; width: 0; height: 0; }
+.rw-track [aria-selected="true"] { color: var(--accent); font-size: 26px; font-weight: 700; }
 /* Recensionen ligger under titeln och fyller ut höjden bredvid omslaget */
 #film-review { width: 100%; height: 118px; resize: none; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; }
 .film { align-items: stretch; }

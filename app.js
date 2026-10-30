@@ -766,28 +766,8 @@ function renderFilmRating() {
   $('rw-track').querySelectorAll('button').forEach((b) => {
     b.setAttribute('aria-selected', String(Number(b.dataset.r) === (film.rating || 0)));
   });
-  placeRing();
 }
 
-// Ringen läggs runt själva siffran. Typsnitt ritar siffror olika långt från mitten av
-// sin ruta, så bläckets kanter mäts upp och ringen centreras på dem.
-const inkCtx = document.createElement('canvas').getContext('2d');
-function placeRing() {
-  const box = $('film-rating');
-  const span = $('rw-track').querySelector('[aria-selected="true"] span');
-  if (!span || !span.offsetWidth) return;
-  const cs = getComputedStyle(span);
-  inkCtx.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-  const m = inkCtx.measureText(span.textContent);
-  const r = span.getBoundingClientRect();
-  // Det tomma elementet i siffran sitter på baslinjen
-  const baseline = span.querySelector('.bl').getBoundingClientRect().top;
-  const f = box.getBoundingClientRect();
-  const x = r.left + (m.actualBoundingBoxRight - m.actualBoundingBoxLeft) / 2;
-  const y = baseline + (m.actualBoundingBoxDescent - m.actualBoundingBoxAscent) / 2;
-  box.style.setProperty('--ring-x', `${x - f.left}px`);
-  box.style.setProperty('--ring-y', `${y - f.top}px`);
-}
 
 // Hjulet: siffran i mitten är betyget, längst till vänster är inget betyg
 const RW_ITEM = () => $('rw-track').firstElementChild.offsetWidth;
@@ -797,10 +777,7 @@ function wheelTo(n, smooth) {
 let wheelTimer = 0;
 function wheelSettled() {
   const n = Math.max(0, Math.min(10, Math.round($('rw-track').scrollLeft / RW_ITEM())));
-  if ((film.rating || 0) === n) {
-    placeRing();
-    return;
-  }
+  if ((film.rating || 0) === n) return;
   film.rating = n || null;
   renderFilmRating();
   syncFilmClear();
@@ -840,7 +817,6 @@ function openFilm() {
   else filmDialog.setAttribute('open', '');
   // Hjulet står på betyget när fönstret öppnas
   wheelTo(film.rating || 0, false);
-  requestAnimationFrame(placeRing);
   if (!film.title) $('film-title').focus();
 }
 function closeFilm() {
@@ -858,7 +834,7 @@ filmDialog.addEventListener('close', () => {
 filmDialog.addEventListener('click', (ev) => { if (ev.target === filmDialog) closeFilm(); });
 
 $('rw-track').innerHTML = [...Array(11)].map((_, i) =>
-  `<button type="button" role="option" data-r="${i}" aria-label="${i ? `${i} av 10` : 'Inget betyg'}"><span>${i || '–'}<i class="bl"></i></span></button>`).join('');
+  `<button type="button" role="option" data-r="${i}" aria-label="${i ? `${i} av 10` : 'Inget betyg'}">${i || '–'}</button>`).join('');
 $('rw-track').addEventListener('scroll', () => {
   clearTimeout(wheelTimer);
   wheelTimer = setTimeout(wheelSettled, 120);
