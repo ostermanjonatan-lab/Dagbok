@@ -1720,6 +1720,15 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .paper h2, .paper h3 { margin: 0; line-height: 30.4px; }
 .paper ul, .paper ol { margin: 0; }
 
+/* Läsläget har samma linjer, med lika höga rader */
+.reader .prose {
+  line-height: 28px;
+  background: linear-gradient(to bottom, transparent 27px, var(--rule, color-mix(in srgb, var(--line) 80%, transparent)) 0) 0 0 / 100% 28px;
+}
+.reader .prose p + p, .reader .prose li + li { margin-top: 0; }
+.reader .prose h2, .reader .prose h3 { margin: 0; line-height: 28px; }
+.reader .prose ul, .reader .prose ol { margin: 0; }
+
 /* Bokmärkesband som hänger från dagens överkant */
 .sheet-grab::before {
   content: "";
@@ -1727,7 +1736,7 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
   top: 0;
   left: 22px;
   width: 22px;
-  height: 40px;
+  height: 30px;
   background: var(--accent);
   clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 76%, 0 100%);
 }
