@@ -334,7 +334,10 @@
         <button type="button" class="rate-btn" id="film-rate-btn" aria-expanded="false" aria-controls="film-rating"></button>
       </div>
     </div>
-    <div class="film-rating" id="film-rating" role="radiogroup" aria-label="Betyg från 1 till 10" hidden></div>
+    <div class="film-rating" id="film-rating" hidden>
+    <div class="rw-track" id="rw-track" role="listbox" aria-label="Betyg från 1 till 10"></div>
+  </div>
+  <textarea id="film-review" rows="4" placeholder="Vad tyckte du?" aria-label="Recension"></textarea>
     <div class="fd-foot">
       <button type="button" class="link danger" id="film-clear" hidden>Ta bort filmen</button>
       <div class="buttons"><button type="button" id="film-done">Klar</button></div>

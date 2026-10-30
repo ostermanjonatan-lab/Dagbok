@@ -727,7 +727,7 @@ const canUploadCover = () => true;
 const uploadCover = (blob) => photoStore.upload(blob);
 
 const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.7 5.6 6.1.8-4.5 4.2 1.2 6.1L12 16.5l-5.5 3 1.2-6.1-4.5-4.2 6.1-.8z"/></svg>';
-const EMPTY_FILM = { title: '', rating: null, cover: null, scale: 10 };
+const EMPTY_FILM = { title: '', rating: null, cover: null, review: '', scale: 10 };
 let film = { ...EMPTY_FILM };
 let coverUploading = false;
 
@@ -738,7 +738,8 @@ function cleanFilm(f) {
   let rating = Number.isInteger(f.rating) && f.rating >= 1 && f.rating <= 10 ? f.rating : null;
   if (rating && f.scale !== 10) rating = Math.min(10, rating * 2);
   const cover = typeof f.cover === 'string' && /^[A-Za-z0-9_-]{8,64}$/.test(f.cover) ? f.cover : null;
-  return title || rating || cover ? { title, rating, cover, scale: 10 } : null;
+  const review = typeof f.review === 'string' ? f.review.trim().slice(0, 4000) : '';
+  return title || rating || cover || review ? { title, rating, cover, review, scale: 10 } : null;
 }
 
 // Alla bilder som hör till ett inlägg: dagens bilder och filmens omslag
@@ -763,8 +764,8 @@ function renderFilmCover() {
 
 // Betyget visas som en stjärna och 7/10. Ett tryck visar siffrorna 1 till 10.
 function renderFilmRating() {
-  $('film-rating').querySelectorAll('button').forEach((b) => {
-    b.setAttribute('aria-checked', String(Number(b.dataset.r) === film.rating));
+  $('rw-track').querySelectorAll('button').forEach((b) => {
+    b.setAttribute('aria-selected', String(Number(b.dataset.r) === (film.rating || 0)));
   });
   const btn = $('film-rate-btn');
   btn.classList.toggle('on', !!film.rating);
@@ -775,10 +776,27 @@ function renderFilmRating() {
 function toggleRatingPick(open) {
   $('film-rating').hidden = !open;
   $('film-rate-btn').setAttribute('aria-expanded', String(open));
+  if (open) wheelTo(film.rating || 0, false);
+}
+
+// Hjulet: siffran i mitten är betyget, längst till vänster är inget betyg
+const RW_ITEM = () => $('rw-track').firstElementChild.offsetWidth;
+function wheelTo(n, smooth) {
+  $('rw-track').scrollTo({ left: n * RW_ITEM(), behavior: smooth ? 'smooth' : 'instant' });
+}
+let wheelTimer = 0;
+function wheelSettled() {
+  const n = Math.max(0, Math.min(10, Math.round($('rw-track').scrollLeft / RW_ITEM())));
+  if ((film.rating || 0) === n) return;
+  film.rating = n || null;
+  renderFilmRating();
+  syncFilmClear();
+  buzz(5);
+  scheduleSave();
 }
 
 function syncFilmClear() {
-  $('film-clear').hidden = !(film.title.trim() || film.rating || film.cover);
+  $('film-clear').hidden = !(film.title.trim() || film.rating || film.cover || film.review.trim());
 }
 
 // I dagen syns bara Lägg till film, eller en rad med omslag, titel och betyg
@@ -788,13 +806,14 @@ function renderFilmSummary() {
   $('film-summary').hidden = !f;
   if (!f) return;
   $('film-summary').innerHTML = `${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
-    <span class="fs-text"><span class="fs-title">${escapeHtml(f.title || 'Film utan titel')}</span>${f.rating ? starsHtml(f.rating) : ''}</span>`;
+    <span class="fs-text"><span class="fs-title">${escapeHtml(f.title || 'Film utan titel')}</span>${f.rating ? starsHtml(f.rating) : ''}${f.review ? `<span class="fs-review">${escapeHtml(f.review)}</span>` : ''}</span>`;
   $('film-summary').setAttribute('aria-label', `Film: ${f.title || 'utan titel'}${f.rating ? `, betyg ${f.rating} av 10` : ''}. Ändra`);
 }
 
 function setFilm(f) {
   film = f ? { ...EMPTY_FILM, ...f } : { ...EMPTY_FILM };
   $('film-title').value = film.title;
+  $('film-review').value = film.review;
   toggleRatingPick(false);
   renderFilmCover();
   renderFilmRating();
@@ -824,18 +843,27 @@ filmDialog.addEventListener('close', () => {
 });
 filmDialog.addEventListener('click', (ev) => { if (ev.target === filmDialog) closeFilm(); });
 
-$('film-rating').innerHTML = [...Array(10)].map((_, i) =>
-  `<button type="button" role="radio" data-r="${i + 1}" aria-label="${i + 1} av 10">${i + 1}</button>`).join('');
+$('rw-track').innerHTML = [...Array(11)].map((_, i) =>
+  `<button type="button" role="option" data-r="${i}" aria-label="${i ? `${i} av 10` : 'Inget betyg'}">${i || '–'}</button>`).join('');
 $('film-rate-btn').addEventListener('click', () => toggleRatingPick($('film-rating').hidden));
-$('film-rating').addEventListener('click', (ev) => {
+$('rw-track').addEventListener('scroll', () => {
+  clearTimeout(wheelTimer);
+  wheelTimer = setTimeout(wheelSettled, 120);
+}, { passive: true });
+// Ett tryck på en siffra rullar dit
+$('rw-track').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-r]');
-  if (!b) return;
-  const n = Number(b.dataset.r);
-  film.rating = film.rating === n ? null : n;
-  toggleRatingPick(false);
-  renderFilmRating();
+  if (b) wheelTo(Number(b.dataset.r), true);
+});
+$('rw-track').addEventListener('keydown', (ev) => {
+  const step = { ArrowRight: 1, ArrowLeft: -1 }[ev.key];
+  if (!step) return;
+  ev.preventDefault();
+  wheelTo(Math.max(0, Math.min(10, (film.rating || 0) + step)), true);
+});
+$('film-review').addEventListener('input', (ev) => {
+  film.review = ev.target.value;
   syncFilmClear();
-  buzz(8);
   scheduleSave();
 });
 $('film-title').addEventListener('input', (ev) => {
@@ -1589,7 +1617,7 @@ function renderList() {
     if (sort.keep && !sort.keep(e)) return false;
     if (isAt && !(at && at.test(k))) return false;
     if (!lt) return true;
-    return [Paper.mdToText(e.text), fmtDate(k), e.weather ? fmtWeather(e.weather) : '', (e.people || []).join(' '), e.film ? e.film.title : '']
+    return [Paper.mdToText(e.text), fmtDate(k), e.weather ? fmtWeather(e.weather) : '', (e.people || []).join(' '), e.film ? `${e.film.title} ${e.film.review || ''}` : '']
       .some((t) => t.toLowerCase().includes(lt));
   }).sort(sort.order);
 
@@ -1877,7 +1905,8 @@ function readerPane(key) {
   return `<div class="reader-pane" data-key="${key}">
     ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
     ${e.film ? `<div class="reader-film">${e.film.cover ? `<img src="${escapeHtml(photoUrl(e.film.cover))}" data-id="${escapeHtml(e.film.cover)}" alt="">` : ''}
-      <div><div class="rf-title">${escapeHtml(e.film.title || 'Film')}</div>${e.film.rating ? starsHtml(e.film.rating) : ''}</div></div>` : ''}
+      <div><div class="rf-title">${escapeHtml(e.film.title || 'Film')}</div>${e.film.rating ? starsHtml(e.film.rating) : ''}</div></div>
+    ${e.film.review ? `<p class="rf-review">${escapeHtml(e.film.review)}</p>` : ''}` : ''}
     ${bigPhotos(e.photos)}
     ${meta.length ? `<div class="meta">${meta.join(', ')}</div>` : ''}
     ${e.people && e.people.length ? `<div class="meta">Taggade personer: ${escapeHtml(joinNames(e.people))}</div>` : ''}
