@@ -1670,6 +1670,9 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .media-views .hd-btn.on { background: var(--surface); color: var(--text); }
 .media-views .hd-btn svg { width: 18px; height: 18px; stroke-linecap: round; }
 .media-views .hd-btn svg circle { fill: currentColor; stroke: none; }
+.media-tools .pill .sort-dir { display: none; width: 13px; height: 13px; margin: 0 -3px 0 4px; vertical-align: -1px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s; }
+.media-tools .pill[aria-checked="true"] .sort-dir { display: inline-block; }
+.media-tools .pill.rev .sort-dir { transform: rotate(180deg); }
 /* Rutnät med omslag, tre i bredd */
 .media-all.grid-view { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 10px; }
 .media-tile { flex-direction: column; align-items: flex-start; gap: 4px; padding: 0; border: 0; background: none; border-radius: 0; }

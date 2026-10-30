@@ -2476,12 +2476,14 @@ let mediaKind = 'film';
 const MEDIA_KEY = 'dagbok.settlast';
 let mediaOpts = { view: 'list', sort: 'date' };
 try { mediaOpts = { ...mediaOpts, ...JSON.parse(localStorage.getItem(MEDIA_KEY)) }; } catch {}
+const byNewest = (a, b) => (a[0] < b[0] ? 1 : a[0] > b[0] ? -1 : 0);
+// d är 1 för standardordningen och -1 för omvänd
 const MEDIA_SORTS = {
-  date: (a, b) => (a[0] < b[0] ? 1 : a[0] > b[0] ? -1 : 0),
-  // Utan betyg sist, samma betyg med det senaste först
-  rating: (a, b) => (b[1].rating || 0) - (a[1].rating || 0) || MEDIA_SORTS.date(a, b),
-  // Utan titel sist
-  name: (a, b) => (!a[1].title) - (!b[1].title) || a[1].title.localeCompare(b[1].title, 'sv') || MEDIA_SORTS.date(a, b),
+  date: (a, b, d) => byNewest(a, b) * d,
+  // Utan betyg sist åt båda hållen, samma betyg med det senaste först
+  rating: (a, b, d) => (!a[1].rating) - (!b[1].rating) || ((b[1].rating || 0) - (a[1].rating || 0)) * d || byNewest(a, b),
+  // Utan titel sist åt båda hållen
+  name: (a, b, d) => (!a[1].title) - (!b[1].title) || a[1].title.localeCompare(b[1].title, 'sv') * d || byNewest(a, b),
 };
 const KIND_COUNT = { film: ['film', 'filmer'], serie: ['serie', 'serier'], bok: ['bok', 'böcker'] };
 
@@ -2490,7 +2492,10 @@ function renderMediaAll() {
     b.setAttribute('aria-checked', String(b.dataset.kind === mediaKind));
   });
   document.querySelectorAll('#media-sort [data-sort]').forEach((b) => {
-    b.setAttribute('aria-checked', String(b.dataset.sort === mediaOpts.sort));
+    const on = b.dataset.sort === mediaOpts.sort;
+    b.setAttribute('aria-checked', String(on));
+    b.classList.toggle('rev', on && !!mediaOpts.rev);
+    b.title = on ? 'Vänd ordningen' : '';
   });
   document.querySelectorAll('.media-views [data-view]').forEach((b) => {
     b.classList.toggle('on', b.dataset.view === mediaOpts.view);
@@ -2500,7 +2505,8 @@ function renderMediaAll() {
   for (const k of Object.keys(entries).sort().reverse()) {
     (entries[k].media || []).forEach((f, i) => { if (f.kind === mediaKind) rows.push([k, f, i]); });
   }
-  rows.sort(MEDIA_SORTS[mediaOpts.sort] || MEDIA_SORTS.date);
+  const by = MEDIA_SORTS[mediaOpts.sort] || MEDIA_SORTS.date;
+  rows.sort((a, b) => by(a, b, mediaOpts.rev ? -1 : 1));
   const grid = mediaOpts.view === 'grid';
   $('media-all').classList.toggle('grid-view', grid);
   const [one, many] = KIND_COUNT[mediaKind];
@@ -2522,7 +2528,10 @@ function setMediaOpt(key, value) {
 }
 $('media-sort').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-sort]');
-  if (b) setMediaOpt('sort', b.dataset.sort);
+  if (!b) return;
+  // Tryck på vald sortering vänder ordningen
+  if (b.dataset.sort === mediaOpts.sort) setMediaOpt('rev', !mediaOpts.rev);
+  else { mediaOpts.rev = false; setMediaOpt('sort', b.dataset.sort); }
 });
 document.querySelector('.media-views').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-view]');
