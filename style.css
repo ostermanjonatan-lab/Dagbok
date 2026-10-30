@@ -1670,6 +1670,10 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .media-views .hd-btn.on { background: var(--surface); color: var(--text); }
 .media-views .hd-btn svg { width: 18px; height: 18px; stroke-linecap: round; }
 .media-views .hd-btn svg circle { fill: currentColor; stroke: none; }
+.media-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 0 10px; }
+.media-head .media-count { margin: 0; }
+.media-add { padding: 4px 0; border: 0; background: none; color: var(--accent); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.media-add::before { content: "+"; margin-right: 5px; font-size: 17px; font-weight: 500; }
 .mr-review { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 2px; font-size: 14px; color: var(--text); white-space: pre-line; }
 .media-tools .pill .sort-dir { display: none; width: 13px; height: 13px; margin: 0 -3px 0 4px; vertical-align: -1px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s; }
 .media-tools .pill[aria-checked="true"] .sort-dir { display: inline-block; }

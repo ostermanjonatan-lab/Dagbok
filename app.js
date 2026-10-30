@@ -276,6 +276,9 @@ $('wipe-yes').addEventListener('click', async () => {
   for (const k of keys) entryAssets(entries[k]).forEach(removeAsset);
   entries = {};
   persist();
+  Object.values(shelf).forEach((x) => { if (x.cover) removeAsset(x.cover); });
+  shelf = {};
+  persistShelf();
   photos = [];
   try { await photoTx('readwrite', (st) => st.clear()); } catch {}
   renderSettings();
@@ -737,6 +740,35 @@ let media = [];                 // allt för dagen som visas
 let editIdx = -1;               // var i listan det öppna hör hemma, -1 när fönstret är stängt
 let coverUploading = false;
 
+// Filmer, serier och böcker som inte hör till någon dag. Varje titel har ett id,
+// dagen den lades till och när den ändrades senast.
+const SHELF_KEY = 'dagbok.hylla';
+let shelf = {};
+let shelfStamp = '';
+let shelfId = null;     // titeln utan dag som är öppen i fönstret
+let shelfTimer = null;
+function cleanShelf(data) {
+  const out = {};
+  const items = data && typeof data === 'object' && data.items && typeof data.items === 'object' ? data.items : {};
+  for (const [id, raw] of Object.entries(items)) {
+    const f = /^[a-z0-9]{6,24}$/.test(id) ? cleanFilm(raw) : null;
+    if (!f) continue;
+    f.added = typeof raw.added === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.added) ? raw.added : todayKey();
+    f.updated = typeof raw.updated === 'string' ? raw.updated : new Date().toISOString();
+    out[id] = f;
+  }
+  return out;
+}
+try {
+  const raw = JSON.parse(localStorage.getItem(SHELF_KEY) || '{}');
+  shelf = cleanShelf(raw);
+  shelfStamp = typeof raw.updated === 'string' ? raw.updated : '';
+} catch {}
+function persistShelf() {
+  shelfStamp = new Date().toISOString();
+  try { localStorage.setItem(SHELF_KEY, JSON.stringify({ items: shelf, updated: shelfStamp })); } catch {}
+}
+
 function cleanFilm(f) {
   if (!f || typeof f !== 'object') return null;
   // Körs när datan läses in, innan KINDS finns, så typerna står här
@@ -807,7 +839,7 @@ function wheelSettled() {
   renderFilmRating();
   syncFilmClear();
   buzz(5);
-  scheduleSave();
+  filmChanged();
 }
 
 function syncFilmClear() {
@@ -850,6 +882,7 @@ function setFilmForm(f) {
 // Fyll i i ett eget fönster. Allt sparas medan man ändrar, Klar stänger bara.
 const filmDialog = $('film-dialog');
 function openFilm(i) {
+  shelfId = null;
   editIdx = i;
   setFilmForm(i < media.length ? media[i] : null);
   if (filmDialog.showModal) filmDialog.showModal();
@@ -871,11 +904,18 @@ $('film-kind').addEventListener('click', (ev) => {
   if (!b) return;
   film.kind = b.dataset.kind;
   renderKind();
-  scheduleSave();
+  filmChanged();
 });
 $('film-done').addEventListener('click', closeFilm);
 $('film-close').addEventListener('click', closeFilm);
 filmDialog.addEventListener('close', () => {
+  if (shelfId) {
+    saveShelfItem();
+    shelfId = null;
+    renderMediaAll();
+    if ($('search').value) renderList();
+    return;
+  }
   media = currentMedia();
   editIdx = -1;
   flushSave();
@@ -903,12 +943,12 @@ $('rw-track').addEventListener('keydown', (ev) => {
 $('film-review').addEventListener('input', (ev) => {
   film.review = ev.target.value;
   syncFilmClear();
-  scheduleSave();
+  filmChanged();
 });
 $('film-title').addEventListener('input', (ev) => {
   film.title = ev.target.value;
   syncFilmClear();
-  scheduleSave();
+  filmChanged();
 });
 $('film-title').addEventListener('keydown', (ev) => {
   if (ev.key === 'Enter') {
@@ -923,16 +963,16 @@ $('film-file').addEventListener('change', async (ev) => {
   const file = ev.target.files[0];
   ev.target.value = '';
   if (!file) return;
-  const key = current;
+  const key = shelfId || current;
   coverUploading = true;
   renderFilmCover();
   try {
     const res = await uploadCover(await shrink(file));
-    if (key === current) {
+    if (key === (shelfId || current)) {
       const old = film.cover;
       film.cover = res.id;
       if (old) removeAsset(old);
-      scheduleSave();
+      filmChanged();
     } else {
       removeAsset(res.id);
     }
@@ -946,9 +986,45 @@ $('film-file').addEventListener('change', async (ev) => {
 $('film-clear').addEventListener('click', () => {
   if (film.cover) removeAsset(film.cover);
   film = { ...EMPTY_FILM, kind: film.kind };
-  scheduleSave();
+  filmChanged();
   closeFilm();
 });
+
+
+// Ändringar i fönstret sparas i dagen, eller bland titlarna utan dag
+function filmChanged() {
+  if (!shelfId) {
+    scheduleSave();
+    return;
+  }
+  clearTimeout(shelfTimer);
+  shelfTimer = setTimeout(saveShelfItem, 400);
+}
+function saveShelfItem() {
+  clearTimeout(shelfTimer);
+  shelfTimer = null;
+  if (!shelfId) return;
+  const c = cleanFilm(film);
+  const old = shelf[shelfId];
+  if (c) shelf[shelfId] = { ...c, added: old ? old.added : todayKey(), updated: new Date().toISOString() };
+  else if (old) delete shelf[shelfId];
+  else return;
+  persistShelf();
+}
+// Utan id läggs en ny titel till
+function openShelfFilm(id, kind) {
+  shelfId = id || Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  editIdx = -1;
+  setFilmForm(shelf[shelfId] || { kind });
+  if (filmDialog.showModal) filmDialog.showModal();
+  else filmDialog.setAttribute('open', '');
+  wheelTo(film.rating || 0, false);
+}
+// En rad i listan öppnar titeln för läsning, från en dag eller utan dag
+function openMediaRow(b) {
+  if (b.dataset.shelf) openFilmView(null, -1, shelf[b.dataset.shelf], b.dataset.shelf);
+  else openFilmView(b.dataset.key, Number(b.dataset.i));
+}
 
 /* Personer som taggas i dagen, separat från texten */
 
@@ -1421,7 +1497,7 @@ function markLongPosts(list) {
 $('list').addEventListener('click', (ev) => {
   // Ett tryck var som helst på inlägget öppnar det för läsning, utom på bilder och Visa mer
   const row = ev.target.closest('.media-row');
-  if (row) openFilmView(row.dataset.key, Number(row.dataset.i));
+  if (row) openMediaRow(row);
   const post = ev.target.closest('.post');
   if (post && (ev.target.closest('.when') || !ev.target.closest('button, a')) && window.getSelection().isCollapsed) {
     openReader(post.dataset.key);
@@ -1735,6 +1811,10 @@ function renderMediaSearch(at, text, oldest) {
       if (f.kind === at.kind && (!lt || `${f.title} ${f.review}`.toLowerCase().includes(lt))) rows.push([k, f, i]);
     });
   }
+  for (const [id, f] of Object.entries(shelf)) {
+    if (f.kind === at.kind && at.inYear(f.added) && (!lt || `${f.title} ${f.review}`.toLowerCase().includes(lt))) rows.push([f.added, f, -1, id]);
+  }
+  rows.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
   if (!oldest) rows.reverse();
   const [, one, many] = AT_MEDIA_LABEL[at.kind];
   const count = `${rows.length} ${rows.length === 1 ? one : many}`;
@@ -1745,10 +1825,10 @@ function renderMediaSearch(at, text, oldest) {
     list.innerHTML = `<p class="empty">${text ? 'Inget matchar.' : `Inga ${many} ännu.`}</p>`;
     return;
   }
-  list.innerHTML = `<div class="media-all">${rows.map(([k, f, i]) => `<button type="button" class="media-row" data-key="${k}" data-i="${i}">
+  list.innerHTML = `<div class="media-all">${rows.map(([k, f, i, id]) => `<button type="button" class="media-row" data-key="${k}" data-i="${i}"${id ? ` data-shelf="${id}"` : ''}>
     ${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : '<span class="mr-blank" aria-hidden="true"></span>'}
     <span class="fs-text"><span class="fs-title">${escapeHtml(f.title || 'Utan titel')}</span>
-      <span class="mr-meta">${shortDate(k)}${f.rating ? starsHtml(f.rating) : ''}</span>
+      <span class="mr-meta">${id ? '' : shortDate(k)}${f.rating ? starsHtml(f.rating) : ''}</span>
       ${f.review ? `<span class="mr-review">${escapeHtml(f.review)}</span>` : ''}</span></button>`).join('')}</div>`;
   if (text) list.querySelectorAll('.fs-title, .mr-review').forEach((el) => Paper.highlight(el, text));
 }
@@ -2052,13 +2132,14 @@ function onReaderScroll() {
 // Ett tryck på en film, serie eller bok visar den för läsning. Ändra öppnar fönstret för att redigera.
 const filmView = $('film-view');
 let filmViewing = null;
-function openFilmView(key, i, item) {
+function openFilmView(key, i, item, id) {
   const f = item || ((entries[key] && entries[key].media) || [])[i];
   if (!f) return;
-  filmViewing = { key, i };
+  filmViewing = { key, i, id };
   $('fv-kind').textContent = KINDS[f.kind];
   $('fv-title').textContent = f.title || 'Utan titel';
-  $('fv-date').textContent = shortDate(key);
+  $('fv-date').textContent = key ? shortDate(key) : '';
+  $('fv-date').hidden = !key;
   $('fv-rating').innerHTML = f.rating ? starsHtml(f.rating) : '';
   $('fv-review').textContent = f.review;
   $('fv-review').hidden = !f.review;
@@ -2074,8 +2155,12 @@ function closeFilmView() {
 $('fv-close').addEventListener('click', closeFilmView);
 filmView.addEventListener('click', (ev) => { if (ev.target === filmView) closeFilmView(); });
 $('fv-edit').addEventListener('click', () => {
-  const { key, i } = filmViewing;
+  const { key, i, id } = filmViewing;
   closeFilmView();
+  if (id) {
+    openShelfFilm(id);
+    return;
+  }
   if ($('reader').open) closeReader();
   if (!daySheet.hidden && current === key) {
     openFilm(i);
@@ -2546,20 +2631,22 @@ function renderMediaAll() {
   for (const k of Object.keys(entries).sort().reverse()) {
     (entries[k].media || []).forEach((f, i) => { if (f.kind === mediaKind) rows.push([k, f, i]); });
   }
+  for (const [id, f] of Object.entries(shelf)) if (f.kind === mediaKind) rows.push([f.added, f, -1, id]);
   const by = MEDIA_SORTS[mediaOpts.sort] || MEDIA_SORTS.date;
   rows.sort((a, b) => by(a, b, mediaOpts.rev ? -1 : 1));
   const grid = mediaOpts.view === 'grid';
   $('media-all').classList.toggle('grid-view', grid);
   const [one, many] = KIND_COUNT[mediaKind];
+  $('media-add').textContent = `Lägg till ${one}`;
   $('media-count').textContent = rows.length ? `${rows.length} ${rows.length === 1 ? one : many}` : `Inga ${many} ännu.`;
-  $('media-all').innerHTML = grid ? rows.map(([k, f, i]) => `<button type="button" class="media-row media-tile" data-key="${k}" data-i="${i}"
-    aria-label="${escapeHtml(f.title || 'Utan titel')}, ${shortDate(k)}${f.rating ? `, betyg ${f.rating} av 10` : ''}">
+  $('media-all').innerHTML = grid ? rows.map(([k, f, i, id]) => `<button type="button" class="media-row media-tile" data-key="${k}" data-i="${i}"${id ? ` data-shelf="${id}"` : ''}
+    aria-label="${escapeHtml(f.title || 'Utan titel')}${id ? '' : `, ${shortDate(k)}`}${f.rating ? `, betyg ${f.rating} av 10` : ''}">
     ${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : `<span class="mt-blank">${escapeHtml(f.title || 'Utan titel')}</span>`}
     <span class="mt-title">${escapeHtml(f.title || 'Utan titel')}</span>${f.rating ? starsHtml(f.rating) : ''}</button>`).join('')
-    : rows.map(([k, f, i]) => `<button type="button" class="media-row" data-key="${k}" data-i="${i}">
+    : rows.map(([k, f, i, id]) => `<button type="button" class="media-row" data-key="${k}" data-i="${i}"${id ? ` data-shelf="${id}"` : ''}>
     ${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : '<span class="mr-blank" aria-hidden="true"></span>'}
     <span class="fs-text"><span class="fs-title">${escapeHtml(f.title || 'Utan titel')}</span>
-      <span class="mr-meta">${shortDate(k)}${f.rating ? starsHtml(f.rating) : ''}</span></span></button>`).join('');
+      <span class="mr-meta">${id ? '' : shortDate(k)}${f.rating ? starsHtml(f.rating) : ''}</span></span></button>`).join('');
 }
 
 function setMediaOpt(key, value) {
@@ -2586,8 +2673,9 @@ $('media-kind').addEventListener('click', (ev) => {
 });
 $('media-all').addEventListener('click', (ev) => {
   const b = ev.target.closest('.media-row');
-  if (b) openFilmView(b.dataset.key, Number(b.dataset.i));
+  if (b) openMediaRow(b);
 });
+$('media-add').addEventListener('click', () => openShelfFilm(null, mediaKind));
 syncPanel();
 
 function shiftMonth(n) {
@@ -2654,7 +2742,8 @@ function blobToDataUrl(blob) {
 $('export').addEventListener('click', async () => {
   flushSave();
   const images = {};
-  for (const e of Object.values(entries)) {
+  const shelfCovers = Object.values(shelf).map((x) => x.cover).filter(Boolean);
+  for (const e of [...Object.values(entries), { photos: shelfCovers }]) {
     for (const id of entryAssets(e)) {
       try {
         const b = await photoStore.get(id);
@@ -2662,7 +2751,7 @@ $('export').addEventListener('click', async () => {
       } catch {}
     }
   }
-  const blob = new Blob([JSON.stringify({ app: 'dagbok', version: 3, entries, images }, null, 2)],
+  const blob = new Blob([JSON.stringify({ app: 'dagbok', version: 3, entries, shelf: { items: shelf, updated: shelfStamp }, images }, null, 2)],
     { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -2684,10 +2773,12 @@ $('import-file').addEventListener('change', async (ev) => {
   ev.target.value = '';
   if (!file) return;
   let incoming;
+  let incomingShelf = null;
   let images = {};
   try {
     const data = JSON.parse(await file.text());
     incoming = data.entries || data;
+    incomingShelf = data.shelf;
     if (data.images && typeof data.images === 'object') images = data.images;
     if (!incoming || typeof incoming !== 'object') throw new Error();
   } catch {
@@ -2723,6 +2814,22 @@ $('import-file').addEventListener('change', async (ev) => {
     entries[k] = e;
   }
   persist();
+  // Titlar utan dag, den nyaste versionen av varje vinner
+  if (incomingShelf) {
+    for (const [id, x] of Object.entries(cleanShelf(incomingShelf))) {
+      if (shelf[id] && shelf[id].updated >= x.updated) continue;
+      if (x.cover && !photoUrls[x.cover]) {
+        const src = images[x.cover];
+        x.cover = null;
+        if (typeof src === 'string' && src.startsWith('data:image/')) {
+          try { x.cover = (await photoStore.upload(await (await fetch(src)).blob())).id; } catch {}
+        }
+      }
+      shelf[id] = x;
+    }
+    persistShelf();
+    renderMediaAll();
+  }
   renderList();
   alert(`Importerade ${added} nya dagar och uppdaterade ${replaced}.`);
 });
