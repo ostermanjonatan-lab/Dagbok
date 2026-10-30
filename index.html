@@ -294,9 +294,9 @@
               <div class="people-suggest" id="people-suggest" hidden></div>
             </div>
             <div class="field">
-              <span id="film-label">Film</span>
-              <button type="button" class="add-photo" id="film-add">Lägg till film</button>
-              <button type="button" class="film-summary" id="film-summary" hidden></button>
+              <span id="film-label">Sett och läst</span>
+              <div class="film-list" id="film-list"></div>
+              <button type="button" class="add-photo" id="film-add">Lägg till film, serie eller bok</button>
             </div>
             <div class="field">
               <span>Bilder</span>
@@ -320,13 +320,13 @@
     </div>
   </div>
 
-  <dialog class="film-dialog" id="film-dialog" aria-labelledby="film-dialog-title">
+  <dialog class="film-dialog" id="film-dialog" aria-label="Sett och läst">
     <div class="fd-head">
-      <h2 id="film-dialog-title">Film</h2>
+      <div class="fd-kind" id="film-kind" role="radiogroup" aria-label="Typ"><button type="button" role="radio" data-kind="film">Film</button><button type="button" role="radio" data-kind="serie">Serie</button><button type="button" role="radio" data-kind="bok">Bok</button></div>
       <button type="button" class="icon close-x" id="film-close" aria-label="Stäng"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     </div>
     <input type="text" id="film-title" placeholder="Vilken film?" autocomplete="off"
-      enterkeyhint="done" aria-labelledby="film-dialog-title">
+      enterkeyhint="done" aria-label="Titel">
     <div class="film">
       <button type="button" class="film-cover" id="film-cover"></button>
       <input type="file" id="film-file" accept="image/*" hidden>

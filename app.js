@@ -53,7 +53,7 @@ function normalize(e) {
       : null,
     photos: Array.isArray(e.photos) ? e.photos.filter((id) => /^[A-Za-z0-9_-]{8,64}$/.test(id)) : [],
     people: cleanPeople(e.people),
-    film: cleanFilm(e.film),
+    media: cleanMedia(e),
     updated: typeof e.updated === 'string' ? e.updated : new Date().toISOString(),
   };
 }
@@ -474,7 +474,7 @@ function readForm() {
     mood: checked ? Number(checked.dataset.v) : null,
     photos: photos.slice(),
     people: people.slice(),
-    film: cleanFilm(film),
+    media: currentMedia(),
   };
 }
 
@@ -507,7 +507,7 @@ function showDay(key) {
   people = e && e.people ? e.people.slice() : [];
   $('people-input').value = '';
   renderPeople();
-  setFilm(e && e.film);
+  setDayMedia(e && e.media ? e.media : []);
   setMood(e ? e.mood : null);
   showWeather(e);
 
@@ -533,7 +533,7 @@ function setStatus(text) { $('status').textContent = text; }
 function save() {
   saveTimer = null;
   const data = readForm();
-  if (!data.text && data.mood == null && !data.photos.length && !data.people.length && !data.film) {
+  if (!data.text && data.mood == null && !data.photos.length && !data.people.length && !data.media.length) {
     if (!entries[current]) return;
     delete entries[current];
     persist();
@@ -665,7 +665,7 @@ function attachSwipe({ area, moving, skip, canNext, step }) {
 attachSwipe({
   area: $('view-day'),
   moving: $('view-day'),
-  skip: '.photos, .fmt, .date-pop, .people, .people-suggest, .film-summary',
+  skip: '.photos, .fmt, .date-pop, .people, .people-suggest, .film-list',
   canNext: () => current < todayKey(),
   step: (dir) => stepDay(dir),
 });
@@ -721,30 +721,55 @@ document.addEventListener('keydown', (ev) => {
   $('date-btn').focus();
 });
 
-/* Film som man sett under dagen: titel, betyg och omslag */
+/* Sett och läst: filmer, serier och böcker med titel, betyg, recension och omslag */
 
 const canUploadCover = () => true;
 const uploadCover = (blob) => photoStore.upload(blob);
 
 const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.7 5.6 6.1.8-4.5 4.2 1.2 6.1L12 16.5l-5.5 3 1.2-6.1-4.5-4.2 6.1-.8z"/></svg>';
-const EMPTY_FILM = { title: '', rating: null, cover: null, review: '', scale: 10 };
-let film = { ...EMPTY_FILM };
+// Det man har sett eller läst: en film, en serie eller en bok. En dag kan ha flera.
+const KINDS = { film: 'Film', serie: 'Serie', bok: 'Bok' };
+const ASK = { film: 'Vilken film?', serie: 'Vilken serie?', bok: 'Vilken bok?' };
+const THE = { film: 'filmen', serie: 'serien', bok: 'boken' };
+const EMPTY_FILM = { kind: 'film', title: '', rating: null, cover: null, review: '', scale: 10 };
+let film = { ...EMPTY_FILM };   // det som är öppet i fönstret
+let media = [];                 // allt för dagen som visas
+let editIdx = -1;               // var i listan det öppna hör hemma, -1 när fönstret är stängt
 let coverUploading = false;
 
 function cleanFilm(f) {
   if (!f || typeof f !== 'object') return null;
+  // Körs när datan läses in, innan KINDS finns, så typerna står här
+  const kind = ['film', 'serie', 'bok'].includes(f.kind) ? f.kind : 'film';
   const title = typeof f.title === 'string' ? f.title.replace(/\s+/g, ' ').trim().slice(0, 120) : '';
-  // Betyget är 1 till 10. Filmer som fick betyg på den tidigare skalan 1 till 5 räknas om.
+  // Betyget är 1 till 10. Det som fick betyg på den tidigare skalan 1 till 5 räknas om.
   let rating = Number.isInteger(f.rating) && f.rating >= 1 && f.rating <= 10 ? f.rating : null;
   if (rating && f.scale !== 10) rating = Math.min(10, rating * 2);
   const cover = typeof f.cover === 'string' && /^[A-Za-z0-9_-]{8,64}$/.test(f.cover) ? f.cover : null;
   const review = typeof f.review === 'string' ? f.review.trim().slice(0, 4000) : '';
-  return title || rating || cover || review ? { title, rating, cover, review, scale: 10 } : null;
+  return title || rating || cover || review ? { kind, title, rating, cover, review, scale: 10 } : null;
 }
 
-// Alla bilder som hör till ett inlägg: dagens bilder och filmens omslag
+// Äldre inlägg hade bara en film
+function cleanMedia(e) {
+  const list = Array.isArray(e.media) ? e.media : e.film ? [e.film] : [];
+  return list.map(cleanFilm).filter(Boolean).slice(0, 20);
+}
+
+// Alla bilder som hör till ett inlägg: dagens bilder och omslagen
 function entryAssets(e) {
-  return e.film && e.film.cover ? [...e.photos, e.film.cover] : e.photos;
+  return [...e.photos, ...(e.media || []).map((m) => m.cover).filter(Boolean)];
+}
+
+// Dagens lista, med det som är öppet i fönstret
+function currentMedia() {
+  const list = media.slice();
+  if (editIdx >= 0) {
+    const c = cleanFilm(film);
+    if (c) list[editIdx] = c;
+    else list.splice(editIdx, 1);
+  }
+  return list.filter(Boolean);
 }
 
 // Betyget att visa, en stjärna och siffran
@@ -789,30 +814,44 @@ function syncFilmClear() {
   $('film-clear').hidden = !(film.title.trim() || film.rating || film.cover || film.review.trim());
 }
 
-// I dagen syns bara Lägg till film, eller en rad med omslag, titel och betyg
-function renderFilmSummary() {
-  const f = cleanFilm(film);
-  $('film-add').hidden = !!f;
-  $('film-summary').hidden = !f;
-  if (!f) return;
-  $('film-summary').innerHTML = `${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
-    <span class="fs-text"><span class="fs-title">${escapeHtml(f.title || 'Film utan titel')}</span>${f.rating ? starsHtml(f.rating) : ''}${f.review ? `<span class="fs-review">${escapeHtml(f.review)}</span>` : ''}</span>`;
-  $('film-summary').setAttribute('aria-label', `Film: ${f.title || 'utan titel'}${f.rating ? `, betyg ${f.rating} av 10` : ''}. Ändra`);
+function renderKind() {
+  $('film-kind').querySelectorAll('[data-kind]').forEach((b) => {
+    b.setAttribute('aria-checked', String(b.dataset.kind === film.kind));
+  });
+  $('film-title').placeholder = ASK[film.kind];
+  $('film-clear').textContent = `Ta bort ${THE[film.kind]}`;
 }
 
-function setFilm(f) {
+// I dagen syns en rad för varje film, serie eller bok, och knappen för att lägga till
+function renderMediaList() {
+  $('film-list').innerHTML = currentMedia().map((f, i) => `<button type="button" class="film-summary" data-i="${i}"
+    aria-label="${KINDS[f.kind]}: ${escapeHtml(f.title || 'utan titel')}${f.rating ? `, betyg ${f.rating} av 10` : ''}. Ändra">
+    ${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
+    <span class="fs-text"><span class="fs-kind">${KINDS[f.kind]}</span><span class="fs-title">${escapeHtml(f.title || 'Utan titel')}</span>${
+      f.rating ? starsHtml(f.rating) : ''}${f.review ? `<span class="fs-review">${escapeHtml(f.review)}</span>` : ''}</span></button>`).join('');
+}
+
+function setDayMedia(list) {
+  media = list.slice();
+  editIdx = -1;
+  renderMediaList();
+}
+
+function setFilmForm(f) {
   film = f ? { ...EMPTY_FILM, ...f } : { ...EMPTY_FILM };
   $('film-title').value = film.title;
   $('film-review').value = film.review;
+  renderKind();
   renderFilmCover();
   renderFilmRating();
   syncFilmClear();
-  renderFilmSummary();
 }
 
-// Filmen fylls i i ett eget fönster. Allt sparas medan man ändrar, Klar stänger bara.
+// Fyll i i ett eget fönster. Allt sparas medan man ändrar, Klar stänger bara.
 const filmDialog = $('film-dialog');
-function openFilm() {
+function openFilm(i) {
+  editIdx = i;
+  setFilmForm(i < media.length ? media[i] : null);
   if (filmDialog.showModal) filmDialog.showModal();
   else filmDialog.setAttribute('open', '');
   // Hjulet står på betyget när fönstret öppnas
@@ -822,13 +861,25 @@ function closeFilm() {
   if (filmDialog.close) filmDialog.close();
   else filmDialog.removeAttribute('open');
 }
-$('film-add').addEventListener('click', openFilm);
-$('film-summary').addEventListener('click', openFilm);
+$('film-add').addEventListener('click', () => openFilm(media.length));
+$('film-list').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-i]');
+  if (b) openFilm(Number(b.dataset.i));
+});
+$('film-kind').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-kind]');
+  if (!b) return;
+  film.kind = b.dataset.kind;
+  renderKind();
+  scheduleSave();
+});
 $('film-done').addEventListener('click', closeFilm);
 $('film-close').addEventListener('click', closeFilm);
 filmDialog.addEventListener('close', () => {
+  media = currentMedia();
+  editIdx = -1;
   flushSave();
-  renderFilmSummary();
+  renderMediaList();
 });
 filmDialog.addEventListener('click', (ev) => { if (ev.target === filmDialog) closeFilm(); });
 
@@ -894,7 +945,7 @@ $('film-file').addEventListener('change', async (ev) => {
 });
 $('film-clear').addEventListener('click', () => {
   if (film.cover) removeAsset(film.cover);
-  setFilm(null);
+  film = { ...EMPTY_FILM, kind: film.kind };
   scheduleSave();
   closeFilm();
 });
@@ -1353,8 +1404,8 @@ function postHtml(k, e, today, searching) {
     </header>
     ${e.text ? `<div class="prose${searching ? '' : ' clamp'}">${Paper.mdToHtml(e.text)}</div>
     <button type="button" class="link more" hidden>Visa mer</button>` : ''}
-    ${e.film ? `<div class="post-film">${e.film.cover ? `<img src="${escapeHtml(photoUrl(e.film.cover))}" data-id="${escapeHtml(e.film.cover)}" alt="">` : ''}
-      <span class="pf-title">${escapeHtml(e.film.title || 'Film')}</span>${e.film.rating ? starsHtml(e.film.rating) : ''}</div>` : ''}
+    ${(e.media || []).map((f) => `<div class="post-film">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
+      <span class="pf-kind">${KINDS[f.kind]}</span><span class="pf-title">${escapeHtml(f.title || 'Utan titel')}</span>${f.rating ? starsHtml(f.rating) : ''}</div>`).join('')}
     ${postMedia(e.photos)}
   </article>`;
 }
@@ -1607,7 +1658,7 @@ function renderList() {
     if (sort.keep && !sort.keep(e)) return false;
     if (isAt && !(at && at.test(k))) return false;
     if (!lt) return true;
-    return [Paper.mdToText(e.text), fmtDate(k), e.weather ? fmtWeather(e.weather) : '', (e.people || []).join(' '), e.film ? `${e.film.title} ${e.film.review || ''}` : '']
+    return [Paper.mdToText(e.text), fmtDate(k), e.weather ? fmtWeather(e.weather) : '', (e.people || []).join(' '), (e.media || []).map((f) => `${f.title} ${f.review}`).join(' ')]
       .some((t) => t.toLowerCase().includes(lt));
   }).sort(sort.order);
 
@@ -1894,9 +1945,9 @@ function readerPane(key) {
   if (e.weather) meta.push(escapeHtml(fmtWeather(e.weather)));
   return `<div class="reader-pane" data-key="${key}">
     ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
-    ${e.film ? `<div class="reader-film">${e.film.cover ? `<img src="${escapeHtml(photoUrl(e.film.cover))}" data-id="${escapeHtml(e.film.cover)}" alt="">` : ''}
-      <div><div class="rf-title">${escapeHtml(e.film.title || 'Film')}</div>${e.film.rating ? starsHtml(e.film.rating) : ''}</div></div>
-    ${e.film.review ? `<p class="rf-review">${escapeHtml(e.film.review)}</p>` : ''}` : ''}
+    ${(e.media || []).map((f) => `<div class="reader-film">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
+      <div><div class="fs-kind">${KINDS[f.kind]}</div><div class="rf-title">${escapeHtml(f.title || 'Utan titel')}</div>${f.rating ? starsHtml(f.rating) : ''}</div></div>
+    ${f.review ? `<p class="rf-review">${escapeHtml(f.review)}</p>` : ''}`).join('')}
     ${bigPhotos(e.photos)}
     ${meta.length ? `<div class="meta">${meta.join(', ')}</div>` : ''}
     ${e.people && e.people.length ? `<div class="meta">Taggade personer: ${escapeHtml(joinNames(e.people))}</div>` : ''}
@@ -2486,11 +2537,12 @@ $('import-file').addEventListener('change', async (ev) => {
       } catch {}
     }
     e.photos = kept;
-    if (e.film && e.film.cover && !photoUrls[e.film.cover]) {
-      const src = images[e.film.cover];
-      e.film.cover = null;
+    for (const f of e.media) {
+      if (!f.cover || photoUrls[f.cover]) continue;
+      const src = images[f.cover];
+      f.cover = null;
       if (typeof src === 'string' && src.startsWith('data:image/')) {
-        try { e.film.cover = (await photoStore.upload(await (await fetch(src)).blob())).id; } catch {}
+        try { f.cover = (await photoStore.upload(await (await fetch(src)).blob())).id; } catch {}
       }
     }
     entries[k] = e;
