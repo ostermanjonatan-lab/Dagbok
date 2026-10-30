@@ -817,7 +817,6 @@ function openFilm() {
   else filmDialog.setAttribute('open', '');
   // Hjulet står på betyget när fönstret öppnas
   wheelTo(film.rating || 0, false);
-  if (!film.title) $('film-title').focus();
 }
 function closeFilm() {
   if (filmDialog.close) filmDialog.close();
