@@ -769,15 +769,24 @@ function renderFilmRating() {
   placeRing();
 }
 
-// Ringen läggs exakt runt den valda siffran, oavsett hur telefonen rundar av
+// Ringen läggs runt själva siffran. Typsnitt ritar siffror olika långt från mitten av
+// sin ruta, så bläckets kanter mäts upp och ringen centreras på dem.
+const inkCtx = document.createElement('canvas').getContext('2d');
 function placeRing() {
   const box = $('film-rating');
-  const b = $('rw-track').querySelector('[aria-selected="true"]');
-  if (!b || !b.offsetWidth) return;
+  const span = $('rw-track').querySelector('[aria-selected="true"] span');
+  if (!span || !span.offsetWidth) return;
+  const cs = getComputedStyle(span);
+  inkCtx.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+  const m = inkCtx.measureText(span.textContent);
+  const r = span.getBoundingClientRect();
+  // Det tomma elementet i siffran sitter på baslinjen
+  const baseline = span.querySelector('.bl').getBoundingClientRect().top;
   const f = box.getBoundingClientRect();
-  const r = b.getBoundingClientRect();
-  box.style.setProperty('--ring-x', `${r.left - f.left + r.width / 2}px`);
-  box.style.setProperty('--ring-y', `${r.top - f.top + r.height / 2}px`);
+  const x = r.left + (m.actualBoundingBoxRight - m.actualBoundingBoxLeft) / 2;
+  const y = baseline + (m.actualBoundingBoxDescent - m.actualBoundingBoxAscent) / 2;
+  box.style.setProperty('--ring-x', `${x - f.left}px`);
+  box.style.setProperty('--ring-y', `${y - f.top}px`);
 }
 
 // Hjulet: siffran i mitten är betyget, längst till vänster är inget betyg
@@ -849,7 +858,7 @@ filmDialog.addEventListener('close', () => {
 filmDialog.addEventListener('click', (ev) => { if (ev.target === filmDialog) closeFilm(); });
 
 $('rw-track').innerHTML = [...Array(11)].map((_, i) =>
-  `<button type="button" role="option" data-r="${i}" aria-label="${i ? `${i} av 10` : 'Inget betyg'}"><span>${i || '–'}</span></button>`).join('');
+  `<button type="button" role="option" data-r="${i}" aria-label="${i ? `${i} av 10` : 'Inget betyg'}"><span>${i || '–'}<i class="bl"></i></span></button>`).join('');
 $('rw-track').addEventListener('scroll', () => {
   clearTimeout(wheelTimer);
   wheelTimer = setTimeout(wheelSettled, 120);
