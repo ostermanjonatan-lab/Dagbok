@@ -325,12 +325,12 @@
       <h2 id="film-dialog-title">Film</h2>
       <button type="button" class="icon close-x" id="film-close" aria-label="Stäng"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     </div>
+    <input type="text" id="film-title" placeholder="Vilken film?" autocomplete="off"
+      enterkeyhint="done" aria-labelledby="film-dialog-title">
     <div class="film">
       <button type="button" class="film-cover" id="film-cover"></button>
       <input type="file" id="film-file" accept="image/*" hidden>
       <div class="film-info">
-        <input type="text" id="film-title" placeholder="Vilken film?" autocomplete="off"
-          enterkeyhint="done" aria-labelledby="film-dialog-title">
         <textarea id="film-review" rows="3" placeholder="Vad tyckte du?" aria-label="Recension"></textarea>
       </div>
     </div>
