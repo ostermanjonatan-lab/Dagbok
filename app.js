@@ -1420,6 +1420,8 @@ function markLongPosts(list) {
 
 $('list').addEventListener('click', (ev) => {
   // Ett tryck var som helst på inlägget öppnar det för läsning, utom på bilder och Visa mer
+  const row = ev.target.closest('.media-row');
+  if (row) openFilmView(row.dataset.key, Number(row.dataset.i));
   const post = ev.target.closest('.post');
   if (post && (ev.target.closest('.when') || !ev.target.closest('button, a')) && window.getSelection().isCollapsed) {
     openReader(post.dataset.key);
@@ -1440,7 +1442,10 @@ const HOLIDAY_GROUPS = {
   Midsommar: ['Midsommarafton', 'Midsommardagen'],
   Nyår: ['Nyårsafton', 'Nyårsdagen'],
 };
-const AT_DEFAULTS = ['Idag', 'Igår', 'Julafton', 'Midsommarafton', 'Påsk', 'Nyårsafton', 'Helgdagar'];
+const AT_DEFAULTS = ['Idag', 'Igår', 'Film', 'Serie', 'Bok', 'Julafton', 'Midsommarafton', 'Helgdagar'];
+// @film, @serie och @bok söker bland det man har sett och läst
+const AT_MEDIA = { film: 'film', filmer: 'film', serie: 'serie', serier: 'serie', bok: 'bok', böcker: 'bok' };
+const AT_MEDIA_LABEL = { film: ['Filmer', 'film', 'filmer'], serie: ['Serier', 'serie', 'serier'], bok: ['Böcker', 'bok', 'böcker'] };
 const holidayCache = {};
 
 const pad2 = (n) => String(n).padStart(2, '0');
@@ -1546,6 +1551,10 @@ function parseAt(raw) {
   }
 
   const n = normAt(s);
+  if (AT_MEDIA[n]) {
+    const kind = AT_MEDIA[n];
+    return { label: withYear(AT_MEDIA_LABEL[kind][0]), kind, inYear, test: (x) => inYear(x) && (entries[x].media || []).some((f) => f.kind === kind) };
+  }
   if (n === 'helgdagar' || n === 'helgdag' || n === 'rödadagar') {
     return { label: withYear('Helgdagar'), test: (x) => !!holidayOf(x) && inYear(x) };
   }
@@ -1682,9 +1691,13 @@ function renderList() {
     list.innerHTML = '';
     return;
   }
+  if (at && at.kind) {
+    renderMediaSearch(at, text, sortBy === 'oldest');
+    return;
+  }
   if (!keys.length) {
     list.innerHTML = `<p class="empty">${
-      isAt && !at ? 'Känner inte igen datumet. Prova @julafton, @24 dec, @maj 2025 eller @lördagar.'
+      isAt && !at ? 'Känner inte igen det. Prova @julafton, @24 dec, @maj 2025, @lördagar eller @film.'
         : at && text ? 'Inga dagar matchar.'
         : at ? 'Inget skrivet då.'
         : whole ? 'Inga dagar matchar.' : `Inget skrivet i ${monthFmt.format(parseKey(calMonth + '-01'))}.`
@@ -1710,6 +1723,34 @@ function renderList() {
   list.innerHTML = html;
   if (text) list.querySelectorAll('.when, .prose, .sub').forEach((el) => Paper.highlight(el, text));
   else markLongPosts(list);
+}
+
+// Träffar för @film, @serie och @bok: en rad per titel med en bit av recensionen
+function renderMediaSearch(at, text, oldest) {
+  const lt = text.toLowerCase();
+  const rows = [];
+  for (const k of Object.keys(entries).sort()) {
+    if (!at.inYear(k)) continue;
+    (entries[k].media || []).forEach((f, i) => {
+      if (f.kind === at.kind && (!lt || `${f.title} ${f.review}`.toLowerCase().includes(lt))) rows.push([k, f, i]);
+    });
+  }
+  if (!oldest) rows.reverse();
+  const [, one, many] = AT_MEDIA_LABEL[at.kind];
+  const count = `${rows.length} ${rows.length === 1 ? one : many}`;
+  $('sort-note').hidden = false;
+  $('sort-note').textContent = !rows.length ? at.label : text ? `${count} med ”${text}”` : count;
+  const list = $('list');
+  if (!rows.length) {
+    list.innerHTML = `<p class="empty">${text ? 'Inget matchar.' : `Inga ${many} ännu.`}</p>`;
+    return;
+  }
+  list.innerHTML = `<div class="media-all">${rows.map(([k, f, i]) => `<button type="button" class="media-row" data-key="${k}" data-i="${i}">
+    ${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : '<span class="mr-blank" aria-hidden="true"></span>'}
+    <span class="fs-text"><span class="fs-title">${escapeHtml(f.title || 'Utan titel')}</span>
+      <span class="mr-meta">${shortDate(k)}${f.rating ? starsHtml(f.rating) : ''}</span>
+      ${f.review ? `<span class="mr-review">${escapeHtml(f.review)}</span>` : ''}</span></button>`).join('')}</div>`;
+  if (text) list.querySelectorAll('.fs-title, .mr-review').forEach((el) => Paper.highlight(el, text));
 }
 
 $('search').addEventListener('input', () => {
