@@ -1659,12 +1659,16 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
 button.reader-film { width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 
 /* Sortering och vy i Sett och läst */
-.media-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 4px 0 6px; }
-.media-panel .media-tools .period { margin: 0; font-size: 14px; }
-.media-panel .media-tools .period .pill { font-size: 14px; }
-.media-views { display: flex; gap: 6px; }
-.media-views .hd-btn { width: 36px; height: 36px; }
-.media-views .hd-btn svg { width: 20px; height: 20px; stroke-linecap: round; }
+#media-kind { gap: 22px; margin: 0 0 12px; border-bottom: 1px solid var(--line); }
+#media-kind .pill, #media-kind .pill:hover { margin-bottom: -1px; padding: 6px 0 8px; border-bottom: 2px solid transparent; font-size: 16px; }
+#media-kind .pill[aria-checked="true"] { border-bottom-color: var(--accent); }
+.media-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 10px; }
+.media-panel .media-tools .period, .media-views { display: flex; gap: 2px; margin: 0; padding: 2px; border-radius: 9px; background: color-mix(in srgb, var(--line) 60%, transparent); }
+.media-panel .media-tools .period .pill, .media-panel .media-tools .period .pill:hover { padding: 5px 12px; border-radius: 7px; font-size: 14px; }
+.media-panel .media-tools .period .pill[aria-checked="true"], .media-views .hd-btn.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(42, 20, 24, .12); }
+.media-views .hd-btn, .media-views .hd-btn.on { width: 34px; height: 29px; border: 0; border-radius: 7px; background: none; color: var(--muted); }
+.media-views .hd-btn.on { background: var(--surface); color: var(--text); }
+.media-views .hd-btn svg { width: 18px; height: 18px; stroke-linecap: round; }
 .media-views .hd-btn svg circle { fill: currentColor; stroke: none; }
 /* Rutnät med omslag, tre i bredd */
 .media-all.grid-view { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 10px; }
