@@ -1600,6 +1600,32 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
 .fv-review { margin: 14px 0 0; white-space: pre-wrap; line-height: 1.5; }
 .film-view .fd-head { margin-bottom: 12px; }
 button.reader-film { width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+/* Sortering och vy i Sett och läst */
+.media-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 4px 0 6px; }
+.media-panel .media-tools .period { margin: 0; font-size: 14px; }
+.media-panel .media-tools .period .pill { font-size: 14px; }
+.media-views { display: flex; gap: 6px; }
+.media-views .hd-btn { width: 36px; height: 36px; }
+.media-views .hd-btn svg { width: 20px; height: 20px; stroke-linecap: round; }
+.media-views .hd-btn svg circle { fill: currentColor; stroke: none; }
+/* Rutnät med omslag, tre i bredd */
+.media-all.grid-view { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 10px; }
+.media-tile { flex-direction: column; align-items: flex-start; gap: 4px; padding: 0; border: 0; background: none; border-radius: 0; }
+.media-tile img, .mt-blank { width: 100%; aspect-ratio: 2 / 3; border-radius: 6px; }
+.media-tile img { object-fit: cover; }
+.mt-blank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--line));
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+  overflow: hidden;
+}
+.mt-title { width: 100%; font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.media-tile .stars { font-size: 13px; }
 </style>
 
 
@@ -1664,6 +1690,17 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
         <button type="button" class="pill" role="radio" data-kind="film">Film</button>
         <button type="button" class="pill" role="radio" data-kind="serie">Serie</button>
         <button type="button" class="pill" role="radio" data-kind="bok">Bok</button>
+      </div>
+      <div class="media-tools">
+        <div class="period" id="media-sort" role="radiogroup" aria-label="Sortera">
+          <button type="button" class="pill" role="radio" data-sort="date">Datum</button>
+          <button type="button" class="pill" role="radio" data-sort="rating">Betyg</button>
+          <button type="button" class="pill" role="radio" data-sort="name">Namn</button>
+        </div>
+        <div class="media-views">
+          <button type="button" class="hd-btn" data-view="list" aria-label="Lista"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/></svg></button>
+          <button type="button" class="hd-btn" data-view="grid" aria-label="Rutnät"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></svg></button>
+        </div>
       </div>
       <p class="media-count" id="media-count"></p>
       <div class="media-all" id="media-all"></div>
@@ -4856,24 +4893,62 @@ document.querySelector('.seg').addEventListener('keydown', (ev) => {
 /* Sett och läst i hela dagboken, en typ i taget, det senaste först */
 
 let mediaKind = 'film';
+// Lista eller rutnät, och sortering på datum, betyg eller namn. Sparas till nästa gång.
+const MEDIA_KEY = 'dagbok.settlast';
+let mediaOpts = { view: 'list', sort: 'date' };
+try { mediaOpts = { ...mediaOpts, ...JSON.parse(localStorage.getItem(MEDIA_KEY)) }; } catch {}
+const MEDIA_SORTS = {
+  date: (a, b) => (a[0] < b[0] ? 1 : a[0] > b[0] ? -1 : 0),
+  // Utan betyg sist, samma betyg med det senaste först
+  rating: (a, b) => (b[1].rating || 0) - (a[1].rating || 0) || MEDIA_SORTS.date(a, b),
+  // Utan titel sist
+  name: (a, b) => (!a[1].title) - (!b[1].title) || a[1].title.localeCompare(b[1].title, 'sv') || MEDIA_SORTS.date(a, b),
+};
 const KIND_COUNT = { film: ['film', 'filmer'], serie: ['serie', 'serier'], bok: ['bok', 'böcker'] };
 
 function renderMediaAll() {
   document.querySelectorAll('#media-kind [data-kind]').forEach((b) => {
     b.setAttribute('aria-checked', String(b.dataset.kind === mediaKind));
   });
+  document.querySelectorAll('#media-sort [data-sort]').forEach((b) => {
+    b.setAttribute('aria-checked', String(b.dataset.sort === mediaOpts.sort));
+  });
+  document.querySelectorAll('.media-views [data-view]').forEach((b) => {
+    b.classList.toggle('on', b.dataset.view === mediaOpts.view);
+    b.setAttribute('aria-pressed', String(b.dataset.view === mediaOpts.view));
+  });
   const rows = [];
   for (const k of Object.keys(entries).sort().reverse()) {
     (entries[k].media || []).forEach((f, i) => { if (f.kind === mediaKind) rows.push([k, f, i]); });
   }
+  rows.sort(MEDIA_SORTS[mediaOpts.sort] || MEDIA_SORTS.date);
+  const grid = mediaOpts.view === 'grid';
+  $('media-all').classList.toggle('grid-view', grid);
   const [one, many] = KIND_COUNT[mediaKind];
   $('media-count').textContent = rows.length ? `${rows.length} ${rows.length === 1 ? one : many}` : `Inga ${many} ännu.`;
-  $('media-all').innerHTML = rows.map(([k, f, i]) => `<button type="button" class="media-row" data-key="${k}" data-i="${i}">
+  $('media-all').innerHTML = grid ? rows.map(([k, f, i]) => `<button type="button" class="media-row media-tile" data-key="${k}" data-i="${i}"
+    aria-label="${escapeHtml(f.title || 'Utan titel')}, ${shortDate(k)}${f.rating ? `, betyg ${f.rating} av 10` : ''}">
+    ${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : `<span class="mt-blank">${escapeHtml(f.title || 'Utan titel')}</span>`}
+    <span class="mt-title">${escapeHtml(f.title || 'Utan titel')}</span>${f.rating ? starsHtml(f.rating) : ''}</button>`).join('')
+    : rows.map(([k, f, i]) => `<button type="button" class="media-row" data-key="${k}" data-i="${i}">
     ${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : '<span class="mr-blank" aria-hidden="true"></span>'}
     <span class="fs-text"><span class="fs-title">${escapeHtml(f.title || 'Utan titel')}</span>
       <span class="mr-meta">${shortDate(k)}${f.rating ? starsHtml(f.rating) : ''}</span></span></button>`).join('');
 }
 
+function setMediaOpt(key, value) {
+  mediaOpts[key] = value;
+  try { localStorage.setItem(MEDIA_KEY, JSON.stringify(mediaOpts)); } catch {}
+  renderMediaAll();
+}
+$('media-sort').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-sort]');
+  if (b) setMediaOpt('sort', b.dataset.sort);
+});
+document.querySelector('.media-views').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-view]');
+  if (b) setMediaOpt('view', b.dataset.view);
+});
 $('media-kind').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-kind]');
   if (!b) return;

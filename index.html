@@ -92,6 +92,17 @@
           <button type="button" class="pill" role="radio" data-kind="serie">Serie</button>
           <button type="button" class="pill" role="radio" data-kind="bok">Bok</button>
         </div>
+        <div class="media-tools">
+          <div class="period" id="media-sort" role="radiogroup" aria-label="Sortera">
+            <button type="button" class="pill" role="radio" data-sort="date">Datum</button>
+            <button type="button" class="pill" role="radio" data-sort="rating">Betyg</button>
+            <button type="button" class="pill" role="radio" data-sort="name">Namn</button>
+          </div>
+          <div class="media-views">
+            <button type="button" class="hd-btn" data-view="list" aria-label="Lista"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/></svg></button>
+            <button type="button" class="hd-btn" data-view="grid" aria-label="Rutnät"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></svg></button>
+          </div>
+        </div>
         <p class="media-count" id="media-count"></p>
         <div class="media-all" id="media-all"></div>
       </section>
