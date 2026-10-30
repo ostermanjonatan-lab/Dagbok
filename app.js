@@ -1835,7 +1835,7 @@ function renderMediaSearch(at, text, oldest) {
   list.innerHTML = `<div class="media-all">${rows.map(([k, f, i, id]) => `<button type="button" class="media-row" data-key="${k}" data-i="${i}"${id ? ` data-shelf="${id}"` : ''}>
     ${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : '<span class="mr-blank" aria-hidden="true"></span>'}
     <span class="fs-text"><span class="fs-title">${escapeHtml(f.title || 'Utan titel')}</span>
-      <span class="mr-meta">${kindIcon(f.kind)}${id ? '' : `<span>${shortDate(k)}</span>`}${f.rating ? starsHtml(f.rating) : ''}</span>
+      <span class="mr-meta">${id ? '' : shortDate(k)}${f.rating ? starsHtml(f.rating) : ''}</span>
       ${f.review ? `<span class="mr-review">${escapeHtml(f.review)}</span>` : ''}</span></button>`).join('')}</div>`;
   if (text) list.querySelectorAll('.fs-title, .mr-review').forEach((el) => Paper.highlight(el, text));
 }
@@ -2653,7 +2653,7 @@ function renderMediaAll() {
     : rows.map(([k, f, i, id]) => `<button type="button" class="media-row" data-key="${k}" data-i="${i}"${id ? ` data-shelf="${id}"` : ''}>
     ${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : '<span class="mr-blank" aria-hidden="true"></span>'}
     <span class="fs-text"><span class="fs-title">${escapeHtml(f.title || 'Utan titel')}</span>
-      <span class="mr-meta">${kindIcon(f.kind)}${id ? '' : `<span>${shortDate(k)}</span>`}${f.rating ? starsHtml(f.rating) : ''}</span></span></button>`).join('');
+      <span class="mr-meta">${id ? '' : shortDate(k)}${f.rating ? starsHtml(f.rating) : ''}</span></span></button>`).join('');
 }
 
 function setMediaOpt(key, value) {
