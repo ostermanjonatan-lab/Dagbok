@@ -294,6 +294,19 @@
               <div class="people-suggest" id="people-suggest" hidden></div>
             </div>
             <div class="field">
+              <span id="film-label">Film</span>
+              <div class="film">
+                <button type="button" class="film-cover" id="film-cover"></button>
+                <input type="file" id="film-file" accept="image/*" hidden>
+                <div class="film-info">
+                  <input type="text" id="film-title" placeholder="Vilken film?" autocomplete="off"
+                    enterkeyhint="done" aria-labelledby="film-label">
+                  <div class="film-rating" id="film-rating" role="radiogroup" aria-label="Betyg"></div>
+                  <button type="button" class="link danger" id="film-clear" hidden>Ta bort filmen</button>
+                </div>
+              </div>
+            </div>
+            <div class="field">
               <span>Bilder</span>
               <div class="photos" id="photos"></div>
               <button type="button" class="add-photo" id="add-photo">Lägg till bilder</button>

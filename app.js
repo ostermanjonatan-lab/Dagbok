@@ -53,6 +53,7 @@ function normalize(e) {
       : null,
     photos: Array.isArray(e.photos) ? e.photos.filter((id) => /^[A-Za-z0-9_-]{8,64}$/.test(id)) : [],
     people: cleanPeople(e.people),
+    film: cleanFilm(e.film),
     updated: typeof e.updated === 'string' ? e.updated : new Date().toISOString(),
   };
 }
@@ -272,7 +273,7 @@ $('wipe-yes').addEventListener('click', async () => {
   clearTimeout(saveTimer);
   saveTimer = null;
   const keys = Object.keys(entries);
-  for (const k of keys) entries[k].photos.forEach(removeAsset);
+  for (const k of keys) entryAssets(entries[k]).forEach(removeAsset);
   entries = {};
   persist();
   photos = [];
@@ -473,6 +474,7 @@ function readForm() {
     mood: checked ? Number(checked.dataset.v) : null,
     photos: photos.slice(),
     people: people.slice(),
+    film: cleanFilm(film),
   };
 }
 
@@ -505,6 +507,7 @@ function showDay(key) {
   people = e && e.people ? e.people.slice() : [];
   $('people-input').value = '';
   renderPeople();
+  setFilm(e && e.film);
   setMood(e ? e.mood : null);
   showWeather(e);
 
@@ -530,7 +533,7 @@ function setStatus(text) { $('status').textContent = text; }
 function save() {
   saveTimer = null;
   const data = readForm();
-  if (!data.text && data.mood == null && !data.photos.length && !data.people.length) {
+  if (!data.text && data.mood == null && !data.photos.length && !data.people.length && !data.film) {
     if (!entries[current]) return;
     delete entries[current];
     persist();
@@ -662,7 +665,7 @@ function attachSwipe({ area, moving, skip, canNext, step }) {
 attachSwipe({
   area: $('view-day'),
   moving: $('view-day'),
-  skip: '.photos, .fmt, .date-pop, .people, .people-suggest',
+  skip: '.photos, .fmt, .date-pop, .people, .people-suggest, .film',
   canNext: () => current < todayKey(),
   step: (dir) => stepDay(dir),
 });
@@ -716,6 +719,121 @@ document.addEventListener('keydown', (ev) => {
   ev.stopImmediatePropagation();
   toggleDatePop(false);
   $('date-btn').focus();
+});
+
+/* Film som man sett under dagen: titel, betyg och omslag */
+
+const canUploadCover = () => true;
+const uploadCover = (blob) => photoStore.upload(blob);
+
+const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.7 5.6 6.1.8-4.5 4.2 1.2 6.1L12 16.5l-5.5 3 1.2-6.1-4.5-4.2 6.1-.8z"/></svg>';
+const EMPTY_FILM = { title: '', rating: null, cover: null };
+let film = { ...EMPTY_FILM };
+let coverUploading = false;
+
+function cleanFilm(f) {
+  if (!f || typeof f !== 'object') return null;
+  const title = typeof f.title === 'string' ? f.title.replace(/\s+/g, ' ').trim().slice(0, 120) : '';
+  const rating = Number.isInteger(f.rating) && f.rating >= 1 && f.rating <= 5 ? f.rating : null;
+  const cover = typeof f.cover === 'string' && /^[A-Za-z0-9_-]{8,64}$/.test(f.cover) ? f.cover : null;
+  return title || rating || cover ? { title, rating, cover } : null;
+}
+
+// Alla bilder som hör till ett inlägg: dagens bilder och filmens omslag
+function entryAssets(e) {
+  return e.film && e.film.cover ? [...e.photos, e.film.cover] : e.photos;
+}
+
+// Stjärnor att visa, inte att trycka på
+function starsHtml(rating) {
+  return `<span class="stars" role="img" aria-label="Betyg ${rating} av 5">${
+    [1, 2, 3, 4, 5].map((n) => `<span class="${n <= rating ? 'on' : ''}">${STAR}</span>`).join('')}</span>`;
+}
+
+function renderFilmCover() {
+  const box = $('film-cover');
+  box.classList.toggle('has', !!film.cover);
+  box.innerHTML = film.cover
+    ? `<img src="${escapeHtml(photoUrl(film.cover))}" data-id="${escapeHtml(film.cover)}" alt="">`
+    : `<span>${coverUploading ? 'Sparar' : 'Lägg till omslag'}</span>`;
+  box.hidden = !film.cover && !canUploadCover();
+  box.setAttribute('aria-label', film.cover ? 'Byt omslag' : 'Lägg till omslag');
+}
+
+function renderFilmRating() {
+  $('film-rating').querySelectorAll('button').forEach((b) => {
+    const n = Number(b.dataset.r);
+    b.classList.toggle('on', film.rating != null && n <= film.rating);
+    b.setAttribute('aria-checked', String(n === film.rating));
+  });
+}
+
+function syncFilmClear() {
+  $('film-clear').hidden = !(film.title.trim() || film.rating || film.cover);
+}
+
+function setFilm(f) {
+  film = f ? { ...EMPTY_FILM, ...f } : { ...EMPTY_FILM };
+  $('film-title').value = film.title;
+  renderFilmCover();
+  renderFilmRating();
+  syncFilmClear();
+}
+
+$('film-rating').innerHTML = [1, 2, 3, 4, 5].map((n) =>
+  `<button type="button" role="radio" data-r="${n}" aria-label="${n} av 5">${STAR}</button>`).join('');
+$('film-rating').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-r]');
+  if (!b) return;
+  const n = Number(b.dataset.r);
+  film.rating = film.rating === n ? null : n;
+  renderFilmRating();
+  syncFilmClear();
+  buzz(8);
+  scheduleSave();
+});
+$('film-title').addEventListener('input', (ev) => {
+  film.title = ev.target.value;
+  syncFilmClear();
+  scheduleSave();
+});
+$('film-title').addEventListener('keydown', (ev) => {
+  if (ev.key === 'Enter') {
+    ev.preventDefault();
+    ev.target.blur();
+  }
+});
+$('film-cover').addEventListener('click', () => {
+  if (canUploadCover() && !coverUploading) $('film-file').click();
+});
+$('film-file').addEventListener('change', async (ev) => {
+  const file = ev.target.files[0];
+  ev.target.value = '';
+  if (!file) return;
+  const key = current;
+  coverUploading = true;
+  renderFilmCover();
+  try {
+    const res = await uploadCover(await shrink(file));
+    if (key === current) {
+      const old = film.cover;
+      film.cover = res.id;
+      if (old) removeAsset(old);
+      scheduleSave();
+    } else {
+      removeAsset(res.id);
+    }
+  } catch {
+    $('photo-msg').textContent = 'Omslaget kunde inte sparas.';
+  }
+  coverUploading = false;
+  renderFilmCover();
+  syncFilmClear();
+});
+$('film-clear').addEventListener('click', () => {
+  if (film.cover) removeAsset(film.cover);
+  setFilm(null);
+  scheduleSave();
 });
 
 /* Personer som taggas i dagen, separat från texten */
@@ -908,7 +1026,7 @@ $('delete').addEventListener('click', () => {
     persist();
     if (current === key) showDay(key);
     buzz(10);
-  }, () => entry.photos.forEach(removeAsset));
+  }, () => entryAssets(entry).forEach(removeAsset));
 });
 
 document.addEventListener('visibilitychange', () => {
@@ -1424,7 +1542,7 @@ function renderList() {
     if (sort.keep && !sort.keep(e)) return false;
     if (isAt && !(at && at.test(k))) return false;
     if (!lt) return true;
-    return [Paper.mdToText(e.text), fmtDate(k), e.weather ? fmtWeather(e.weather) : '', (e.people || []).join(' ')]
+    return [Paper.mdToText(e.text), fmtDate(k), e.weather ? fmtWeather(e.weather) : '', (e.people || []).join(' '), e.film ? e.film.title : '']
       .some((t) => t.toLowerCase().includes(lt));
   }).sort(sort.order);
 
@@ -1711,6 +1829,8 @@ function readerPane(key) {
   if (e.weather) meta.push(escapeHtml(fmtWeather(e.weather)));
   return `<div class="reader-pane" data-key="${key}">
     ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
+    ${e.film ? `<div class="reader-film">${e.film.cover ? `<img src="${escapeHtml(photoUrl(e.film.cover))}" data-id="${escapeHtml(e.film.cover)}" alt="">` : ''}
+      <div><div class="rf-title">${escapeHtml(e.film.title || 'Film')}</div>${e.film.rating ? starsHtml(e.film.rating) : ''}</div></div>` : ''}
     ${bigPhotos(e.photos)}
     ${meta.length ? `<div class="meta">${meta.join(', ')}</div>` : ''}
     ${e.people && e.people.length ? `<div class="meta">Taggade personer: ${escapeHtml(joinNames(e.people))}</div>` : ''}
@@ -2243,7 +2363,7 @@ $('export').addEventListener('click', async () => {
   flushSave();
   const images = {};
   for (const e of Object.values(entries)) {
-    for (const id of e.photos) {
+    for (const id of entryAssets(e)) {
       try {
         const b = await photoStore.get(id);
         if (b) images[id] = await blobToDataUrl(b);
@@ -2300,6 +2420,13 @@ $('import-file').addEventListener('change', async (ev) => {
       } catch {}
     }
     e.photos = kept;
+    if (e.film && e.film.cover && !photoUrls[e.film.cover]) {
+      const src = images[e.film.cover];
+      e.film.cover = null;
+      if (typeof src === 'string' && src.startsWith('data:image/')) {
+        try { e.film.cover = (await photoStore.upload(await (await fetch(src)).blob())).id; } catch {}
+      }
+    }
     entries[k] = e;
   }
   persist();

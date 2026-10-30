@@ -1427,6 +1427,54 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
 .people:focus-within { border-color: var(--muted); }
 .people-suggest { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .people-suggest .pill { padding: 5px 12px; font-size: 14px; }
+/* Film i dagen */
+.film { display: flex; gap: 12px; align-items: flex-start; }
+.film-cover {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 84px;
+  aspect-ratio: 2 / 3;
+  padding: 6px;
+  border: 1px dashed var(--accent);
+  border-radius: 6px;
+  background: none;
+  color: var(--accent);
+  font-size: 13px;
+  text-align: center;
+  overflow: hidden;
+  cursor: pointer;
+}
+.film-cover.has { padding: 0; border: 0; }
+.film-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.film-info { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+#film-title {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  font-size: 16px;
+  outline: none;
+}
+#film-title:focus { border-color: var(--muted); }
+.film-rating { display: flex; }
+.film-rating button {
+  width: 38px;
+  height: 38px;
+  padding: 5px;
+  border: 0;
+  background: none;
+  color: var(--line);
+  cursor: pointer;
+}
+.film-rating svg, .stars svg { width: 100%; height: 100%; fill: currentColor; display: block; }
+.film-rating .on, .stars .on { color: #e2a43d; }
+.stars { display: inline-flex; gap: 1px; color: var(--line); }
+.stars > span { width: 16px; height: 16px; }
+.reader-film { display: flex; gap: 12px; align-items: center; margin-top: 14px; }
+.reader-film img { width: 56px; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 4px; }
+.rf-title { font-weight: 600; margin-bottom: 2px; }
 </style>
 
 
@@ -1713,6 +1761,19 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
                 autocapitalize="words" enterkeyhint="done" aria-labelledby="people-label">
             </div>
             <div class="people-suggest" id="people-suggest" hidden></div>
+          </div>
+          <div class="field">
+            <span id="film-label">Film</span>
+            <div class="film">
+              <button type="button" class="film-cover" id="film-cover"></button>
+              <input type="file" id="film-file" accept="image/*" hidden>
+              <div class="film-info">
+                <input type="text" id="film-title" placeholder="Vilken film?" autocomplete="off"
+                  enterkeyhint="done" aria-labelledby="film-label">
+                <div class="film-rating" id="film-rating" role="radiogroup" aria-label="Betyg"></div>
+                <button type="button" class="link danger" id="film-clear" hidden>Ta bort filmen</button>
+              </div>
+            </div>
           </div>
           <div class="field">
             <span>Bilder</span>
@@ -2247,6 +2308,7 @@ function clean(e) {
       : null,
     photos: Array.isArray(e.photos) ? e.photos.filter((id) => /^[A-Za-z0-9_-]{8,64}$/.test(id)) : [],
     people: cleanPeople(e.people),
+    film: cleanFilm(e.film),
     updated: typeof e.updated === 'string' ? e.updated : new Date().toISOString(),
   };
 }
@@ -2286,6 +2348,7 @@ async function connect() {
   downloads = dl;
   assets = as;
   $('add-photo').hidden = !assets;
+  renderFilmCover();
   $('export').hidden = !downloads;
   $('remind-add').hidden = !downloads;
   const uid = user ? await user.id() : null;
@@ -2387,7 +2450,7 @@ $('wipe-yes').addEventListener('click', async () => {
   for (const k of keys) {
     const e = entries[k];
     delete entries[k];
-    e.photos.forEach(removeAsset);
+    entryAssets(e).forEach(removeAsset);
     if (col) {
       try { await col.doc(k).delete(); } catch {}
     }
@@ -2612,6 +2675,7 @@ function readForm() {
     weather: readWeather(old && old.weather),
     photos: photos.slice(),
     people: people.slice(),
+    film: cleanFilm(film),
   };
 }
 
@@ -2666,6 +2730,7 @@ function showDay(key) {
   people = e && e.people ? e.people.slice() : [];
   $('people-input').value = '';
   renderPeople();
+  setFilm(e && e.film);
   setMood(e ? e.mood : null);
   showWeather(e);
 
@@ -2691,7 +2756,7 @@ function setStatus(text) { $('status').textContent = text; }
 function save() {
   saveTimer = null;
   const data = readForm();
-  if (!data.text && data.mood == null && !data.weather && !data.photos.length && !data.people.length) {
+  if (!data.text && data.mood == null && !data.weather && !data.photos.length && !data.people.length && !data.film) {
     if (!entries[current]) return;
     delete entries[current];
     writeCache();
@@ -2994,7 +3059,7 @@ function attachSwipe({ area, moving, skip, canNext, step }) {
 attachSwipe({
   area: $('view-day'),
   moving: $('view-day'),
-  skip: '.photos, .fmt, .date-pop, .people, .people-suggest',
+  skip: '.photos, .fmt, .date-pop, .people, .people-suggest, .film',
   canNext: () => current < todayKey(),
   step: (dir) => stepDay(dir),
 });
@@ -3048,6 +3113,125 @@ document.addEventListener('keydown', (ev) => {
   ev.stopImmediatePropagation();
   toggleDatePop(false);
   $('date-btn').focus();
+});
+
+/* Film som man sett under dagen: titel, betyg och omslag */
+
+const canUploadCover = () => !!assets;
+async function uploadCover(blob) {
+  const res = await assets.upload(blob);
+  photoUrls[res.id] = res.url;
+  return res;
+}
+
+const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.7 5.6 6.1.8-4.5 4.2 1.2 6.1L12 16.5l-5.5 3 1.2-6.1-4.5-4.2 6.1-.8z"/></svg>';
+const EMPTY_FILM = { title: '', rating: null, cover: null };
+let film = { ...EMPTY_FILM };
+let coverUploading = false;
+
+function cleanFilm(f) {
+  if (!f || typeof f !== 'object') return null;
+  const title = typeof f.title === 'string' ? f.title.replace(/\s+/g, ' ').trim().slice(0, 120) : '';
+  const rating = Number.isInteger(f.rating) && f.rating >= 1 && f.rating <= 5 ? f.rating : null;
+  const cover = typeof f.cover === 'string' && /^[A-Za-z0-9_-]{8,64}$/.test(f.cover) ? f.cover : null;
+  return title || rating || cover ? { title, rating, cover } : null;
+}
+
+// Alla bilder som hör till ett inlägg: dagens bilder och filmens omslag
+function entryAssets(e) {
+  return e.film && e.film.cover ? [...e.photos, e.film.cover] : e.photos;
+}
+
+// Stjärnor att visa, inte att trycka på
+function starsHtml(rating) {
+  return `<span class="stars" role="img" aria-label="Betyg ${rating} av 5">${
+    [1, 2, 3, 4, 5].map((n) => `<span class="${n <= rating ? 'on' : ''}">${STAR}</span>`).join('')}</span>`;
+}
+
+function renderFilmCover() {
+  const box = $('film-cover');
+  box.classList.toggle('has', !!film.cover);
+  box.innerHTML = film.cover
+    ? `<img src="${escapeHtml(photoUrl(film.cover))}" data-id="${escapeHtml(film.cover)}" alt="">`
+    : `<span>${coverUploading ? 'Sparar' : 'Lägg till omslag'}</span>`;
+  box.hidden = !film.cover && !canUploadCover();
+  box.setAttribute('aria-label', film.cover ? 'Byt omslag' : 'Lägg till omslag');
+}
+
+function renderFilmRating() {
+  $('film-rating').querySelectorAll('button').forEach((b) => {
+    const n = Number(b.dataset.r);
+    b.classList.toggle('on', film.rating != null && n <= film.rating);
+    b.setAttribute('aria-checked', String(n === film.rating));
+  });
+}
+
+function syncFilmClear() {
+  $('film-clear').hidden = !(film.title.trim() || film.rating || film.cover);
+}
+
+function setFilm(f) {
+  film = f ? { ...EMPTY_FILM, ...f } : { ...EMPTY_FILM };
+  $('film-title').value = film.title;
+  renderFilmCover();
+  renderFilmRating();
+  syncFilmClear();
+}
+
+$('film-rating').innerHTML = [1, 2, 3, 4, 5].map((n) =>
+  `<button type="button" role="radio" data-r="${n}" aria-label="${n} av 5">${STAR}</button>`).join('');
+$('film-rating').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-r]');
+  if (!b) return;
+  const n = Number(b.dataset.r);
+  film.rating = film.rating === n ? null : n;
+  renderFilmRating();
+  syncFilmClear();
+  buzz(8);
+  scheduleSave();
+});
+$('film-title').addEventListener('input', (ev) => {
+  film.title = ev.target.value;
+  syncFilmClear();
+  scheduleSave();
+});
+$('film-title').addEventListener('keydown', (ev) => {
+  if (ev.key === 'Enter') {
+    ev.preventDefault();
+    ev.target.blur();
+  }
+});
+$('film-cover').addEventListener('click', () => {
+  if (canUploadCover() && !coverUploading) $('film-file').click();
+});
+$('film-file').addEventListener('change', async (ev) => {
+  const file = ev.target.files[0];
+  ev.target.value = '';
+  if (!file) return;
+  const key = current;
+  coverUploading = true;
+  renderFilmCover();
+  try {
+    const res = await uploadCover(await shrink(file));
+    if (key === current) {
+      const old = film.cover;
+      film.cover = res.id;
+      if (old) removeAsset(old);
+      scheduleSave();
+    } else {
+      removeAsset(res.id);
+    }
+  } catch {
+    $('photo-msg').textContent = 'Omslaget kunde inte sparas.';
+  }
+  coverUploading = false;
+  renderFilmCover();
+  syncFilmClear();
+});
+$('film-clear').addEventListener('click', () => {
+  if (film.cover) removeAsset(film.cover);
+  setFilm(null);
+  scheduleSave();
 });
 
 /* Personer som taggas i dagen, separat från texten */
@@ -3242,7 +3426,7 @@ $('delete').addEventListener('click', () => {
     remoteSet(key, entry);
     if (current === key) showDay(key);
     buzz(10);
-  }, () => entry.photos.forEach(removeAsset));
+  }, () => entryAssets(entry).forEach(removeAsset));
 });
 
 document.addEventListener('visibilitychange', () => {
@@ -3572,7 +3756,7 @@ function renderList() {
     if (sort.keep && !sort.keep(e)) return false;
     if (isAt && !(at && at.test(k))) return false;
     if (!lt) return true;
-    return [Paper.mdToText(e.text), fmtDate(k), e.weather ? fmtWeather(e.weather) : '', (e.people || []).join(' ')]
+    return [Paper.mdToText(e.text), fmtDate(k), e.weather ? fmtWeather(e.weather) : '', (e.people || []).join(' '), e.film ? e.film.title : '']
       .some((t) => t.toLowerCase().includes(lt));
   }).sort(sort.order);
 
@@ -3862,6 +4046,8 @@ function readerPane(key) {
   if (e.weather) meta.push(escapeHtml(fmtWeather(e.weather)));
   return `<div class="reader-pane" data-key="${key}">
     ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
+    ${e.film ? `<div class="reader-film">${e.film.cover ? `<img src="${escapeHtml(photoUrl(e.film.cover))}" data-id="${escapeHtml(e.film.cover)}" alt="">` : ''}
+      <div><div class="rf-title">${escapeHtml(e.film.title || 'Film')}</div>${e.film.rating ? starsHtml(e.film.rating) : ''}</div></div>` : ''}
     ${bigPhotos(e.photos)}
     ${meta.length ? `<div class="meta">${meta.join(', ')}</div>` : ''}
     ${e.people && e.people.length ? `<div class="meta">Taggade personer: ${escapeHtml(joinNames(e.people))}</div>` : ''}
@@ -4443,6 +4629,17 @@ $('import-file').addEventListener('change', async (ev) => {
         } catch {}
       }
       e.photos = kept;
+      if (e.film && e.film.cover) {
+        const src = images[e.film.cover];
+        e.film.cover = null;
+        if (assets && typeof src === 'string' && src.startsWith('data:image/')) {
+          try {
+            const res = await assets.upload(dataUrlToBlob(src));
+            photoUrls[res.id] = res.url;
+            e.film.cover = res.id;
+          } catch {}
+        }
+      }
     }
     entries[k] = e;
     remoteSet(k, e);
