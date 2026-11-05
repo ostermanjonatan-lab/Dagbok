@@ -605,13 +605,36 @@ function drawMood() {
     $('mood-thumb').style.transform = `translate(${x}px, ${y}px)`;
   }
 }
+// Siffran i knappen rullar till det nya värdet, uppåt när humöret ökar och nedåt när det minskar
+function rollMood(knob, v, prev) {
+  knob.querySelectorAll('.num.out').forEach((n) => n.remove());
+  let cur = knob.querySelector('.num');
+  if (!cur) {
+    cur = document.createElement('span');
+    cur.className = 'num';
+    knob.appendChild(cur);
+  }
+  if (!v || !prev || v === prev || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    cur.className = 'num';
+    cur.textContent = v || '';
+    return;
+  }
+  const up = v > prev;
+  cur.className = `num out ${up ? 'out-up' : 'out-down'}`;
+  const next = document.createElement('span');
+  next.className = `num ${up ? 'in-up' : 'in-down'}`;
+  next.textContent = v;
+  knob.appendChild(next);
+  setTimeout(() => cur.remove(), 220);
+}
 function setMood(v) {
+  const prev = moodValue;
   moodValue = v || null;
   moodEl.classList.toggle('set', !!moodValue);
   moodEl.setAttribute('aria-valuenow', moodValue || '');
   moodEl.setAttribute('aria-valuetext', moodValue ? `${moodValue} av 10` : 'Inget humör valt');
   const thumb = $('mood-thumb');
-  thumb.firstElementChild.textContent = moodValue || '';
+  rollMood(thumb.firstElementChild, moodValue, prev);
   thumb.dataset.m = moodValue || '';
   if (moodValue) thumb.style.setProperty('--m', `var(--m${moodValue})`);
   drawMood();

@@ -1800,7 +1800,9 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 }
 .mood-slider.dragging .mood-thumb { transition: none; }
 .mood-slider:not(.set) .mood-thumb { display: none; }
-.mood-thumb span {
+.mood-thumb > span {
+  position: relative;
+  overflow: hidden;
   display: grid;
   place-items: center;
   width: 100%;
@@ -1814,11 +1816,21 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
   box-shadow: 0 0 0 3px var(--bg), 0 3px 8px rgb(42 20 24 / .25);
   transition: transform .15s;
 }
-.mood-slider.dragging .mood-thumb span { transform: scale(1.15); }
-.mood-thumb span.pop { animation: mood-pop .32s cubic-bezier(.3, 1.6, .5, 1); }
-@media (prefers-reduced-motion: reduce) { .mood-thumb span.pop { animation: none; } .mood-thumb { transition: none; } }
+.mood-slider.dragging .mood-thumb > span { transform: scale(1.15); }
+.mood-thumb > span.pop { animation: mood-pop .32s cubic-bezier(.3, 1.6, .5, 1); }
+@media (prefers-reduced-motion: reduce) { .mood-thumb > span.pop { animation: none; } .mood-thumb { transition: none; } }
 .mood-thumb[data-m="1"] span, .mood-thumb[data-m="2"] span, .mood-thumb[data-m="9"] span, .mood-thumb[data-m="10"] span { color: #fff; }
 .mood .ends { margin-top: -4px; }
+/* Siffran rullar uppåt när humöret ökar och nedåt när det minskar */
+.mood-thumb .num { position: absolute; inset: 0; display: grid; place-items: center; }
+.mood-thumb .num.in-up { animation: num-in-up .2s ease-out; }
+.mood-thumb .num.out-up { animation: num-out-up .2s ease-out forwards; }
+.mood-thumb .num.in-down { animation: num-in-down .2s ease-out; }
+.mood-thumb .num.out-down { animation: num-out-down .2s ease-out forwards; }
+@keyframes num-in-up { from { transform: translateY(100%); opacity: 0; } }
+@keyframes num-out-up { to { transform: translateY(-100%); opacity: 0; } }
+@keyframes num-in-down { from { transform: translateY(-100%); opacity: 0; } }
+@keyframes num-out-down { to { transform: translateY(100%); opacity: 0; } }
 </style>
 
 
@@ -3239,13 +3251,36 @@ function drawMood() {
     $('mood-thumb').style.transform = `translate(${x}px, ${y}px)`;
   }
 }
+// Siffran i knappen rullar till det nya värdet, uppåt när humöret ökar och nedåt när det minskar
+function rollMood(knob, v, prev) {
+  knob.querySelectorAll('.num.out').forEach((n) => n.remove());
+  let cur = knob.querySelector('.num');
+  if (!cur) {
+    cur = document.createElement('span');
+    cur.className = 'num';
+    knob.appendChild(cur);
+  }
+  if (!v || !prev || v === prev || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    cur.className = 'num';
+    cur.textContent = v || '';
+    return;
+  }
+  const up = v > prev;
+  cur.className = `num out ${up ? 'out-up' : 'out-down'}`;
+  const next = document.createElement('span');
+  next.className = `num ${up ? 'in-up' : 'in-down'}`;
+  next.textContent = v;
+  knob.appendChild(next);
+  setTimeout(() => cur.remove(), 220);
+}
 function setMood(v) {
+  const prev = moodValue;
   moodValue = v || null;
   moodEl.classList.toggle('set', !!moodValue);
   moodEl.setAttribute('aria-valuenow', moodValue || '');
   moodEl.setAttribute('aria-valuetext', moodValue ? `${moodValue} av 10` : 'Inget humör valt');
   const thumb = $('mood-thumb');
-  thumb.firstElementChild.textContent = moodValue || '';
+  rollMood(thumb.firstElementChild, moodValue, prev);
   thumb.dataset.m = moodValue || '';
   if (moodValue) thumb.style.setProperty('--m', `var(--m${moodValue})`);
   drawMood();
