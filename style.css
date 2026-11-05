@@ -1765,11 +1765,14 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .reader-photos img { border-radius: 1px; }
 
 /* Hela året: tolv små månader med en ruta per dag i humörets färg */
-#year-btn { margin-left: 4px; }
-/* Månadens namn ska alltid rymmas på en rad, även med två knappar bredvid */
-#cal-title { min-width: 0; white-space: nowrap; font-size: clamp(15px, 4.9vw, 20px); }
-#cal-prev, #cal-next { width: 32px; }
-#year-btn svg .st { fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; }
+/* Månad eller år väljs med en växlare ovanför kalendern, lagren ligger till höger */
+.cal-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
+.cal-top + .cal-head { margin-top: 6px; }
+.cal-mode { display: flex; gap: 2px; padding: 2px; border-radius: 9px; background: color-mix(in srgb, var(--line) 60%, transparent); }
+.cal-mode button { padding: 5px 14px; border: 0; border-radius: 7px; background: none; color: var(--muted); font: inherit; font-size: 14px; cursor: pointer; }
+.cal-mode [aria-checked="true"] { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: 0 1px 2px rgba(42, 20, 24, .12); }
+.cal-top .layers { margin-left: 0; }
+#cal-title { white-space: nowrap; }
 .grid.year { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 14px; margin-top: 10px; }
 .ym { display: flex; flex-direction: column; justify-content: flex-start; align-self: start; padding: 0; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
 .ym:disabled { cursor: default; }

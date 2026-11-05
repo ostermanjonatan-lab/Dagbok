@@ -2044,9 +2044,11 @@ function renderCal() {
   const moods = calShow.mood;
   const weathers = calShow.weather;
 
-  $('year-btn').classList.toggle('on', calYear);
-  $('year-btn').setAttribute('aria-pressed', String(calYear));
-  $('layers').hidden = calYear;
+  document.querySelectorAll('#cal-mode [data-mode]').forEach((b) => {
+    b.setAttribute('aria-checked', String((b.dataset.mode === 'year') === calYear));
+  });
+  // Lagren gäller bara månaden. Platsen behålls så att inget hoppar.
+  $('layers').style.visibility = calYear ? 'hidden' : '';
   $('cal-grid').classList.toggle('year', calYear);
   $('cal-prev').setAttribute('aria-label', calYear ? 'Föregående år' : 'Föregående månad');
   $('cal-next').setAttribute('aria-label', calYear ? 'Nästa år' : 'Nästa månad');
@@ -2746,7 +2748,10 @@ attachSwipe({
 
 $('cal-prev').addEventListener('click', () => shiftMonth(-1));
 $('cal-next').addEventListener('click', () => shiftMonth(1));
-$('year-btn').addEventListener('click', () => setYearView(!calYear));
+$('cal-mode').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-mode]');
+  if (b && (b.dataset.mode === 'year') !== calYear) setYearView(b.dataset.mode === 'year');
+});
 $('cal-grid').addEventListener('click', (ev) => {
   // En månad i årsvyn öppnar den månaden
   const ym = ev.target.closest('.ym');
