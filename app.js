@@ -36,6 +36,14 @@ function persist() {
   }
 }
 
+// Humöret är 1 till 10. Det som sparades på den tidigare skalan 1 till 5 dubblas.
+function cleanMood(e) {
+  const m = e.mood;
+  if (!Number.isInteger(m)) return null;
+  if (e.moodScale === 10) return m >= 1 && m <= 10 ? m : null;
+  return m >= 1 && m <= 5 ? m * 2 : null;
+}
+
 // Gör om ett inlägg till dagens format. Äldre inlägg hade två textfält.
 function normalize(e) {
   const text = typeof e.text === 'string'
@@ -44,7 +52,8 @@ function normalize(e) {
   const w = e.weather;
   return {
     text,
-    mood: Number.isInteger(e.mood) && e.mood >= 1 && e.mood <= 5 ? e.mood : null,
+    mood: cleanMood(e),
+    moodScale: 10,
     weather: w && (typeof w.code === 'number' || typeof w.temp === 'number')
       ? {
         code: typeof w.code === 'number' ? w.code : null,
@@ -476,6 +485,7 @@ function readForm() {
   return {
     text: editor.get(),
     mood: checked ? Number(checked.dataset.v) : null,
+    moodScale: 10,
     photos: photos.slice(),
     people: people.slice(),
     media: currentMedia(),
@@ -1480,7 +1490,7 @@ function postHtml(k, e, today, searching) {
   const sub = [rel, wx].filter(Boolean).join('<span class="sep" aria-hidden="true">·</span>');
   return `<article class="post${k === today ? ' today' : ''}" data-key="${k}">
     <header class="post-head">
-      <span class="avatar${e.mood ? '' : ' none'}" data-m="${e.mood || ''}" style="--m: var(--m${e.mood || 3})" aria-hidden="true">${['sön', 'mån', 'tis', 'ons', 'tor', 'fre', 'lör'][d.getDay()]}</span>
+      <span class="avatar${e.mood ? '' : ' none'}" data-m="${e.mood || ''}" style="--m: var(--m${e.mood || 6})" aria-hidden="true">${['sön', 'mån', 'tis', 'ons', 'tor', 'fre', 'lör'][d.getDay()]}</span>
       <div class="who">
         <button type="button" class="when">${shortDate(k)}</button>
         ${sub ? `<span class="sub">${sub}</span>` : ''}
@@ -2026,7 +2036,7 @@ function yearHtml(y, today) {
       aria-label="${MONTHS[m - 1]} ${y}${future ? '' : `, ${written} ${written === 1 ? 'dag' : 'dagar'} skrivna`}"><span class="ym-name">${MONTHS[m - 1]}</span><span class="ym-days" aria-hidden="true">${cells}</span></button>`;
   }
   const dot = (n) => `<i class="yd mood" style="--m: var(--m${n})"></i>`;
-  html += `<div class="y-legend" aria-hidden="true"><span>Tungt</span>${[1, 2, 3, 4, 5].map(dot).join('')}<span>Bra</span><i class="yd has"></i><span>Utan humör</span></div>`;
+  html += `<div class="y-legend" aria-hidden="true"><span>Tungt</span>${Array.from({ length: 10 }, (_, i) => dot(i + 1)).join('')}<span>Bra</span><i class="yd has"></i><span>Utan humör</span></div>`;
   return html;
 }
 
@@ -2480,8 +2490,8 @@ function renderStats() {
 
   $('facts').innerHTML = facts.map(([k, v]) => `<dt>${k}</dt><dd>${escapeHtml(v)}</dd>`).join('');
 
-  // Fördelning av humöret, en stapel med fem delar
-  const counts = [1, 2, 3, 4, 5].map((v) => moods.filter((x) => x === v).length);
+  // Fördelning av humöret, en stapel med tio delar
+  const counts = Array.from({ length: 10 }, (_, i) => moods.filter((x) => x === i + 1).length);
   $('distr').hidden = !moods.length;
   $('distr-bar').innerHTML = counts.map((c, i) => (c
     ? `<span style="--m: var(--m${i + 1}); flex-grow: ${c}" title="Humör ${i + 1}: ${dagar(c)}">${c}</span>`
@@ -2551,13 +2561,13 @@ function renderTrend() {
   const H = 128;
   const x0 = 22;
   const x1 = W - 8;
-  const yOf = (v) => 12 + (5 - v) * 22; // 5 överst, 1 nederst
+  const yOf = (v) => 12 + ((10 - v) * 88) / 9; // 10 överst, 1 nederst
   const xOf = bars ? (i) => x0 + ((i + 0.5) * (x1 - x0)) / n : (i) => x0 + (i * (x1 - x0)) / (n - 1);
   const step = bars ? (x1 - x0) / n : (x1 - x0) / (n - 1);
   const base = yOf(1) + 8;
 
   let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Snitthumör per månad">`;
-  for (const v of [1, 3, 5]) {
+  for (const v of [1, 4, 7, 10]) {
     svg += `<line class="gl" x1="${x0}" x2="${x1}" y1="${yOf(v)}" y2="${yOf(v)}"/>`;
     svg += `<text class="lbl" x="${x0 - 8}" y="${yOf(v) + 3.5}" text-anchor="end">${v}</text>`;
   }

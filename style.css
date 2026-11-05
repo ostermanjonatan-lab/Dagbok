@@ -10,11 +10,9 @@
   --brand-text: #f3e6d5;
   --paper: #ffffff;
   --danger: #b3261e;
-  --m1: #d2483c;
-  --m2: #e8893c;
-  --m3: #e2c23d;
-  --m4: #95c65c;
-  --m5: #3d9c5a;
+  /* Humör 1 till 10. De jämna är samma färger som när skalan var 1 till 5. */
+  --m1: #b8352e; --m2: #d2483c; --m3: #de6a3a; --m4: #e8893c; --m5: #e5a63c;
+  --m6: #e2c23d; --m7: #bfc84e; --m8: #95c65c; --m9: #66b05a; --m10: #3d9c5a;
   --on-mood: #2a1418;
   --nav-h: 58px;
   /* Telefonens eget typsnitt i hela appen: San Francisco på iPhone, Roboto på Android */
@@ -1818,3 +1816,12 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .ym:not(:disabled):active { background: color-mix(in srgb, var(--line) 55%, transparent); }
 .ym.now .ym-name { color: var(--accent); }
 .yd.today { box-shadow: 0 0 0 1.5px var(--accent); }
+
+/* Tio humörknappar på en rad */
+.scale { gap: 3px; }
+.scale button { min-width: 0; padding: 0; font-size: 15px; }
+.post .avatar[data-m="1"], .post .avatar[data-m="2"], .post .avatar[data-m="9"], .post .avatar[data-m="10"] { color: #fff; }
+.post .avatar[data-m="5"] { color: var(--on-mood); }
+.y-legend { gap: 3px; }
+.y-legend .yd { width: 9px; }
+.y-legend span { margin: 0 3px; }
