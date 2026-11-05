@@ -2001,6 +2001,41 @@ document.addEventListener('keydown', (ev) => {
 });
 syncShow();
 
+// Hela året i kalendern, sparas mellan gångerna
+const YEAR_KEY = 'dagbok.arsvy';
+let calYear = false;
+try { calYear = localStorage.getItem(YEAR_KEY) === '1'; } catch {}
+
+function yearHtml(y, today) {
+  let html = '';
+  for (let m = 1; m <= 12; m++) {
+    const ym = `${y}-${pad(m)}`;
+    const first = new Date(y, m - 1, 1);
+    const days = new Date(y, m, 0).getDate();
+    let cells = '<i class="yd pad"></i>'.repeat((first.getDay() + 6) % 7);
+    let written = 0;
+    for (let d = 1; d <= days; d++) {
+      const key = `${ym}-${pad(d)}`;
+      const e = entries[key];
+      if (e) written++;
+      const cls = key > today ? 'future' : e && e.mood ? 'mood' : e ? 'has' : '';
+      cells += `<i class="yd ${cls}${key === today ? ' today' : ''}"${e && e.mood ? ` style="--m: var(--m${e.mood})"` : ''}></i>`;
+    }
+    const future = ym > today.slice(0, 7);
+    html += `<button type="button" class="ym" data-ym="${ym}"${future ? ' disabled' : ''}
+      aria-label="${MONTHS[m - 1]} ${y}${future ? '' : `, ${written} ${written === 1 ? 'dag' : 'dagar'} skrivna`}"><span class="ym-name">${MONTHS[m - 1]}</span><span class="ym-days" aria-hidden="true">${cells}</span></button>`;
+  }
+  const dot = (n) => `<i class="yd mood" style="--m: var(--m${n})"></i>`;
+  html += `<div class="y-legend" aria-hidden="true"><span>Tungt</span>${[1, 2, 3, 4, 5].map(dot).join('')}<span>Bra</span><i class="yd has"></i><span>Utan humör</span></div>`;
+  return html;
+}
+
+function setYearView(on) {
+  calYear = on;
+  try { localStorage.setItem(YEAR_KEY, on ? '1' : '0'); } catch {}
+  renderCal();
+}
+
 function renderCal() {
   const [y, m] = calMonth.split('-').map(Number);
   const first = new Date(y, m - 1, 1);
@@ -2009,17 +2044,23 @@ function renderCal() {
   const moods = calShow.mood;
   const weathers = calShow.weather;
 
-  $('cal-title').textContent = monthFmt.format(first);
-  $('cal-next').disabled = calMonth >= today.slice(0, 7);
+  $('year-btn').classList.toggle('on', calYear);
+  $('year-btn').setAttribute('aria-pressed', String(calYear));
+  $('layers').hidden = calYear;
+  $('cal-grid').classList.toggle('year', calYear);
+  $('cal-prev').setAttribute('aria-label', calYear ? 'Föregående år' : 'Föregående månad');
+  $('cal-next').setAttribute('aria-label', calYear ? 'Nästa år' : 'Nästa månad');
+  $('cal-title').textContent = calYear ? String(y) : monthFmt.format(first);
+  $('cal-next').disabled = calYear ? String(y) >= today.slice(0, 4) : calMonth >= today.slice(0, 7);
   $('cal-grid').classList.toggle('moods', moods);
   $('cal-grid').classList.toggle('weathers', weathers);
 
-  let html = ['mån', 'tis', 'ons', 'tor', 'fre', 'lör', 'sön']
+  let html = calYear ? yearHtml(y, today) : ['mån', 'tis', 'ons', 'tor', 'fre', 'lör', 'sön']
     .map((d) => `<div class="wd">${d}</div>`).join('');
   // Veckan börjar på måndag
   const offset = (first.getDay() + 6) % 7;
-  html += '<div></div>'.repeat(offset);
-  for (let d = 1; d <= days; d++) {
+  if (!calYear) html += '<div></div>'.repeat(offset);
+  for (let d = 1; d <= (calYear ? 0 : days); d++) {
     const key = `${calMonth}-${pad(d)}`;
     const e = entries[key];
     const cls = ['day'];
@@ -2688,8 +2729,10 @@ syncPanel();
 
 function shiftMonth(n) {
   const [y, m] = calMonth.split('-').map(Number);
-  const d = new Date(y, m - 1 + n, 1);
+  // I årsvyn bläddrar man ett år i taget
+  const d = new Date(y, m - 1 + (calYear ? 12 * n : n), 1);
   calMonth = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+  if (calMonth > todayKey().slice(0, 7)) calMonth = todayKey().slice(0, 7);
   renderCal();
 }
 
@@ -2697,13 +2740,21 @@ attachSwipe({
   area: $('view-cal'),
   moving: $('cal-grid'),
   skip: '.seg, #feed-panel, #month-stats, #media-panel, .layers',
-  canNext: () => calMonth < todayKey().slice(0, 7),
+  canNext: () => (calYear ? calMonth.slice(0, 4) < todayKey().slice(0, 4) : calMonth < todayKey().slice(0, 7)),
   step: (dir) => shiftMonth(dir),
 });
 
 $('cal-prev').addEventListener('click', () => shiftMonth(-1));
 $('cal-next').addEventListener('click', () => shiftMonth(1));
+$('year-btn').addEventListener('click', () => setYearView(!calYear));
 $('cal-grid').addEventListener('click', (ev) => {
+  // En månad i årsvyn öppnar den månaden
+  const ym = ev.target.closest('.ym');
+  if (ym && !ym.disabled) {
+    calMonth = ym.dataset.ym;
+    setYearView(false);
+    return;
+  }
   const btn = ev.target.closest('.day');
   if (!btn || btn.disabled) return;
   openReader(btn.dataset.key);

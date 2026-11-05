@@ -1763,3 +1763,22 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .reader-photos button:nth-child(even) { transform: rotate(1deg); }
 .reader-photos button:nth-child(3n) { transform: rotate(-.5deg); }
 .reader-photos img { border-radius: 1px; }
+
+/* Hela året: tolv små månader med en ruta per dag i humörets färg */
+#year-btn { margin-left: 4px; }
+.grid.year { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 14px; margin-top: 10px; }
+.ym { display: flex; flex-direction: column; justify-content: flex-start; align-self: start; padding: 0; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.ym:disabled { cursor: default; }
+.ym-name { display: block; margin-bottom: 5px; font-size: 13px; font-weight: 600; }
+.ym-name::first-letter { text-transform: uppercase; }
+.ym:disabled .ym-name { color: var(--muted); font-weight: 500; }
+.ym-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+.yd { display: block; aspect-ratio: 1; border-radius: 2px; background: color-mix(in srgb, var(--line) 60%, transparent); }
+.yd.pad, .yd.future { background: none; }
+.yd.has { background: color-mix(in srgb, var(--muted) 40%, transparent); }
+.yd.mood { background: var(--m); }
+.yd.today { box-shadow: 0 0 0 1.5px var(--text); }
+.y-legend { grid-column: 1 / -1; display: flex; align-items: center; gap: 5px; font-size: 13px; color: var(--muted); }
+.y-legend .yd { width: 11px; }
+.y-legend .yd.has { margin-left: 12px; }
+.y-legend span + .yd, .y-legend .yd + span { margin-left: 2px; }
