@@ -1720,7 +1720,9 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .ym:disabled .ym-name { color: var(--muted); font-weight: 500; }
 .ym-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
 .yd { display: block; aspect-ratio: 1; border-radius: 2px; background: color-mix(in srgb, var(--line) 60%, transparent); }
-.yd.pad, .yd.future { background: none; }
+.yd.pad { background: none; }
+/* Dagar som inte har kommit än syns som tomma rutor, så att månadens form syns */
+.yd.future { background: none; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line) 80%, transparent); }
 .yd.has { background: color-mix(in srgb, var(--muted) 40%, transparent); }
 .yd.mood { background: var(--m); }
 .yd.today { box-shadow: 0 0 0 1.5px var(--text); }
