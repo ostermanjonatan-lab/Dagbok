@@ -1772,10 +1772,10 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .y-legend .yd { width: 9px; }
 .y-legend span { margin: 0 3px; }
 
-/* Humöret: dra längs linjen, den ler när det är bra och hänger när det är tungt */
+/* Humöret: dra längs färgskalan */
 .mood-slider {
   position: relative;
-  height: 72px;
+  height: 56px;
   margin: 0 -6px;
   border-radius: 12px;
   outline: none;
@@ -1786,9 +1786,9 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 }
 .mood-slider:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
 .mood-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.mood-line { fill: none; stroke: url(#mood-grad); stroke-width: 6; stroke-linecap: round; opacity: .45; transition: opacity .2s; }
+.mood-line { fill: none; stroke: url(#mood-grad); stroke-width: 10; stroke-linecap: round; opacity: .5; transition: opacity .2s; }
 .mood-slider.set .mood-line { opacity: 1; }
-.mood-ticks circle { fill: var(--bg); stroke: color-mix(in srgb, var(--text) 25%, transparent); stroke-width: 1; }
+.mood-ticks circle { fill: rgb(255 255 255 / .7); }
 .mood-thumb {
   position: absolute;
   top: 0;
@@ -1819,7 +1819,7 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .mood-thumb span.pop { animation: mood-pop .32s cubic-bezier(.3, 1.6, .5, 1); }
 @media (prefers-reduced-motion: reduce) { .mood-thumb span.pop { animation: none; } .mood-thumb { transition: none; } }
 .mood-thumb[data-m="1"] span, .mood-thumb[data-m="2"] span, .mood-thumb[data-m="9"] span, .mood-thumb[data-m="10"] span { color: #fff; }
-.mood .ends { margin-top: -6px; }
+.mood .ends { margin-top: -4px; }
 </style>
 
 
@@ -3213,28 +3213,25 @@ function flushSave() {
   if (saveTimer) { clearTimeout(saveTimer); save(); }
 }
 
-/* Humöret väljs genom att dra längs en linje som är en mun. Den hänger när det är
-   tungt och ler när det är bra. Ett tryck på linjen väljer, ett tryck på det valda tar bort. */
+/* Humöret väljs genom att dra längs en färgskala från rött till grönt.
+   Ett tryck på skalan väljer, ett tryck på det valda tar bort. */
 const moodEl = $('f-mood');
 let moodValue = null;
-let moodCurve = 0;      // linjens böjning just nu, från -1 (hänger) till 1 (ler)
-let moodRaf = 0;
 let moodDrag = null;
 const MOOD_PAD = 22;
 
 function moodGeom() {
   const w = moodEl.clientWidth;
-  return { w, x0: MOOD_PAD, x1: w - MOOD_PAD, y0: 36 };
+  return { w, x0: MOOD_PAD, x1: w - MOOD_PAD, y0: 28 };
 }
-// Punkten på kurvan för ett humör. Kurvan är en andragradskurva med mitten 26 px upp eller ner.
+// Punkten på skalan för ett humör
 function moodPoint(v, g) {
-  const t = (v - 1) / 9;
-  return [g.x0 + t * (g.x1 - g.x0), g.y0 + 2 * t * (1 - t) * moodCurve * 52];
+  return [g.x0 + ((v - 1) / 9) * (g.x1 - g.x0), g.y0];
 }
 function drawMood() {
   const g = moodGeom();
   if (!g.w) return;
-  $('mood-path').setAttribute('d', `M${g.x0} ${g.y0} Q${g.w / 2} ${g.y0 + moodCurve * 52} ${g.x1} ${g.y0}`);
+  $('mood-path').setAttribute('d', `M${g.x0} ${g.y0} H${g.x1}`);
   const grad = $('mood-grad');
   grad.setAttribute('x1', g.x0);
   grad.setAttribute('x2', g.x1);
@@ -3248,23 +3245,6 @@ function drawMood() {
     $('mood-thumb').style.transform = `translate(${x}px, ${y}px)`;
   }
 }
-// Munnen glider mot sin nya form i stället för att hoppa
-function animateMood() {
-  const target = moodValue ? (moodValue - 5.5) / 4.5 : 0;
-  cancelAnimationFrame(moodRaf);
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    moodCurve = target;
-    drawMood();
-    return;
-  }
-  const tick = () => {
-    moodCurve += (target - moodCurve) * 0.2;
-    if (Math.abs(target - moodCurve) < 0.003) moodCurve = target;
-    drawMood();
-    if (moodCurve !== target) moodRaf = requestAnimationFrame(tick);
-  };
-  tick();
-}
 function setMood(v) {
   moodValue = v || null;
   moodEl.classList.toggle('set', !!moodValue);
@@ -3274,7 +3254,7 @@ function setMood(v) {
   thumb.firstElementChild.textContent = moodValue || '';
   thumb.dataset.m = moodValue || '';
   if (moodValue) thumb.style.setProperty('--m', `var(--m${moodValue})`);
-  animateMood();
+  drawMood();
 }
 function pickMood(v) {
   if (v === moodValue) return;
