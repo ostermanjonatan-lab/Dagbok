@@ -7,7 +7,6 @@ const $ = (id) => document.getElementById(id);
 
 const editor = Paper.createEditor($('f-text'), $('fmt'), () => scheduleSave());
 
-const moodButtons = [...$('f-mood').querySelectorAll('button')];
 
 let entries = normalizeAll(load());
 let current = todayKey();
@@ -481,21 +480,14 @@ if (lockData) showLock('unlock');
 /* Dagvy */
 
 function readForm() {
-  const checked = moodButtons.find((b) => b.getAttribute('aria-checked') === 'true');
   return {
     text: editor.get(),
-    mood: checked ? Number(checked.dataset.v) : null,
+    mood: moodValue,
     moodScale: 10,
     photos: photos.slice(),
     people: people.slice(),
     media: currentMedia(),
   };
-}
-
-function setMood(v) {
-  moodButtons.forEach((b) => {
-    b.setAttribute('aria-checked', String(Number(b.dataset.v) === v));
-  });
 }
 
 // Veckodag, datum och år som separata delar så att de kan få olika storlek
@@ -586,19 +578,125 @@ function flushSave() {
   }
 }
 
-moodButtons.forEach((b) => {
-  b.addEventListener('click', () => {
-    const on = b.getAttribute('aria-checked') === 'true';
-    setMood(on ? null : Number(b.dataset.v));
-    buzz(8);
-    if (!on) {
-      b.classList.remove('pop');
-      void b.offsetWidth;
-      b.classList.add('pop');
-    }
-    scheduleSave();
+/* Humöret väljs genom att dra längs en linje som är en mun. Den hänger när det är
+   tungt och ler när det är bra. Ett tryck på linjen väljer, ett tryck på det valda tar bort. */
+const moodEl = $('f-mood');
+let moodValue = null;
+let moodCurve = 0;      // linjens böjning just nu, från -1 (hänger) till 1 (ler)
+let moodRaf = 0;
+let moodDrag = null;
+const MOOD_PAD = 22;
+
+function moodGeom() {
+  const w = moodEl.clientWidth;
+  return { w, x0: MOOD_PAD, x1: w - MOOD_PAD, y0: 36 };
+}
+// Punkten på kurvan för ett humör. Kurvan är en andragradskurva med mitten 26 px upp eller ner.
+function moodPoint(v, g) {
+  const t = (v - 1) / 9;
+  return [g.x0 + t * (g.x1 - g.x0), g.y0 + 2 * t * (1 - t) * moodCurve * 52];
+}
+function drawMood() {
+  const g = moodGeom();
+  if (!g.w) return;
+  $('mood-path').setAttribute('d', `M${g.x0} ${g.y0} Q${g.w / 2} ${g.y0 + moodCurve * 52} ${g.x1} ${g.y0}`);
+  const grad = $('mood-grad');
+  grad.setAttribute('x1', g.x0);
+  grad.setAttribute('x2', g.x1);
+  [...$('mood-ticks').children].forEach((c, i) => {
+    const [x, y] = moodPoint(i + 1, g);
+    c.setAttribute('cx', x);
+    c.setAttribute('cy', y);
   });
+  if (moodValue) {
+    const [x, y] = moodPoint(moodValue, g);
+    $('mood-thumb').style.transform = `translate(${x}px, ${y}px)`;
+  }
+}
+// Munnen glider mot sin nya form i stället för att hoppa
+function animateMood() {
+  const target = moodValue ? (moodValue - 5.5) / 4.5 : 0;
+  cancelAnimationFrame(moodRaf);
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    moodCurve = target;
+    drawMood();
+    return;
+  }
+  const tick = () => {
+    moodCurve += (target - moodCurve) * 0.2;
+    if (Math.abs(target - moodCurve) < 0.003) moodCurve = target;
+    drawMood();
+    if (moodCurve !== target) moodRaf = requestAnimationFrame(tick);
+  };
+  tick();
+}
+function setMood(v) {
+  moodValue = v || null;
+  moodEl.classList.toggle('set', !!moodValue);
+  moodEl.setAttribute('aria-valuenow', moodValue || '');
+  moodEl.setAttribute('aria-valuetext', moodValue ? `${moodValue} av 10` : 'Inget humör valt');
+  const thumb = $('mood-thumb');
+  thumb.firstElementChild.textContent = moodValue || '';
+  thumb.dataset.m = moodValue || '';
+  if (moodValue) thumb.style.setProperty('--m', `var(--m${moodValue})`);
+  animateMood();
+}
+function pickMood(v) {
+  if (v === moodValue) return;
+  setMood(v);
+  buzz(5);
+}
+function moodFromX(clientX) {
+  const g = moodGeom();
+  const t = (clientX - moodEl.getBoundingClientRect().left - g.x0) / (g.x1 - g.x0);
+  return Math.max(1, Math.min(10, Math.round(1 + t * 9)));
+}
+function moodPop() {
+  const s = $('mood-thumb').firstElementChild;
+  s.classList.remove('pop');
+  void s.offsetWidth;
+  s.classList.add('pop');
+}
+// Ett tryck väljer först när fingret släpps, så att man kan scrolla förbi utan att välja
+moodEl.addEventListener('pointerdown', (ev) => {
+  moodDrag = { id: ev.pointerId, x: ev.clientX, start: moodValue, moved: false, onThumb: !!ev.target.closest('.mood-thumb') };
+  moodEl.setPointerCapture(ev.pointerId);
 });
+moodEl.addEventListener('pointermove', (ev) => {
+  if (!moodDrag || ev.pointerId !== moodDrag.id) return;
+  if (!moodDrag.moved && Math.abs(ev.clientX - moodDrag.x) > 6) {
+    moodDrag.moved = true;
+    moodEl.classList.add('dragging');
+  }
+  if (moodDrag.moved) pickMood(moodFromX(ev.clientX));
+});
+function endMoodDrag(ev, cancelled) {
+  if (!moodDrag || ev.pointerId !== moodDrag.id) return;
+  const d = moodDrag;
+  moodDrag = null;
+  moodEl.classList.remove('dragging');
+  if (!cancelled && !d.moved) {
+    if (d.onThumb) setMood(null);
+    else pickMood(moodFromX(ev.clientX));
+  }
+  if (moodValue !== d.start) {
+    if (moodValue) moodPop();
+    scheduleSave();
+  }
+}
+moodEl.addEventListener('pointerup', (ev) => endMoodDrag(ev, false));
+moodEl.addEventListener('pointercancel', (ev) => endMoodDrag(ev, true));
+moodEl.addEventListener('keydown', (ev) => {
+  const v = moodValue || 0;
+  const next = { ArrowRight: v ? v + 1 : 6, ArrowUp: v ? v + 1 : 6, ArrowLeft: v ? v - 1 : 5, ArrowDown: v ? v - 1 : 5, Home: 1, End: 10, Backspace: null, Delete: null }[ev.key];
+  if (next === undefined) return;
+  ev.preventDefault();
+  const n = next === null ? null : Math.max(1, Math.min(10, next));
+  if (n === moodValue) return;
+  setMood(n);
+  scheduleSave();
+});
+if (window.ResizeObserver) new ResizeObserver(drawMood).observe(moodEl);
 
 function stepDay(dir) { go(`#/dag/${shiftKey(current, dir)}`); }
 
@@ -679,7 +777,7 @@ function attachSwipe({ area, moving, skip, canNext, step }) {
 attachSwipe({
   area: $('view-day'),
   moving: $('view-day'),
-  skip: '.photos, .fmt, .date-pop, .people, .people-suggest, .film-list',
+  skip: '.photos, .fmt, .date-pop, .people, .people-suggest, .film-list, .mood-slider',
   canNext: () => current < todayKey(),
   step: (dir) => stepDay(dir),
 });

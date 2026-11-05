@@ -1825,3 +1825,52 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .y-legend { gap: 3px; }
 .y-legend .yd { width: 9px; }
 .y-legend span { margin: 0 3px; }
+
+/* Humöret: dra längs linjen, den ler när det är bra och hänger när det är tungt */
+.mood-slider {
+  position: relative;
+  height: 72px;
+  margin: 0 -6px;
+  border-radius: 12px;
+  outline: none;
+  touch-action: pan-y;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.mood-slider:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
+.mood-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.mood-line { fill: none; stroke: url(#mood-grad); stroke-width: 6; stroke-linecap: round; opacity: .45; transition: opacity .2s; }
+.mood-slider.set .mood-line { opacity: 1; }
+.mood-ticks circle { fill: var(--bg); stroke: color-mix(in srgb, var(--text) 25%, transparent); stroke-width: 1; }
+.mood-thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  pointer-events: auto;
+  transition: transform .12s ease-out;
+}
+.mood-slider.dragging .mood-thumb { transition: none; }
+.mood-slider:not(.set) .mood-thumb { display: none; }
+.mood-thumb span {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--m);
+  color: var(--on-mood);
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 0 0 3px var(--bg), 0 3px 8px rgb(42 20 24 / .25);
+  transition: transform .15s;
+}
+.mood-slider.dragging .mood-thumb span { transform: scale(1.15); }
+.mood-thumb span.pop { animation: mood-pop .32s cubic-bezier(.3, 1.6, .5, 1); }
+@media (prefers-reduced-motion: reduce) { .mood-thumb span.pop { animation: none; } .mood-thumb { transition: none; } }
+.mood-thumb[data-m="1"] span, .mood-thumb[data-m="2"] span, .mood-thumb[data-m="9"] span, .mood-thumb[data-m="10"] span { color: #fff; }
+.mood .ends { margin-top: -6px; }

@@ -305,17 +305,10 @@
 
             <fieldset class="field mood">
               <legend>Humör</legend>
-              <div class="scale" id="f-mood" role="radiogroup">
-                <button type="button" role="radio" data-v="1" style="--m: var(--m1)" aria-label="1, tungt">1</button>
-                <button type="button" role="radio" data-v="2" style="--m: var(--m2)">2</button>
-                <button type="button" role="radio" data-v="3" style="--m: var(--m3)">3</button>
-                <button type="button" role="radio" data-v="4" style="--m: var(--m4)">4</button>
-                <button type="button" role="radio" data-v="5" style="--m: var(--m5)">5</button>
-                <button type="button" role="radio" data-v="6" style="--m: var(--m6)">6</button>
-                <button type="button" role="radio" data-v="7" style="--m: var(--m7)">7</button>
-                <button type="button" role="radio" data-v="8" style="--m: var(--m8)">8</button>
-                <button type="button" role="radio" data-v="9" style="--m: var(--m9)">9</button>
-                <button type="button" role="radio" data-v="10" style="--m: var(--m10)" aria-label="10, bra">10</button>
+              <div class="mood-slider" id="f-mood" role="slider" tabindex="0" aria-label="Humör"
+                aria-valuemin="1" aria-valuemax="10" aria-valuetext="Inget humör valt">
+                <svg class="mood-svg" aria-hidden="true"><defs><linearGradient id="mood-grad" gradientUnits="userSpaceOnUse"><stop offset="0.000" style="stop-color: var(--m1)"/><stop offset="0.111" style="stop-color: var(--m2)"/><stop offset="0.222" style="stop-color: var(--m3)"/><stop offset="0.333" style="stop-color: var(--m4)"/><stop offset="0.444" style="stop-color: var(--m5)"/><stop offset="0.556" style="stop-color: var(--m6)"/><stop offset="0.667" style="stop-color: var(--m7)"/><stop offset="0.778" style="stop-color: var(--m8)"/><stop offset="0.889" style="stop-color: var(--m9)"/><stop offset="1.000" style="stop-color: var(--m10)"/></linearGradient></defs><path class="mood-line" id="mood-path"/><g class="mood-ticks" id="mood-ticks"><circle r="2.2"/><circle r="2.2"/><circle r="2.2"/><circle r="2.2"/><circle r="2.2"/><circle r="2.2"/><circle r="2.2"/><circle r="2.2"/><circle r="2.2"/><circle r="2.2"/></g></svg>
+                <div class="mood-thumb" id="mood-thumb" aria-hidden="true"><span></span></div>
               </div>
               <div class="ends"><span>Tungt</span><span>Bra</span></div>
             </fieldset>
