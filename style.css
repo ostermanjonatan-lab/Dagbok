@@ -1766,13 +1766,13 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 
 /* Hela året: tolv små månader med en ruta per dag i humörets färg */
 /* Månad eller år väljs med en växlare ovanför kalendern, lagren ligger till höger */
-.cal-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
-.cal-top + .cal-head { margin-top: 6px; }
+.cal-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 6px 0 14px; }
 .cal-mode { display: flex; gap: 2px; padding: 2px; border-radius: 9px; background: color-mix(in srgb, var(--line) 60%, transparent); }
 .cal-mode button { padding: 5px 14px; border: 0; border-radius: 7px; background: none; color: var(--muted); font: inherit; font-size: 14px; cursor: pointer; }
 .cal-mode [aria-checked="true"] { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: 0 1px 2px rgba(42, 20, 24, .12); }
 .cal-top .layers { margin-left: 0; }
 #cal-title { white-space: nowrap; }
+
 .grid.year { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 14px; margin-top: 10px; }
 .ym { display: flex; flex-direction: column; justify-content: flex-start; align-self: start; padding: 0; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
 .ym:disabled { cursor: default; }
@@ -1791,3 +1791,17 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .y-legend .yd { width: 11px; }
 .y-legend .yd.has { margin-left: 12px; }
 .y-legend span + .yd, .y-legend .yd + span { margin-left: 2px; }
+
+/* Rubriken först och vänsterställd, pilarna samlade till höger */
+.cal-head { margin: 14px 0 0; gap: 0; }
+#cal-title { order: -1; text-align: left; font-size: 24px; }
+#cal-prev, #cal-next { width: 38px; }
+/* Byte mellan månad och år tonar in i stället för att hoppa */
+.grid.swap { animation: grid-swap .18s ease-out; }
+@keyframes grid-swap { from { opacity: 0; transform: scale(.985); } }
+@media (prefers-reduced-motion: reduce) { .grid.swap { animation: none; } }
+/* Månaderna i årsvyn är knappar: större träffyta och tydlig tryckeffekt */
+.ym { margin: -6px; padding: 6px; border-radius: 8px; transition: background .12s; }
+.ym:not(:disabled):active { background: color-mix(in srgb, var(--line) 55%, transparent); }
+.ym.now .ym-name { color: var(--accent); }
+.yd.today { box-shadow: 0 0 0 1.5px var(--accent); }

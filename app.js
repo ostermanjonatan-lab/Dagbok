@@ -2022,7 +2022,7 @@ function yearHtml(y, today) {
       cells += `<i class="yd ${cls}${key === today ? ' today' : ''}"${e && e.mood ? ` style="--m: var(--m${e.mood})"` : ''}></i>`;
     }
     const future = ym > today.slice(0, 7);
-    html += `<button type="button" class="ym" data-ym="${ym}"${future ? ' disabled' : ''}
+    html += `<button type="button" class="ym${ym === today.slice(0, 7) ? ' now' : ''}" data-ym="${ym}"${future ? ' disabled' : ''}
       aria-label="${MONTHS[m - 1]} ${y}${future ? '' : `, ${written} ${written === 1 ? 'dag' : 'dagar'} skrivna`}"><span class="ym-name">${MONTHS[m - 1]}</span><span class="ym-days" aria-hidden="true">${cells}</span></button>`;
   }
   const dot = (n) => `<i class="yd mood" style="--m: var(--m${n})"></i>`;
@@ -2034,6 +2034,10 @@ function setYearView(on) {
   calYear = on;
   try { localStorage.setItem(YEAR_KEY, on ? '1' : '0'); } catch {}
   renderCal();
+  const grid = $('cal-grid');
+  grid.classList.remove('swap');
+  void grid.offsetWidth;
+  grid.classList.add('swap');
 }
 
 function renderCal() {
