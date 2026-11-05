@@ -600,11 +600,6 @@ function drawMood() {
   const grad = $('mood-grad');
   grad.setAttribute('x1', g.x0);
   grad.setAttribute('x2', g.x1);
-  [...$('mood-ticks').children].forEach((c, i) => {
-    const [x, y] = moodPoint(i + 1, g);
-    c.setAttribute('cx', x);
-    c.setAttribute('cy', y);
-  });
   if (moodValue) {
     const [x, y] = moodPoint(moodValue, g);
     $('mood-thumb').style.transform = `translate(${x}px, ${y}px)`;

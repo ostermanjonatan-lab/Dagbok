@@ -1840,9 +1840,8 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 }
 .mood-slider:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
 .mood-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.mood-line { fill: none; stroke: url(#mood-grad); stroke-width: 10; stroke-linecap: round; opacity: .5; transition: opacity .2s; }
+.mood-line { fill: none; stroke: url(#mood-grad); stroke-width: 18; stroke-linecap: round; opacity: .5; transition: opacity .2s; }
 .mood-slider.set .mood-line { opacity: 1; }
-.mood-ticks circle { fill: rgb(255 255 255 / .7); }
 .mood-thumb {
   position: absolute;
   top: 0;
