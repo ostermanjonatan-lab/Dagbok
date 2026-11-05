@@ -1794,12 +1794,25 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 
 /* Rubriken först och vänsterställd, pilarna samlade till höger */
 .cal-head { margin: 14px 0 0; gap: 0; }
-#cal-title { order: -1; text-align: left; font-size: 24px; }
+#cal-title { text-align: left; font-size: 24px; }
 #cal-prev, #cal-next { width: 38px; }
-/* Byte mellan månad och år tonar in i stället för att hoppa */
-.grid.swap { animation: grid-swap .18s ease-out; }
-@keyframes grid-swap { from { opacity: 0; transform: scale(.985); } }
-@media (prefers-reduced-motion: reduce) { .grid.swap { animation: none; } }
+/* Rubriken är en knapp som byter mellan månad och år. Pilen visar åt vilket håll. */
+.cal-head h2 { order: -1; flex: 1; min-width: 0; margin: 0; }
+#cal-title { display: inline-flex; align-items: center; gap: 8px; padding: 2px 0; border: 0; background: none; cursor: pointer; }
+#cal-title::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  margin-top: -4px;
+  border: solid var(--muted);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  transition: transform .2s;
+}
+.year-view #cal-title::after { margin-top: 4px; transform: rotate(-135deg); }
+/* Huvudet ligger över kalendern, så att zoomen glider in under det */
+.cal-head, .cal-top { position: relative; z-index: 2; background: var(--bg); }
+.cal-top { margin: 0; padding: 6px 0 14px; }
 /* Månaderna i årsvyn är knappar: större träffyta och tydlig tryckeffekt */
 .ym { margin: -6px; padding: 6px; border-radius: 8px; transition: background .12s; }
 .ym:not(:disabled):active { background: color-mix(in srgb, var(--line) 55%, transparent); }

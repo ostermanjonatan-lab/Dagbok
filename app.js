@@ -2030,14 +2030,41 @@ function yearHtml(y, today) {
   return html;
 }
 
+// Bytet zoomar: månaden krymper in på sin plats i året, och växer ut därifrån igen
 function setYearView(on) {
+  const grid = $('cal-grid');
+  const tileOf = () => {
+    const t = grid.querySelector(`.ym[data-ym="${calMonth}"] .ym-days`);
+    return t ? t.getBoundingClientRect() : null;
+  };
+  const before = on ? grid.getBoundingClientRect() : tileOf();
   calYear = on;
   try { localStorage.setItem(YEAR_KEY, on ? '1' : '0'); } catch {}
   renderCal();
-  const grid = $('cal-grid');
-  grid.classList.remove('swap');
-  void grid.offsetWidth;
-  grid.classList.add('swap');
+  if (!before || !grid.animate || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const g = grid.getBoundingClientRect();
+  const center = (r) => [r.left + r.width / 2, r.top + r.height / 2];
+  let from;
+  if (on) {
+    // Året börjar inzoomat på månaden, så att den täcker där månaden nyss stod
+    const tile = tileOf();
+    if (!tile) return;
+    const s = before.width / tile.width;
+    const [tx, ty] = center(tile);
+    const [bx, by] = center(before);
+    from = { transformOrigin: `${tx - g.left}px ${ty - g.top}px`, transform: `translate(${bx - tx}px, ${by - ty}px) scale(${s})`, opacity: 0 };
+  } else {
+    // Månaden börjar lika liten som rutan den hade i året
+    const s = before.width / g.width;
+    const [tx, ty] = center(before);
+    const [gx, gy] = center(g);
+    from = { transformOrigin: '50% 50%', transform: `translate(${tx - gx}px, ${ty - gy}px) scale(${s})`, opacity: 0 };
+  }
+  const view = $('view-cal');
+  view.style.overflowX = 'clip';
+  const anim = grid.animate([from, { transformOrigin: from.transformOrigin, transform: 'none', opacity: 1 }],
+    { duration: 340, easing: 'cubic-bezier(.2, .8, .2, 1)' });
+  anim.onfinish = anim.oncancel = () => { view.style.overflowX = ''; };
 }
 
 function renderCal() {
@@ -2056,7 +2083,11 @@ function renderCal() {
   $('cal-grid').classList.toggle('year', calYear);
   $('cal-prev').setAttribute('aria-label', calYear ? 'Föregående år' : 'Föregående månad');
   $('cal-next').setAttribute('aria-label', calYear ? 'Nästa år' : 'Nästa månad');
-  $('cal-title').textContent = calYear ? String(y) : monthFmt.format(first);
+  // Stor bokstav i koden, ::first-letter fungerar inte på knappen
+  const monthName = monthFmt.format(first);
+  $('cal-title').textContent = calYear ? String(y) : monthName.charAt(0).toUpperCase() + monthName.slice(1);
+  $('cal-title').setAttribute('aria-label', calYear ? `${y}, visa månaden` : `${monthFmt.format(first)}, visa hela året`);
+  $('cal-head').classList.toggle('year-view', calYear);
   $('cal-next').disabled = calYear ? String(y) >= today.slice(0, 4) : calMonth >= today.slice(0, 7);
   $('cal-grid').classList.toggle('moods', moods);
   $('cal-grid').classList.toggle('weathers', weathers);
@@ -2752,6 +2783,7 @@ attachSwipe({
 
 $('cal-prev').addEventListener('click', () => shiftMonth(-1));
 $('cal-next').addEventListener('click', () => shiftMonth(1));
+$('cal-title').addEventListener('click', () => setYearView(!calYear));
 $('cal-mode').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-mode]');
   if (b && (b.dataset.mode === 'year') !== calYear) setYearView(b.dataset.mode === 'year');
