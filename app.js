@@ -2595,6 +2595,109 @@ function renderStats() {
   $('distr').setAttribute('aria-label', 'Humör: ' + counts.map((c, i) => `${c} med ${i + 1}`).join(', '));
 
   renderTrend();
+  renderWeatherStats(keys);
+}
+
+/* Väder och temperatur under perioden */
+
+const WX_NAME = { 0: 'Sol', 2: 'Halvklart', 3: 'Mulet', 45: 'Dimma', 63: 'Regn', 73: 'Snö', 95: 'Åska', 1000: 'Storm' };
+const fmtTemp = (t, dec) => `${(dec ? fmtDec(t) : String(Math.round(t))).replace('-', '−')} °C`;
+
+function renderWeatherStats(keys) {
+  const withWx = keys.filter((k) => entries[k].weather);
+  $('wx-stats').hidden = !withWx.length;
+  if (!withWx.length) return;
+
+  // Hur många dagar av varje sorts väder, vanligast först
+  const groups = {};
+  for (const k of withWx) {
+    const g = weatherGroup(entries[k].weather.code);
+    if (g != null) (groups[g] = groups[g] || []).push(k);
+  }
+  const order = Object.keys(groups).sort((a, b) => groups[b].length - groups[a].length);
+  $('wx-chips').innerHTML = order.map((g) => `<span class="wx-chip"><svg viewBox="0 0 24 24" aria-hidden="true">${WEATHER_ICONS[g]}</svg>${WX_NAME[g]}<b>${groups[g].length}</b></span>`).join('');
+
+  const facts = [];
+  const temps = withWx.filter((k) => entries[k].weather.temp != null);
+  if (temps.length) {
+    const t = (k) => entries[k].weather.temp;
+    const avgT = temps.reduce((s, k) => s + t(k), 0) / temps.length;
+    const warm = temps.reduce((a, k) => (t(k) > t(a) ? k : a));
+    const cold = temps.reduce((a, k) => (t(k) < t(a) ? k : a));
+    facts.push(['Snittemperatur', fmtTemp(avgT, true)]);
+    if (temps.length > 1) {
+      facts.push(['Varmast', `${fmtTemp(t(warm))}, ${shortDate(warm)}`]);
+      facts.push(['Kallast', `${fmtTemp(t(cold))}, ${shortDate(cold)}`]);
+    }
+  }
+  // Humöret i olika väder, bara när det finns minst tre dagar i minst två sorters väder
+  const byWx = order.map((g) => [g, groups[g].map((k) => entries[k].mood).filter(Boolean)]).filter(([, m]) => m.length >= 3);
+  if (byWx.length >= 2) {
+    const avgOf = (m) => m.reduce((s, x) => s + x, 0) / m.length;
+    byWx.sort((a, b) => avgOf(b[1]) - avgOf(a[1]));
+    const [best, worst] = [byWx[0], byWx[byWx.length - 1]];
+    facts.push(['Humör och väder', `Bäst vid ${WX_NAME[best[0]].toLowerCase()} (${fmtDec(avgOf(best[1]))}), sämst vid ${WX_NAME[worst[0]].toLowerCase()} (${fmtDec(avgOf(worst[1]))})`]);
+  }
+  $('wx-facts').innerHTML = facts.map(([k, v]) => `<dt>${k}</dt><dd>${escapeHtml(v)}</dd>`).join('');
+  renderTempTrend();
+}
+
+// Temperatur per dag för vecka och månad, snittet per månad för år och totalt
+function renderTempTrend() {
+  const tempOf = (k) => (entries[k] && entries[k].weather && entries[k].weather.temp != null ? entries[k].weather.temp : null);
+  let data;
+  if (statPeriod === 'week' || statPeriod === 'month') {
+    const days = statPeriod === 'week'
+      ? [...Array(7)].map((_, i) => shiftKey(weekStart(), i))
+      : [...Array(new Date(...calMonth.split('-').map(Number), 0).getDate())].map((_, i) => `${calMonth}-${pad(i + 1)}`);
+    data = days.map((k, i) => ({ v: tempOf(k), label: statPeriod === 'week' ? weekdayFmt.format(parseKey(k)).slice(0, 3) : (i === 0 || (i + 1) % 5 === 0 ? String(i + 1) : ''), name: shortDate(k) }));
+    $('temp-title').textContent = 'Temperatur per dag';
+  } else {
+    data = trendMonths().map((ym) => {
+      const ts = Object.keys(entries).filter((k) => k.slice(0, 7) === ym).map(tempOf).filter((x) => x != null);
+      return { v: ts.length ? ts.reduce((s, x) => s + x, 0) / ts.length : null, label: monthShortFmt.format(parseKey(ym + '-01')).replace('.', '').slice(0, 3), name: cap(monthFmt.format(parseKey(ym + '-01'))) };
+    });
+    if (data.length > 12) data.forEach((d, i) => { if (i % Math.ceil(data.length / 12)) d.label = ''; });
+    $('temp-title').textContent = 'Snittemperatur per månad';
+  }
+  const vals = data.map((d) => d.v).filter((v) => v != null);
+  $('temp-title').hidden = vals.length < 2;
+  if (vals.length < 2) {
+    $('temp-trend').innerHTML = '';
+    return;
+  }
+  const W = 340;
+  const H = 120;
+  const x0 = 30;
+  const x1 = W - 8;
+  let lo = Math.floor(Math.min(...vals) / 5) * 5;
+  let hi = Math.ceil(Math.max(...vals) / 5) * 5;
+  if (hi === lo) hi = lo + 5;
+  const yOf = (v) => 10 + ((hi - v) * (H - 34)) / (hi - lo);
+  const xOf = (i) => x0 + ((i + 0.5) * (x1 - x0)) / data.length;
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${$('temp-title').textContent}">`;
+  const lines = [lo, hi];
+  if (lo < 0 && hi > 0) lines.push(0);
+  for (const v of lines) {
+    svg += `<line class="gl${v === 0 ? ' zero' : ''}" x1="${x0}" x2="${x1}" y1="${yOf(v)}" y2="${yOf(v)}"/>`;
+    svg += `<text class="lbl" x="${x0 - 6}" y="${yOf(v) + 3.5}" text-anchor="end">${String(v).replace('-', '−')}°</text>`;
+  }
+  let path = '';
+  let pen = false;
+  data.forEach((d, i) => {
+    if (d.v == null) {
+      pen = false;
+      return;
+    }
+    path += `${pen ? 'L' : 'M'}${xOf(i).toFixed(1)} ${yOf(d.v).toFixed(1)}`;
+    pen = true;
+  });
+  svg += `<path class="ln temp" d="${path}"/>`;
+  data.forEach((d, i) => {
+    if (d.v != null) svg += `<circle class="pt temp" cx="${xOf(i)}" cy="${yOf(d.v)}" r="${data.length > 14 ? 2.5 : 3.5}"><title>${d.name}: ${fmtTemp(d.v, true)}</title></circle>`;
+    if (d.label) svg += `<text class="lbl" x="${xOf(i)}" y="${H - 4}" text-anchor="middle">${d.label}</text>`;
+  });
+  $('temp-trend').innerHTML = svg + '</svg>';
 }
 
 // Månaderna i diagrammet: senaste tolv, årets tolv eller alla sedan första inlägget
