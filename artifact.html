@@ -1842,6 +1842,16 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 #temp-trend .gl.zero { stroke: color-mix(in srgb, var(--text) 30%, transparent); }
 #temp-trend .ln.temp { stroke: var(--muted); }
 #temp-trend .pt.temp { fill: var(--text); }
+
+/* Namnsdag och högtider under datumet, i dagen och i läsläget */
+.day-names, .reader-names { display: flex; flex-wrap: wrap; gap: 2px 12px; margin: 4px 0 0; font-size: 14px; color: var(--muted); }
+.reader-names { margin: 0 0 14px; font-size: 13px; }
+.dn-day { color: var(--accent); font-weight: 600; }
+
+/* Längst ner i flödet: fortsätt till månaden innan */
+.more-month { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin: 16px 0 4px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: none; color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; }
+.more-month::after { content: ""; width: 7px; height: 7px; margin-top: -4px; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.more-month:active { background: color-mix(in srgb, var(--line) 45%, transparent); }
 </style>
 
 
@@ -2124,6 +2134,7 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
           </div>
           <button type="button" class="icon" id="next" aria-label="Nästa dag">&#8250;</button>
         </div>
+        <p class="day-names" id="day-names" hidden></p>
         <button type="button" class="link" id="to-today" hidden>Gå till idag</button>
         <p class="streak" id="streak" hidden></p>
 
@@ -3191,6 +3202,7 @@ function showDay(key) {
   showWeather(e);
 
   setDateLabel(key);
+  renderDayNames(key);
   toggleDatePop(false);
   $('next').disabled = key >= today;
   $('to-today').hidden = key === today;
@@ -4366,6 +4378,106 @@ function holidays(y) {
 }
 
 const HOLIDAY_NAMES = [...new Set(Object.values(holidays(2026)))];
+
+/* Namnsdagar och andra högtider */
+
+// Svenska Akademiens namnlängd, en post per dag i ett skottår med början 1 januari.
+// Tomt där dagen inte har några namn.
+const NAMNSDAGAR = [
+  '|Svea|Alfred, Alfrida|Rut|Hanna, Hannele|Kasper, Melker, Baltsar|August, Augusta|Erland|Gunnar, Gunder|Sigurd, Sigbritt|Jan, Jannike|Frideborg, Fridolf|Knut|Felix, Felicia|Laura, Lorentz|Hjalmar, Helmer|Anton, Tony|Hilda, Hildur|Henrik|Fabian, Sebastian|Agnes, Agneta|Vincent, Viktor|Frej, Freja|Erika|Paul, Pål|Bodil, Boel|Göte, Göta|Karl, Karla|Diana|Gunilla, Gunhild|Ivar, Joar',
+  'Max, Maximilian||Disa, Hjördis|Ansgar, Anselm|Agata, Agda|Dorotea, Doris|Rikard, Dick|Berta, Bert|Fanny, Franciska|Iris|Yngve, Inge|Evelina, Evy|Agne, Ove|Valentin|Sigfrid|Julia, Julius|Alexandra, Sandra|Frida, Fritiof|Gabriella, Ella|Vivianne|Hilding|Pia|Torsten, Torun|Mattias, Mats|Sigvard, Sivert|Torgny, Torkel|Lage|Maria|',
+  'Albin, Elvira|Ernst, Erna|Gunborg, Gunvor|Adrian, Adriana|Tora, Tove|Ebba, Ebbe|Camilla|Siv|Torbjörn, Torleif|Edla, Ada|Edvin, Egon|Viktoria|Greger|Matilda, Maud|Kristoffer, Christel|Herbert, Gilbert|Gertrud|Edvard, Edmund|Josef, Josefina|Joakim, Kim|Bengt|Kennet, Kent|Gerda, Gerd|Gabriel, Rafael||Emanuel|Rudolf, Ralf|Malkolm, Morgan|Jonas, Jens|Holger, Holmfrid|Ester',
+  'Harald, Hervor|Gudmund, Ingemund|Ferdinand, Nanna|Marianne, Marlene|Irene, Irja|Vilhelm, William|Irma, Irmelin|Nadja, Tanja|Otto, Ottilia|Ingvar, Ingvor|Ulf, Ylva|Liv|Artur, Douglas|Tiburtius|Olivia, Oliver|Patrik, Patricia|Elias, Elis|Valdemar, Volmar|Olaus, Ola|Amalia, Amelie|Anneli, Annika|Allan, Glenn|Georg, Göran|Vega|Markus|Teresia, Terese|Engelbrekt|Ture, Tyra|Tyko|Mariana',
+  'Valborg|Filip, Filippa|John, Jane|Monika, Mona|Gotthard, Erhard|Marit, Rita|Carina, Carita|Åke|Reidar, Reidun|Esbjörn, Styrbjörn|Märta, Märit|Charlotta, Lotta|Linnea, Linn|Halvard, Halvar|Sofia, Sonja|Ronald, Ronny|Rebecka, Ruben|Erik|Maj, Majken|Karolina, Carola|Konstantin, Conny|Hemming, Henning|Desideria, Desirée|Ivan, Vanja|Urban|Vilhelmina, Vilma|Beda, Blenda|Ingeborg, Borghild|Yvonne, Jeanette|Vera, Veronika|Petronella, Pernilla',
+  'Gun, Gunnel|Rutger, Roger|Ingemar, Gudmar|Solbritt, Solveig|Bo|Gustav, Gösta|Robert, Robin|Eivor, Majvor|Börje, Birger|Svante, Boris|Bertil, Berthold|Eskil|Aina, Aino|Håkan, Hakon|Margit, Margot|Axel, Axelina|Torborg, Torvald|Björn, Bjarne|Germund, Görel|Linda|Alf, Alvar|Paulina, Paula|Adolf, Alice||David, Salomon|Rakel, Lea|Selma, Fingal|Leo|Peter, Petra|Elof, Leif',
+  'Aron, Mirjam|Rosa, Rosita|Aurora|Ulrika, Ulla|Laila, Ritva|Esaias, Jessika|Klas|Kjell|Jörgen, Örjan|André, Andrea|Eleonora, Ellinor|Herman, Hermine|Joel, Judit|Folke|Ragnhild, Ragnvald|Reinhold, Reine|Bruno|Fredrik, Fritz|Sara|Margareta, Greta|Johanna|Magdalena, Madeleine|Emma, Emmy|Kristina, Kerstin|Jakob|Jesper, Jasmine|Marta|Botvid, Seved|Olof|Algot|Helena, Elin',
+  'Per|Karin, Kajsa|Tage|Arne, Arnold|Ulrik, Alrik|Alfons, Inez|Dennis, Denise|Silvia, Sylvia|Roland|Lars|Susanna|Klara|Kaj|Uno|Stella, Estelle|Brynolf|Verner, Valter|Ellen, Lena|Magnus, Måns|Bernhard, Bernt|Jon, Jonna|Henrietta, Henrika|Signe, Signhild|Bartolomeus|Lovisa, Louise|Östen|Rolf, Raoul|Fatima, Leila|Hans, Hampus|Albert, Albertina|Arvid, Vidar',
+  'Sam, Samuel|Justus, Justina|Alfhild, Alva|Gisela|Adela, Heidi|Lilian, Lilly|Kevin, Roy|Alma, Hulda|Anita, Annette|Tord, Turid|Dagny, Helny|Åsa, Åslög|Sture|Ida|Sigrid, Siri|Dag, Daga|Hildegard, Magnhild|Orvar|Fredrika|Elise, Lisa|Matteus|Maurits, Moritz|Tekla, Tea|Gerhard, Gert|Tryggve|Enar, Einar|Dagmar, Rigmor|Lennart, Leonard|Mikael, Mikaela|Helge',
+  'Ragnar, Ragna|Ludvig, Love|Evald, Osvald|Frans, Frank|Bror|Jenny, Jennifer|Birgitta, Britta|Nils|Ingrid, Inger|Harry, Harriet|Erling, Jarl|Valfrid, Manfred|Berit, Birgit|Stellan|Hedvig, Hillevi|Finn|Antonia, Toini|Lukas|Tore, Tor|Sibylla|Ursula, Yrsa|Marika, Marita|Severin, Sören|Evert, Eilert|Inga, Ingalill|Amanda, Rasmus|Sabina|Simon, Simone|Viola|Elsa, Isabella|Edit, Edgar',
+  '|Tobias|Hubert, Hugo|Sverker|Eugen, Eugenia|Gustav Adolf|Ingegerd, Ingela|Vendela|Teodor, Teodora|Martin, Martina|Mårten|Konrad, Kurt|Kristian, Krister|Emil, Emilia|Leopold|Vibeke, Viveka|Naemi, Naima|Lillemor, Moa|Elisabet, Lisbet|Pontus, Marina|Helga, Olga|Cecilia, Sissela|Klemens|Gudrun, Rune|Katarina, Katja|Linus|Astrid, Asta|Malte|Sune|Andreas, Anders',
+  'Oskar, Ossian|Beata, Beatrice|Lydia|Barbara, Barbro|Sven|Nikolaus, Niklas|Angela, Angelika|Virginia|Anna|Malin, Malena|Daniel, Daniela|Alexander, Alexis|Lucia|Sten, Sixten|Gottfrid|Assar|Stig|Abraham|Isak|Israel, Moses|Tomas|Natanael, Jonatan|Adam|Eva||Stefan, Staffan|Johannes, Johan|Benjamin|Natalia, Natalie|Abel, Set|Sylvester',
+].join('|').split('|');
+
+// Namnen för ett datum. I skottår är 24 februari skottdagen och namnen
+// 24 till 28 februari flyttas en dag framåt.
+function namesOf(key) {
+  const [y, m, d] = key.split('-').map(Number);
+  const leap = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+  let day = d;
+  if (leap && m === 2 && d >= 24) {
+    if (d === 24) return [];
+    day = d - 1;
+  }
+  const s = NAMNSDAGAR[Math.round((Date.UTC(2016, m - 1, day) - Date.UTC(2016, 0, 1)) / 864e5)];
+  return s ? s.split(', ') : [];
+}
+
+// Dagar som inte är helgdagar men som står i almanackan eller firas ändå
+const otherCache = {};
+function otherDays(y) {
+  if (otherCache[y]) return otherCache[y];
+  const out = {};
+  const put = (d, name) => {
+    const k = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+    (out[k] = out[k] || []).push(name);
+  };
+  const on = (m, d, name) => put(new Date(y, m - 1, d), name);
+  const fromEaster = (n, name) => { const d = easter(y); d.setDate(d.getDate() + n); put(d, name); };
+  const sundayFrom = (m, d, plus = 0) => { const x = new Date(y, m - 1, d); x.setDate(d + ((7 - x.getDay()) % 7) + plus); return x; };
+  on(1, 13, 'Tjugondedag Knut');
+  on(1, 28, 'Konungens namnsdag');
+  on(2, 2, 'Kyndelsmässodagen');
+  if ((y % 4 === 0 && y % 100 !== 0) || y % 400 === 0) on(2, 24, 'Skottdagen');
+  fromEaster(-47, 'Fettisdagen');
+  fromEaster(-46, 'Askonsdagen');
+  on(3, 8, 'Internationella kvinnodagen');
+  on(3, 12, 'Kronprinsessans namnsdag');
+  on(3, 25, 'Våffeldagen');
+  put(sundayFrom(3, 25), 'Sommartid börjar');
+  fromEaster(-7, 'Palmsöndagen');
+  fromEaster(-3, 'Skärtorsdagen');
+  on(4, 30, 'Konungens födelsedag');
+  fromEaster(48, 'Pingstafton');
+  on(6, 24, 'Johannes Döparens dag');
+  on(7, 14, 'Kronprinsessans födelsedag');
+  on(8, 8, 'Drottningens namnsdag');
+  on(10, 4, 'Kanelbullens dag');
+  on(10, 24, 'FN-dagen');
+  put(sundayFrom(10, 25), 'Vintertid börjar');
+  on(10, 31, 'Halloween');
+  on(11, 6, 'Gustav Adolfsdagen');
+  on(11, 10, 'Mårtensafton');
+  on(11, 11, 'Mårtensdagen');
+  ['Första advent', 'Andra advent', 'Tredje advent', 'Fjärde advent'].forEach((n, i) => put(sundayFrom(11, 27, i * 7), n));
+  on(12, 10, 'Nobeldagen');
+  on(12, 23, 'Lillejulafton');
+  on(12, 23, 'Drottningens födelsedag');
+  otherCache[y] = out;
+  return out;
+}
+
+// Helgdagar och andra dagar för ett datum, helgdagen först
+function dayNotes(key) {
+  const y = Number(key.slice(0, 4));
+  const list = [];
+  const h = holidays(y)[key];
+  if (h) list.push(h);
+  for (const n of otherDays(y)[key] || []) if (!list.includes(n)) list.push(n);
+  return list;
+}
+
+function dayNamesHtml(key) {
+  const days = dayNotes(key);
+  const names = namesOf(key);
+  return (days.length ? `<span class="dn-day">${escapeHtml(days.join(', '))}</span>` : '') +
+    (names.length ? `<span class="dn-names">Namnsdag: ${escapeHtml(joinNames(names))}</span>` : '');
+}
+
+function renderDayNames(key) {
+  const el = $('day-names');
+  el.innerHTML = dayNamesHtml(key);
+  el.hidden = !el.innerHTML;
+}
 const holidayOf = (k) => holidays(Number(k.slice(0, 4)))[k];
 
 // Gör om texten efter @ till en etikett och ett test för datumnycklar
@@ -4500,6 +4612,7 @@ const PAGE = 30;
 let sortBy = 'newest';
 let shownCount = PAGE;
 let listMonth = '';
+let feedFrom = '';     // äldsta månaden som visas i flödet, tomt för bara kalenderns månad
 
 function wordCount(e) {
   return e.text ? Paper.mdToText(e.text).split(/\s+/).filter(Boolean).length : 0;
@@ -4517,9 +4630,11 @@ function renderList() {
   const lt = text.toLowerCase();
   // Utan sökning och sortering visas månaden i kalendern, annars hela dagboken
   const whole = !!lq || sortBy !== 'newest';
+  // Byter kalendern månad börjar flödet om från den månaden
+  if (!whole && listMonth && listMonth !== calMonth) feedFrom = '';
   const keys = Object.keys(entries).filter((k) => {
     const e = entries[k];
-    if (!whole) return k.slice(0, 7) === calMonth;
+    if (!whole) return k.slice(0, 7) <= calMonth && k.slice(0, 7) >= (feedFrom || calMonth);
     if (sort.keep && !sort.keep(e)) return false;
     if (isAt && !(at && at.test(k))) return false;
     if (!lt) return true;
@@ -4557,15 +4672,17 @@ function renderList() {
         : at && text ? 'Inga dagar matchar.'
         : at ? 'Inget skrivet då.'
         : whole ? 'Inga dagar matchar.' : `Inget skrivet i ${monthFmt.format(parseKey(calMonth + '-01'))}.`
-    }</p>`;
+    }</p>${whole ? '' : moreMonthHtml()}`;
     return;
   }
 
   const today = todayKey();
-  const byMonth = whole && (sortBy === 'newest' || sortBy === 'oldest');
+  const byMonth = (whole && (sortBy === 'newest' || sortBy === 'oldest')) || (!whole && !!feedFrom);
   let html = '';
   let month = '';
-  for (const k of keys.slice(0, shownCount)) {
+  // Månaderna i flödet visas hela, sökningar en sida i taget
+  const shown = whole ? keys.slice(0, shownCount) : keys;
+  for (const k of shown) {
     const m = monthFmt.format(parseKey(k));
     if (byMonth && m !== month) {
       month = m;
@@ -4573,12 +4690,23 @@ function renderList() {
     }
     html += postHtml(k, entries[k], today, !!text);
   }
-  if (keys.length > shownCount) {
+  if (whole && keys.length > shownCount) {
     html += `<button type="button" class="link show-more" id="show-more">Visa fler (${keys.length - shownCount} kvar)</button>`;
   }
+  if (!whole) html += moreMonthHtml();
   list.innerHTML = html;
   if (text) list.querySelectorAll('.when, .prose, .sub').forEach((el) => Paper.highlight(el, text));
   else markLongPosts(list);
+}
+
+// Knappen längst ner i flödet går till den närmaste tidigare månaden man har skrivit i
+function moreMonthHtml() {
+  const before = `${feedFrom || calMonth}-01`;
+  const prev = Object.keys(entries).filter((k) => k < before).sort().pop();
+  if (!prev) return '';
+  const ym = prev.slice(0, 7);
+  const name = ym.slice(0, 4) === todayKey().slice(0, 4) ? MONTHS[Number(ym.slice(5)) - 1] : monthFmt.format(parseKey(ym + '-01'));
+  return `<button type="button" class="more-month" data-ym="${ym}">Visa ${name}</button>`;
 }
 
 // Träffar för @film, @serie och @bok: en rad per titel med en bit av recensionen
@@ -4619,6 +4747,12 @@ $('search').addEventListener('input', () => {
   renderList();
 });
 $('list').addEventListener('click', (ev) => {
+  const more = ev.target.closest('.more-month');
+  if (more) {
+    feedFrom = more.dataset.ym;
+    renderList();
+    return;
+  }
   if (!ev.target.closest('#show-more')) return;
   shownCount += PAGE;
   renderList();
@@ -4918,7 +5052,7 @@ function bigPhotos(list) {
 function readerPane(key) {
   const e = entries[key];
   if (!e) {
-    return `<div class="reader-pane" data-key="${key}">
+    return `<div class="reader-pane" data-key="${key}">${dayNamesHtml(key) ? `<p class="reader-names">${dayNamesHtml(key)}</p>` : ''}
       <p class="empty">Inget skrivet den här dagen.</p>
       <div class="reader-foot"><button type="button" class="link reader-edit" data-key="${key}">Skriv för den här dagen</button></div>
     </div>`;
@@ -4926,7 +5060,7 @@ function readerPane(key) {
   const meta = [];
   if (e.mood) meta.push(`<span class="dot" style="--m: var(--m${e.mood})"></span>Humör ${e.mood}`);
   if (e.weather) meta.push(escapeHtml(fmtWeather(e.weather)));
-  return `<div class="reader-pane" data-key="${key}">
+  return `<div class="reader-pane" data-key="${key}">${dayNamesHtml(key) ? `<p class="reader-names">${dayNamesHtml(key)}</p>` : ''}
     ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
     ${(e.media || []).map((f, i) => `<button type="button" class="reader-film" data-key="${key}" data-i="${i}">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
       <div><div class="fs-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</div><div class="rf-title">${escapeHtml(f.title || 'Utan titel')}</div>${f.rating ? starsHtml(f.rating) : ''}</div></button>

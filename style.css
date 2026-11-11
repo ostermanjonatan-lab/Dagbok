@@ -1896,3 +1896,13 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 #temp-trend .gl.zero { stroke: color-mix(in srgb, var(--text) 30%, transparent); }
 #temp-trend .ln.temp { stroke: var(--muted); }
 #temp-trend .pt.temp { fill: var(--text); }
+
+/* Namnsdag och högtider under datumet, i dagen och i läsläget */
+.day-names, .reader-names { display: flex; flex-wrap: wrap; gap: 2px 12px; margin: 4px 0 0; font-size: 14px; color: var(--muted); }
+.reader-names { margin: 0 0 14px; font-size: 13px; }
+.dn-day { color: var(--accent); font-weight: 600; }
+
+/* Längst ner i flödet: fortsätt till månaden innan */
+.more-month { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin: 16px 0 4px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: none; color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; }
+.more-month::after { content: ""; width: 7px; height: 7px; margin-top: -4px; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.more-month:active { background: color-mix(in srgb, var(--line) 45%, transparent); }
