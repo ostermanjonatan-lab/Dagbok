@@ -2753,7 +2753,7 @@ function renderStats() {
       }
     }
 
-    // Bästa veckodag, bara veckodagar med minst två inlägg räknas
+    // Bästa och sämsta veckodag, bara veckodagar med minst två inlägg räknas
     const byDay = {};
     for (const k of keys) {
       const e = entries[k];
@@ -2761,12 +2761,13 @@ function renderStats() {
       const wd = parseKey(k).getDay();
       (byDay[wd] = byDay[wd] || []).push(e.mood);
     }
-    const bestDay = Object.entries(byDay).filter(([, v]) => v.length >= 2)
-      .map(([wd, v]) => [Number(wd), avg(v)]).sort((x, y) => y[1] - x[1])[0];
-    if (bestDay) {
-      const sample = new Date(2026, 0, 4 + bestDay[0]);
-      facts.push(['Bästa veckodag', `${cap(weekdayFmt.format(sample))}ar, snitt ${fmtDec(bestDay[1])}`]);
-    }
+    const days = Object.entries(byDay).filter(([, v]) => v.length >= 2)
+      .map(([wd, v]) => [Number(wd), avg(v)]).sort((x, y) => y[1] - x[1]);
+    const dayName = (wd) => `${cap(weekdayFmt.format(new Date(2026, 0, 4 + wd)))}ar`;
+    if (days.length) facts.push(['Bästa veckodag', `${dayName(days[0][0])}, snitt ${fmtDec(days[0][1])}`]);
+    // Sämsta visas bara när den skiljer sig från den bästa
+    const worstDay = days[days.length - 1];
+    if (days.length >= 2 && worstDay[1] < days[0][1]) facts.push(['Sämsta veckodag', `${dayName(worstDay[0])}, snitt ${fmtDec(worstDay[1])}`]);
 
   }
 
