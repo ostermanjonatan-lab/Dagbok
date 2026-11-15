@@ -1821,11 +1821,31 @@ const BIG_HOLIDAYS = {
   Nyårsafton: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/>',
   Påskafton: '<path d="M12 3c3.5 0 6 5.5 6 10a6 6 0 0 1-12 0c0-4.5 2.5-10 6-10z"/>',
   Valborg: '<path d="M12 21c-3.5 0-6-2.4-6-5.6 0-3.2 2.6-5 3.4-8.4 1.6 1.3 2.3 3 2.3 4.6 1-.8 1.6-2 1.7-3.3C16.2 10 18 12.5 18 15.4 18 18.6 15.5 21 12 21z"/>',
-  Nationaldagen: '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
+  Nationaldagen: '<path d="M3 7.5l4.5 4L12 4.5l4.5 7L21 7.5l-2 10H5zM5 20.5h14"/>',
   Midsommarafton: '<circle cx="12" cy="9" r="2"/><path d="M12 4.5v2M12 11v1.5M7.5 9h2.5M14 9h2.5M8.8 5.8l1.6 1.6M13.6 10.6l1.6 1.6M8.8 12.2l1.6-1.6M13.6 7.4l1.6-1.6M12 13v8M12 18c-1.5-1.5-3.5-1.5-4.5-1"/>',
   Lucia: '<path d="M9 10h6v11H9zM12 10V7.5"/><path d="M12 5.5c-.9-.8-.9-1.9 0-3 .9 1.1.9 2.2 0 3z"/>',
   Julafton: '<path d="M12 3 6.5 10H9l-4 6h14l-4-6h2.5zM12 16v4"/>',
 };
+// Små ifyllda ikoner för kalenderns rutor. Linjeikonerna blir för tunna i den storleken.
+const MINI_ICONS = {
+  birthday: '<path d="M2 14.5h12V10a1.5 1.5 0 0 0-1.5-1.5h-9A1.5 1.5 0 0 0 2 10z"/><rect x="7.2" y="5" width="1.6" height="3.5"/><path d="M8 .8c1.1 1.2 1.1 2.4 0 3.2C6.9 3.2 6.9 2 8 .8z"/>',
+  anniversary: '<path d="M8 14.5S1.2 10.3 1.2 5.6A3.4 3.4 0 0 1 8 4a3.4 3.4 0 0 1 6.8 1.6c0 4.7-6.8 8.9-6.8 8.9z"/>',
+  holiday: '<path d="M8 .8l2.2 4.5 4.9.7-3.6 3.5.9 4.9L8 12.1l-4.4 2.3.9-4.9L.9 6l4.9-.7z"/>',
+  party: '<path d="M3.8 1.2h8.4l-1 5.6a3.2 3.2 0 0 1-6.4 0z"/><rect x="7.2" y="9.4" width="1.6" height="4"/><rect x="4.8" y="13.2" width="6.4" height="1.7" rx=".85"/>',
+  travel: '<path d="M15.2.8.8 7l5.4 2 1.9 5.9z"/>',
+  milestone: '<rect x="2.4" y="1" width="1.8" height="14" rx=".9"/><path d="M4 1.5h9.5l-2.2 3.8 2.2 3.8H4z"/>',
+  memorial: '<rect x="5.4" y="6.2" width="5.2" height="8.8" rx="1"/><path d="M8 .6c1.4 1.5 1.4 3 0 4C6.6 3.6 6.6 2.1 8 .6z"/>',
+  home: '<path d="M8 1 .8 7.6h2.3V15h3.7v-4.3h2.4V15h3.7V7.6h2.3z"/>',
+  Nyårsafton: '<path d="M8 .5 9.5 6.5l6 1.5-6 1.5L8 15.5 6.5 9.5l-6-1.5 6-1.5z"/>',
+  Påskafton: '<path d="M8 .8c3 0 5.3 4.6 5.3 8.6A5.3 5.3 0 0 1 2.7 9.4C2.7 5.4 5 .8 8 .8z"/>',
+  Valborg: '<path d="M8 15.3c-3 0-5.2-2.2-5.2-5 0-2.3 1.2-3.6 2.4-5 .3 1.4 1 2.2 1.9 2.6C7 5.4 7.8 3 10 .8c.3 2.6 3.2 4.6 3.2 9.4 0 2.9-2.2 5.1-5.2 5.1z"/>',
+  // Nationaldagen: en krona, flaggan är för detaljerad i den här storleken
+  Nationaldagen: '<path d="M1.2 4.2 5 7.4 8 2l3 5.4 3.8-3.2-1.4 8.6H2.6z"/><rect x="2.6" y="13.2" width="10.8" height="1.8" rx=".6"/>',
+  Midsommarafton: '<circle cx="8" cy="3.3" r="3.1"/><circle cx="12.6" cy="6.6" r="3.1"/><circle cx="10.8" cy="12" r="3.1"/><circle cx="5.2" cy="12" r="3.1"/><circle cx="3.4" cy="6.6" r="3.1"/>',
+  Lucia: '<rect x="5.4" y="6.2" width="5.2" height="8.8" rx="1"/><path d="M8 .6c1.4 1.5 1.4 3 0 4C6.6 3.6 6.6 2.1 8 .6z"/>',
+  Julafton: '<path d="M8 .6 3.2 6.6h2.2L2 11.6h12l-3.4-5h2.2z"/><rect x="7" y="11.4" width="2" height="3.6"/>',
+};
+const miniIcon = (k) => `<svg class="mk-mini" viewBox="0 0 16 16" aria-hidden="true">${MINI_ICONS[k] || ''}</svg>`;
 function bigHoliday(key) {
   const h = holidays(Number(key.slice(0, 4)))[key];
   return BIG_HOLIDAYS[h] ? h : null;
@@ -2404,7 +2424,7 @@ function renderCal() {
     if (big) label += `, ${big.toLowerCase()}`;
     if (e && e.weather) label += `, ${fmtWeather(e.weather)}`;
     html += `<button type="button" class="${cls.join(' ')}" data-key="${key}"${style}
-      aria-label="${escapeHtml(label)}"${key > today ? ' disabled' : ''}><span>${d}</span>${wx}${e && MARK_OF[e.mark] ? `<span class="mk">${markIcon(e.mark)}</span>` : big ? `<span class="mk auto">${bigIcon(big)}</span>` : ''}</button>`;
+      aria-label="${escapeHtml(label)}"${key > today ? ' disabled' : ''}><span>${d}</span>${wx}${e && MARK_OF[e.mark] ? `<span class="mk">${miniIcon(e.mark)}</span>` : big ? `<span class="mk auto">${miniIcon(big)}</span>` : ''}</button>`;
   }
   $('cal-grid').innerHTML = html;
   renderList();
