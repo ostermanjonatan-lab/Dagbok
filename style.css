@@ -1914,7 +1914,7 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .day .mk { position: absolute; top: 3px; right: 3px; display: flex; color: var(--accent); }
 .day .mk .mk-ico { width: 13px; height: 13px; stroke-width: 2; }
 /* På dagar med humörfärg ligger ikonen i en liten ljus rund bricka, så att den behåller sin färg */
-.moods .day.has[style] .mk { top: 2px; right: 2px; padding: 2.5px; border-radius: 50%; background: var(--bg); color: var(--accent); box-shadow: 0 1px 2px rgb(42 20 24 / .15); }
+.moods .day.has[style] .mk { top: 2px; right: 2px; padding: 2.5px; border-radius: 50%; background: var(--bg); color: var(--accent); box-shadow: 0 1px 1.5px rgb(42 20 24 / .18), 0 2px 6px rgb(42 20 24 / .16); }
 .moods .day.has[style] .mk.auto { color: var(--muted); }
 .moods .day.has[style] .mk .mk-mini { width: 11px; height: 11px; }
 .post .sub .mk-sub { display: inline-flex; align-items: center; gap: 4px; color: var(--accent); font-weight: 600; }
