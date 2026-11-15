@@ -1869,6 +1869,11 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .day .mk.auto { color: var(--muted); }
 .dn-day .mk-ico { width: 15px; height: 15px; margin-right: 4px; vertical-align: -2px; }
 .day .mk .mk-mini { width: 13px; height: 13px; fill: currentColor; }
+
+/* Märket i flödet sitter som en liten bricka på cirkeln med veckodagen, som i kalendern */
+.post .avatar { position: relative; }
+.post .av-mk { position: absolute; top: -4px; right: -6px; display: grid; place-items: center; width: 19px; height: 19px; border-radius: 50%; background: var(--surface); color: var(--accent); box-shadow: 0 1px 1.5px rgb(42 20 24 / .18), 0 2px 6px rgb(42 20 24 / .16); }
+.post .av-mk .mk-mini { width: 11px; height: 11px; fill: currentColor; }
 </style>
 
 
@@ -4319,12 +4324,12 @@ function postHtml(k, e, today, searching) {
   const g = e.weather ? weatherGroup(e.weather.code) : null;
   const icon = g != null ? `<svg viewBox="0 0 24 24" aria-hidden="true">${WEATHER_ICONS[g]}</svg>` : '';
   const wx = e.weather ? icon + escapeHtml(fmtWeather(e.weather)) : '';
-  const sub = [rel, markHtml(e.mark, 'mk-sub'), wx].filter(Boolean).join('<span class="sep" aria-hidden="true">·</span>');
+  const sub = [rel, wx].filter(Boolean).join('<span class="sep" aria-hidden="true">·</span>');
   return `<article class="post${k === today ? ' today' : ''}" data-key="${k}">
     <header class="post-head">
-      <span class="avatar${e.mood ? '' : ' none'}" data-m="${e.mood || ''}" style="--m: var(--m${e.mood || 6})" aria-hidden="true">${['sön', 'mån', 'tis', 'ons', 'tor', 'fre', 'lör'][d.getDay()]}</span>
+      <span class="avatar${e.mood ? '' : ' none'}" data-m="${e.mood || ''}" style="--m: var(--m${e.mood || 6})" aria-hidden="true">${['sön', 'mån', 'tis', 'ons', 'tor', 'fre', 'lör'][d.getDay()]}${MARK_OF[e.mark] ? `<span class="av-mk">${miniIcon(e.mark)}</span>` : ''}</span>
       <div class="who">
-        <button type="button" class="when">${shortDate(k)}</button>
+        <button type="button" class="when"${MARK_OF[e.mark] ? ` aria-label="${shortDate(k)}, ${MARK_OF[e.mark].label.toLowerCase()}"` : ''}>${shortDate(k)}</button>
         ${sub ? `<span class="sub">${sub}</span>` : ''}
       </div>
     </header>

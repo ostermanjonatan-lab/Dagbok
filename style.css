@@ -1923,3 +1923,8 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .day .mk.auto { color: var(--muted); }
 .dn-day .mk-ico { width: 15px; height: 15px; margin-right: 4px; vertical-align: -2px; }
 .day .mk .mk-mini { width: 13px; height: 13px; fill: currentColor; }
+
+/* Märket i flödet sitter som en liten bricka på cirkeln med veckodagen, som i kalendern */
+.post .avatar { position: relative; }
+.post .av-mk { position: absolute; top: -4px; right: -6px; display: grid; place-items: center; width: 19px; height: 19px; border-radius: 50%; background: var(--surface); color: var(--accent); box-shadow: 0 1px 1.5px rgb(42 20 24 / .18), 0 2px 6px rgb(42 20 24 / .16); }
+.post .av-mk .mk-mini { width: 11px; height: 11px; fill: currentColor; }

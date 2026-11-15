@@ -1621,12 +1621,12 @@ function postHtml(k, e, today, searching) {
   const g = e.weather ? weatherGroup(e.weather.code) : null;
   const icon = g != null ? `<svg viewBox="0 0 24 24" aria-hidden="true">${WEATHER_ICONS[g]}</svg>` : '';
   const wx = e.weather ? icon + escapeHtml(fmtWeather(e.weather)) : '';
-  const sub = [rel, markHtml(e.mark, 'mk-sub'), wx].filter(Boolean).join('<span class="sep" aria-hidden="true">·</span>');
+  const sub = [rel, wx].filter(Boolean).join('<span class="sep" aria-hidden="true">·</span>');
   return `<article class="post${k === today ? ' today' : ''}" data-key="${k}">
     <header class="post-head">
-      <span class="avatar${e.mood ? '' : ' none'}" data-m="${e.mood || ''}" style="--m: var(--m${e.mood || 6})" aria-hidden="true">${['sön', 'mån', 'tis', 'ons', 'tor', 'fre', 'lör'][d.getDay()]}</span>
+      <span class="avatar${e.mood ? '' : ' none'}" data-m="${e.mood || ''}" style="--m: var(--m${e.mood || 6})" aria-hidden="true">${['sön', 'mån', 'tis', 'ons', 'tor', 'fre', 'lör'][d.getDay()]}${MARK_OF[e.mark] ? `<span class="av-mk">${miniIcon(e.mark)}</span>` : ''}</span>
       <div class="who">
-        <button type="button" class="when">${shortDate(k)}</button>
+        <button type="button" class="when"${MARK_OF[e.mark] ? ` aria-label="${shortDate(k)}, ${MARK_OF[e.mark].label.toLowerCase()}"` : ''}>${shortDate(k)}</button>
         ${sub ? `<span class="sub">${sub}</span>` : ''}
       </div>
     </header>
