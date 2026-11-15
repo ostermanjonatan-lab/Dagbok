@@ -1859,10 +1859,10 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .marks .pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 14px; }
 .day .mk { position: absolute; top: 3px; right: 3px; display: flex; color: var(--accent); }
 .day .mk .mk-ico { width: 13px; height: 13px; stroke-width: 2; }
-/* På dagar med humörfärg ligger ikonen i en liten ljus rund bricka, så att den behåller sin färg */
-.moods .day.has[style] .mk { top: 2px; right: 2px; padding: 2.5px; border-radius: 50%; background: var(--bg); color: var(--accent); box-shadow: 0 1px 1.5px rgb(42 20 24 / .18), 0 2px 6px rgb(42 20 24 / .16); }
+/* På dagar med humörfärg ligger ikonen i en liten ljus rund bricka i hörnet, utanför siffran, så att den behåller sin färg */
+.moods .day.has[style] .mk { top: -3px; right: -3px; z-index: 1; padding: 2.5px; border-radius: 50%; background: var(--bg); color: var(--accent); box-shadow: 0 1px 1.5px rgb(42 20 24 / .18), 0 2px 6px rgb(42 20 24 / .16); }
 .moods .day.has[style] .mk.auto { color: var(--muted); }
-.moods .day.has[style] .mk .mk-mini { width: 11px; height: 11px; }
+.moods .day.has[style] .mk .mk-mini { width: 10px; height: 10px; }
 .post .sub .mk-sub { display: inline-flex; align-items: center; gap: 4px; color: var(--accent); font-weight: 600; }
 .post .sub .mk-sub svg { color: var(--accent); }
 .dn-mark { display: inline-flex; align-items: center; gap: 5px; color: var(--accent); font-weight: 600; }
