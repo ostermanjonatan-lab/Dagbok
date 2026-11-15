@@ -1816,6 +1816,22 @@ function otherDays(y) {
   return out;
 }
 
+// De största högtiderna får en egen ikon i kalendern automatiskt
+const BIG_HOLIDAYS = {
+  Nyårsafton: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/>',
+  Påskafton: '<path d="M12 3c3.5 0 6 5.5 6 10a6 6 0 0 1-12 0c0-4.5 2.5-10 6-10z"/>',
+  Valborg: '<path d="M12 21c-3.5 0-6-2.4-6-5.6 0-3.2 2.6-5 3.4-8.4 1.6 1.3 2.3 3 2.3 4.6 1-.8 1.6-2 1.7-3.3C16.2 10 18 12.5 18 15.4 18 18.6 15.5 21 12 21z"/>',
+  Nationaldagen: '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
+  Midsommarafton: '<circle cx="12" cy="9" r="2"/><path d="M12 4.5v2M12 11v1.5M7.5 9h2.5M14 9h2.5M8.8 5.8l1.6 1.6M13.6 10.6l1.6 1.6M8.8 12.2l1.6-1.6M13.6 7.4l1.6-1.6M12 13v8M12 18c-1.5-1.5-3.5-1.5-4.5-1"/>',
+  Lucia: '<path d="M9 10h6v11H9zM12 10V7.5"/><path d="M12 5.5c-.9-.8-.9-1.9 0-3 .9 1.1.9 2.2 0 3z"/>',
+  Julafton: '<path d="M12 3 6.5 10H9l-4 6h14l-4-6h2.5zM12 16v4"/>',
+};
+function bigHoliday(key) {
+  const h = holidays(Number(key.slice(0, 4)))[key];
+  return BIG_HOLIDAYS[h] ? h : null;
+}
+const bigIcon = (h) => `<svg class="mk-ico" viewBox="0 0 24 24" aria-hidden="true">${BIG_HOLIDAYS[h]}</svg>`;
+
 // Helgdagar och andra dagar för ett datum, helgdagen först
 function dayNotes(key) {
   const y = Number(key.slice(0, 4));
@@ -1829,7 +1845,8 @@ function dayNotes(key) {
 function dayNamesHtml(key) {
   const days = dayNotes(key);
   const names = namesOf(key);
-  return (days.length ? `<span class="dn-day">${escapeHtml(days.join(', '))}</span>` : '') +
+  const big = bigHoliday(key);
+  return (days.length ? `<span class="dn-day">${big ? bigIcon(big) : ''}${escapeHtml(days.join(', '))}</span>` : '') +
     (names.length ? `<span class="dn-names">Namnsdag: ${escapeHtml(joinNames(names))}</span>` : '');
 }
 
@@ -2383,9 +2400,11 @@ function renderCal() {
     const style = e && e.mood ? ` style="--m: var(--m${e.mood})"` : '';
     let label = fmtDate(key) + (e && e.mood ? `, humör ${e.mood}` : e ? ', skrivet' : '');
     if (e && MARK_OF[e.mark]) label += `, ${MARK_OF[e.mark].label.toLowerCase()}`;
+    const big = bigHoliday(key);
+    if (big) label += `, ${big.toLowerCase()}`;
     if (e && e.weather) label += `, ${fmtWeather(e.weather)}`;
     html += `<button type="button" class="${cls.join(' ')}" data-key="${key}"${style}
-      aria-label="${escapeHtml(label)}"${key > today ? ' disabled' : ''}><span>${d}</span>${wx}${e && MARK_OF[e.mark] ? `<span class="mk">${markIcon(e.mark)}</span>` : ''}</button>`;
+      aria-label="${escapeHtml(label)}"${key > today ? ' disabled' : ''}><span>${d}</span>${wx}${e && MARK_OF[e.mark] ? `<span class="mk">${markIcon(e.mark)}</span>` : big ? `<span class="mk auto">${bigIcon(big)}</span>` : ''}</button>`;
   }
   $('cal-grid').innerHTML = html;
   renderList();

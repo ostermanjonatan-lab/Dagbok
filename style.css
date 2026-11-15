@@ -1917,3 +1917,5 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .post .sub .mk-sub { display: inline-flex; align-items: center; gap: 4px; color: var(--accent); font-weight: 600; }
 .post .sub .mk-sub svg { color: var(--accent); }
 .dn-mark { display: inline-flex; align-items: center; gap: 5px; color: var(--accent); font-weight: 600; }
+.day .mk.auto { color: var(--muted); }
+.dn-day .mk-ico { width: 15px; height: 15px; margin-right: 4px; vertical-align: -2px; }
