@@ -1906,3 +1906,14 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .more-month { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin: 16px 0 4px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: none; color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; }
 .more-month::after { content: ""; width: 7px; height: 7px; margin-top: -4px; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); }
 .more-month:active { background: color-mix(in srgb, var(--line) 45%, transparent); }
+
+/* Märken för särskilda dagar */
+.mk-ico { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.marks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.marks .pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 14px; }
+.day .mk { position: absolute; top: 3px; right: 3px; display: flex; color: var(--accent); }
+.day .mk .mk-ico { width: 13px; height: 13px; stroke-width: 2; }
+.moods .day.has[style] .mk { color: var(--on-mood); }
+.post .sub .mk-sub { display: inline-flex; align-items: center; gap: 4px; color: var(--accent); font-weight: 600; }
+.post .sub .mk-sub svg { color: var(--accent); }
+.dn-mark { display: inline-flex; align-items: center; gap: 5px; color: var(--accent); font-weight: 600; }

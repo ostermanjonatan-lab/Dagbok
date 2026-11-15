@@ -35,6 +35,11 @@ function persist() {
   }
 }
 
+// Körs när datan läses in, innan MARKS finns, så märkena står här
+function cleanMark(m) {
+  return ['birthday', 'anniversary', 'holiday', 'party', 'travel', 'milestone', 'memorial', 'home'].includes(m) ? m : null;
+}
+
 // Humöret är 1 till 10. Det som sparades på den tidigare skalan 1 till 5 dubblas.
 function cleanMood(e) {
   const m = e.mood;
@@ -62,6 +67,7 @@ function normalize(e) {
       : null,
     photos: Array.isArray(e.photos) ? e.photos.filter((id) => /^[A-Za-z0-9_-]{8,64}$/.test(id)) : [],
     people: cleanPeople(e.people),
+    mark: cleanMark(e.mark),
     media: cleanMedia(e),
     updated: typeof e.updated === 'string' ? e.updated : new Date().toISOString(),
   };
@@ -484,6 +490,7 @@ function readForm() {
     text: editor.get(),
     mood: moodValue,
     moodScale: 10,
+    mark: markValue,
     photos: photos.slice(),
     people: people.slice(),
     media: currentMedia(),
@@ -515,6 +522,7 @@ function showDay(key) {
   renderPeople();
   setDayMedia(e && e.media ? e.media : []);
   setMood(e ? e.mood : null);
+  setMark(e ? e.mark : null);
   showWeather(e);
 
   setDateLabel(key);
@@ -540,7 +548,7 @@ function setStatus(text) { $('status').textContent = text; }
 function save() {
   saveTimer = null;
   const data = readForm();
-  if (!data.text && data.mood == null && !data.photos.length && !data.people.length && !data.media.length) {
+  if (!data.text && data.mood == null && !data.mark && !data.photos.length && !data.people.length && !data.media.length) {
     if (!entries[current]) return;
     delete entries[current];
     persist();
@@ -696,6 +704,35 @@ moodEl.addEventListener('keydown', (ev) => {
   scheduleSave();
 });
 if (window.ResizeObserver) new ResizeObserver(drawMood).observe(moodEl);
+
+/* Märken för särskilda dagar, som födelsedagar, högtider och jubileum. En dag har högst ett märke. */
+const MARKS = [
+  { key: 'birthday', label: 'Födelsedag', plural: 'Födelsedagar', svg: '<path d="M4 21h16M5 21v-7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v7M5 16c1.5 1 3 1 4.5 0s3-1 4.5 0 3 1 5 0M12 12V8.5"/><path d="M12 6.5c-.9-.8-.9-1.9 0-3 .9 1.1.9 2.2 0 3z"/>' },
+  { key: 'anniversary', label: 'Jubileum', plural: 'Jubileer', svg: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>' },
+  { key: 'holiday', label: 'Högtid', plural: 'Högtider', svg: '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>' },
+  { key: 'party', label: 'Fest', plural: 'Fester', svg: '<path d="M8 3h8l-1 7a3 3 0 0 1-6 0zM12 13v7M8.5 20.5h7"/>' },
+  { key: 'travel', label: 'Resa', plural: 'Resor', svg: '<path d="M21 3 3 10.5l7 2.5 2.5 7z"/><path d="M21 3 10 13"/>' },
+  { key: 'milestone', label: 'Milstolpe', plural: 'Milstolpar', svg: '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>' },
+  { key: 'memorial', label: 'Minnesdag', plural: 'Minnesdagar', svg: '<path d="M9 10h6v11H9zM12 10V7.5"/><path d="M12 5.5c-.9-.8-.9-1.9 0-3 .9 1.1.9 2.2 0 3z"/>' },
+  { key: 'home', label: 'Nytt hem', plural: 'Nya hem', svg: '<path d="M4 11 12 4l8 7M6 9.5V20h12V9.5M10 20v-5h4v5"/>' },
+];
+const MARK_OF = Object.fromEntries(MARKS.map((m) => [m.key, m]));
+const markIcon = (k) => (MARK_OF[k] ? `<svg class="mk-ico" viewBox="0 0 24 24" aria-hidden="true">${MARK_OF[k].svg}</svg>` : '');
+const markHtml = (k, cls) => (MARK_OF[k] ? `<span class="${cls}">${markIcon(k)}${MARK_OF[k].label}</span>` : '');
+let markValue = null;
+$('f-mark').innerHTML = MARKS.map((m) => `<button type="button" class="pill" role="radio" aria-checked="false" data-mark="${m.key}">${markIcon(m.key)}${m.label}</button>`).join('');
+function setMark(k) {
+  markValue = MARK_OF[k] ? k : null;
+  $('f-mark').querySelectorAll('[data-mark]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.mark === markValue)));
+}
+// Ett tryck väljer märket, ett tryck på det valda tar bort det
+$('f-mark').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-mark]');
+  if (!b) return;
+  setMark(b.dataset.mark === markValue ? null : b.dataset.mark);
+  buzz(8);
+  scheduleSave();
+});
 
 function stepDay(dir) { go(`#/dag/${shiftKey(current, dir)}`); }
 
@@ -1584,7 +1621,7 @@ function postHtml(k, e, today, searching) {
   const g = e.weather ? weatherGroup(e.weather.code) : null;
   const icon = g != null ? `<svg viewBox="0 0 24 24" aria-hidden="true">${WEATHER_ICONS[g]}</svg>` : '';
   const wx = e.weather ? icon + escapeHtml(fmtWeather(e.weather)) : '';
-  const sub = [rel, wx].filter(Boolean).join('<span class="sep" aria-hidden="true">·</span>');
+  const sub = [rel, markHtml(e.mark, 'mk-sub'), wx].filter(Boolean).join('<span class="sep" aria-hidden="true">·</span>');
   return `<article class="post${k === today ? ' today' : ''}" data-key="${k}">
     <header class="post-head">
       <span class="avatar${e.mood ? '' : ' none'}" data-m="${e.mood || ''}" style="--m: var(--m${e.mood || 6})" aria-hidden="true">${['sön', 'mån', 'tis', 'ons', 'tor', 'fre', 'lör'][d.getDay()]}</span>
@@ -1796,6 +1833,12 @@ function dayNamesHtml(key) {
     (names.length ? `<span class="dn-names">Namnsdag: ${escapeHtml(joinNames(names))}</span>` : '');
 }
 
+// Överst i läsläget: dagens märke, högtider och namnsdag
+function readerTop(key) {
+  const html = markHtml(entries[key] && entries[key].mark, 'dn-mark') + dayNamesHtml(key);
+  return html ? `<p class="reader-names">${html}</p>` : '';
+}
+
 function renderDayNames(key) {
   const el = $('day-names');
   el.innerHTML = dayNamesHtml(key);
@@ -1846,6 +1889,8 @@ function parseAt(raw) {
     const kind = AT_MEDIA[n];
     return { label: withYear(AT_MEDIA_LABEL[kind][0]), kind, inYear, test: (x) => inYear(x) && (entries[x].media || []).some((f) => f.kind === kind) };
   }
+  const mk = MARKS.find((x) => normAt(x.label) === n || normAt(x.plural) === n);
+  if (mk) return { label: withYear(mk.plural), test: (x) => entries[x] && entries[x].mark === mk.key && inYear(x) };
   if (n === 'helgdagar' || n === 'helgdag' || n === 'rödadagar') {
     return { label: withYear('Helgdagar'), test: (x) => !!holidayOf(x) && inYear(x) };
   }
@@ -1902,7 +1947,7 @@ function renderAtSuggest() {
     return;
   }
   const n = normAt(v.slice(i + 1));
-  const all = [...AT_DEFAULTS, ...Object.keys(HOLIDAY_GROUPS), ...HOLIDAY_NAMES,
+  const all = [...AT_DEFAULTS, ...MARKS.map((x) => x.label), ...Object.keys(HOLIDAY_GROUPS), ...HOLIDAY_NAMES,
     ...MONTHS.map((x) => x.charAt(0).toUpperCase() + x.slice(1))];
   const pool = n ? [...new Set(all)].filter((x) => normAt(x).startsWith(n)) : AT_DEFAULTS;
   const list = pool.filter((x) => normAt(x) !== n).slice(0, 8);
@@ -2337,9 +2382,10 @@ function renderCal() {
     if (wx) cls.push('has-wx');
     const style = e && e.mood ? ` style="--m: var(--m${e.mood})"` : '';
     let label = fmtDate(key) + (e && e.mood ? `, humör ${e.mood}` : e ? ', skrivet' : '');
+    if (e && MARK_OF[e.mark]) label += `, ${MARK_OF[e.mark].label.toLowerCase()}`;
     if (e && e.weather) label += `, ${fmtWeather(e.weather)}`;
     html += `<button type="button" class="${cls.join(' ')}" data-key="${key}"${style}
-      aria-label="${escapeHtml(label)}"${key > today ? ' disabled' : ''}><span>${d}</span>${wx}</button>`;
+      aria-label="${escapeHtml(label)}"${key > today ? ' disabled' : ''}><span>${d}</span>${wx}${e && MARK_OF[e.mark] ? `<span class="mk">${markIcon(e.mark)}</span>` : ''}</button>`;
   }
   $('cal-grid').innerHTML = html;
   renderList();
@@ -2372,7 +2418,7 @@ function bigPhotos(list) {
 function readerPane(key) {
   const e = entries[key];
   if (!e) {
-    return `<div class="reader-pane" data-key="${key}">${dayNamesHtml(key) ? `<p class="reader-names">${dayNamesHtml(key)}</p>` : ''}
+    return `<div class="reader-pane" data-key="${key}">${readerTop(key)}
       <p class="empty">Inget skrivet den här dagen.</p>
       <div class="reader-foot"><button type="button" class="link reader-edit" data-key="${key}">Skriv för den här dagen</button></div>
     </div>`;
@@ -2380,7 +2426,7 @@ function readerPane(key) {
   const meta = [];
   if (e.mood) meta.push(`<span class="dot" style="--m: var(--m${e.mood})"></span>Humör ${e.mood}`);
   if (e.weather) meta.push(escapeHtml(fmtWeather(e.weather)));
-  return `<div class="reader-pane" data-key="${key}">${dayNamesHtml(key) ? `<p class="reader-names">${dayNamesHtml(key)}</p>` : ''}
+  return `<div class="reader-pane" data-key="${key}">${readerTop(key)}
     ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
     ${(e.media || []).map((f, i) => `<button type="button" class="reader-film" data-key="${key}" data-i="${i}">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
       <div><div class="fs-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</div><div class="rf-title">${escapeHtml(f.title || 'Utan titel')}</div>${f.rating ? starsHtml(f.rating) : ''}</div></button>
