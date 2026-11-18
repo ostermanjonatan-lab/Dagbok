@@ -1902,7 +1902,7 @@ body, body::before, .lock, .sheet-panel, .sheet-grab, .reader, .reader-head, .fi
    skugga mot ryggen till vänster och en bunt sidor som syns i kanten nere till höger. */
 :root {
   --page: #fffaf1;
-  --page-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .25 0 0 0 0 .14 .5 0 0 0 -.2'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23g)' opacity='.35'/%3E%3C/svg%3E");
+  --page-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .36 0 0 0 0 .26 0 0 0 0 .15 .95 0 0 0 -.33'/%3E%3C/filter%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.04 .28' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .4 0 0 0 0 .3 0 0 0 0 .18 .8 0 0 0 -.36'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23g)' opacity='.6'/%3E%3Crect width='240' height='240' filter='url(%23f)' opacity='.28'/%3E%3C/svg%3E");
 }
 .writer {
   background-color: var(--page);
@@ -2027,6 +2027,7 @@ body, body::before, .lock, .sheet-panel, .sheet-grab, .reader, .reader-head, .fi
 :root[data-accent="gron"] { --accent: #1f5a3d; --brand: #1f5a3d; --cloth-base: #2b8156; --brand-dark: #133826; }
 :root[data-accent="lila"] { --accent: #4e2a6e; --brand: #4e2a6e; --cloth-base: #6d3c99; --brand-dark: #301843; }
 :root[data-accent="orange"] { --accent: #a3440e; --brand: #a3440e; --cloth-base: #e5631a; --brand-dark: #6a2b08; }
+:root[data-accent="rosa"] { --accent: #9c3a5e; --brand: #9c3a5e; --cloth-base: #d65282; --brand-dark: #5e1f37; }
 .accents { display: flex; flex-wrap: wrap; gap: 6px 4px; }
 .accents button { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 60px; padding: 4px 2px; border: 0; background: none; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; }
 .accents button span { width: 34px; height: 34px; border-radius: 50%; background: var(--sw); box-shadow: inset 0 0 0 1px rgb(0 0 0 / .08); }
@@ -2168,6 +2169,7 @@ body, body::before, .lock, .sheet-panel, .sheet-grab, .reader, .reader-head, .fi
         <button type="button" role="radio" aria-checked="false" data-accent="gron" style="--sw: #1f5a3d"><span></span>Grön</button>
         <button type="button" role="radio" aria-checked="false" data-accent="lila" style="--sw: #4e2a6e"><span></span>Lila</button>
         <button type="button" role="radio" aria-checked="false" data-accent="orange" style="--sw: #a3440e"><span></span>Orange</button>
+        <button type="button" role="radio" aria-checked="false" data-accent="rosa" style="--sw: #9c3a5e"><span></span>Rosa</button>
       </div>
     </div>
 
@@ -3094,9 +3096,9 @@ function saveSettings() {
   try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch {}
 }
 
-/* Huvudfärgen: vinröd, blå, grön, lila eller orange */
+/* Huvudfärgen: vinröd, blå, grön, lila, orange eller rosa */
 const ACCENT_KEY = 'dagbok.farg';
-const ACCENTS = ['', 'bla', 'gron', 'lila', 'orange'];
+const ACCENTS = ['', 'bla', 'gron', 'lila', 'orange', 'rosa'];
 function applyAccent(a) {
   if (a) document.documentElement.dataset.accent = a;
   else delete document.documentElement.dataset.accent;

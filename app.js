@@ -249,9 +249,9 @@ function saveSettings() {
   try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch {}
 }
 
-/* Huvudfärgen: vinröd, blå, grön, lila eller orange */
+/* Huvudfärgen: vinröd, blå, grön, lila, orange eller rosa */
 const ACCENT_KEY = 'dagbok.farg';
-const ACCENTS = ['', 'bla', 'gron', 'lila', 'orange'];
+const ACCENTS = ['', 'bla', 'gron', 'lila', 'orange', 'rosa'];
 function applyAccent(a) {
   if (a) document.documentElement.dataset.accent = a;
   else delete document.documentElement.dataset.accent;
