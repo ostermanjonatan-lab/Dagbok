@@ -249,6 +249,26 @@ function saveSettings() {
   try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch {}
 }
 
+/* Huvudfärgen: vinröd, blå, grön, lila eller orange */
+const ACCENT_KEY = 'dagbok.farg';
+const ACCENTS = ['', 'bla', 'gron', 'lila', 'orange'];
+function applyAccent(a) {
+  if (a) document.documentElement.dataset.accent = a;
+  else delete document.documentElement.dataset.accent;
+  document.querySelectorAll('#set-accent [data-accent]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.accent === a)));
+}
+let accent = '';
+try { accent = localStorage.getItem(ACCENT_KEY) || ''; } catch {}
+if (!ACCENTS.includes(accent)) accent = '';
+applyAccent(accent);
+$('set-accent').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-accent]');
+  if (!b) return;
+  accent = b.dataset.accent;
+  try { localStorage.setItem(ACCENT_KEY, accent); } catch {}
+  applyAccent(accent);
+});
+
 function renderSettings() {
   $('set-memories').checked = settings.memories;
   if ($('set-weather')) $('set-weather').checked = settings.weather;

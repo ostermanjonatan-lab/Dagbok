@@ -1938,7 +1938,7 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
     repeating-linear-gradient(90deg, rgb(0 0 0 / .13) 0 1px, transparent 1px 3px);
 }
 /* Väven gör färgen mörkare, så grunden under är lite ljusare för att helheten ska bli samma vinröda */
-.nav, #splash, .sheet-grab::before { background-color: #b4062f; background-image: var(--cloth); }
+.nav, #splash, .sheet-grab::before { background-color: var(--cloth-base); background-image: var(--cloth); }
 
 /* Den ljusa bakgrunden har papperets struktur: fint korn, inga linjer. Strukturen ritas en gång
    och rullar med. Att låta den ligga fast mot skärmen tvingade telefonen att måla om allt vid
@@ -2073,3 +2073,16 @@ body, body::before, .lock, .sheet-panel, .sheet-grab, .reader, .reader-head, .fi
 /* Läsläget har samma höjd för alla dagar, så att rutan inte hoppar när man bläddrar.
    Långa dagar rullar inuti. */
 .reader { height: 82vh; height: 82dvh; }
+
+/* Huvudfärgen kan bytas i inställningarna. Vävens grund är ljusare än färgen eftersom
+   väven mörknar den, så att helheten blir samma ton. */
+:root { --cloth-base: #b4062f; --brand-dark: #5c0017; }
+:root[data-accent="bla"] { --accent: #1f3f73; --brand: #1f3f73; --cloth-base: #2c5aa6; --brand-dark: #142a4d; }
+:root[data-accent="gron"] { --accent: #1f5a3d; --brand: #1f5a3d; --cloth-base: #2b8156; --brand-dark: #133826; }
+:root[data-accent="lila"] { --accent: #4e2a6e; --brand: #4e2a6e; --cloth-base: #6d3c99; --brand-dark: #301843; }
+:root[data-accent="orange"] { --accent: #a3440e; --brand: #a3440e; --cloth-base: #e5631a; --brand-dark: #6a2b08; }
+.accents { display: flex; flex-wrap: wrap; gap: 6px 4px; }
+.accents button { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 60px; padding: 4px 2px; border: 0; background: none; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; }
+.accents button span { width: 34px; height: 34px; border-radius: 50%; background: var(--sw); box-shadow: inset 0 0 0 1px rgb(0 0 0 / .08); }
+.accents [aria-checked="true"] { color: var(--text); font-weight: 600; }
+.accents [aria-checked="true"] span { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--sw); }

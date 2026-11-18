@@ -1884,7 +1884,7 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
     repeating-linear-gradient(90deg, rgb(0 0 0 / .13) 0 1px, transparent 1px 3px);
 }
 /* Väven gör färgen mörkare, så grunden under är lite ljusare för att helheten ska bli samma vinröda */
-.nav, #splash, .sheet-grab::before { background-color: #b4062f; background-image: var(--cloth); }
+.nav, #splash, .sheet-grab::before { background-color: var(--cloth-base); background-image: var(--cloth); }
 
 /* Den ljusa bakgrunden har papperets struktur: fint korn, inga linjer. Strukturen ritas en gång
    och rullar med. Att låta den ligga fast mot skärmen tvingade telefonen att måla om allt vid
@@ -2019,6 +2019,19 @@ body, body::before, .lock, .sheet-panel, .sheet-grab, .reader, .reader-head, .fi
 /* Läsläget har samma höjd för alla dagar, så att rutan inte hoppar när man bläddrar.
    Långa dagar rullar inuti. */
 .reader { height: 82vh; height: 82dvh; }
+
+/* Huvudfärgen kan bytas i inställningarna. Vävens grund är ljusare än färgen eftersom
+   väven mörknar den, så att helheten blir samma ton. */
+:root { --cloth-base: #b4062f; --brand-dark: #5c0017; }
+:root[data-accent="bla"] { --accent: #1f3f73; --brand: #1f3f73; --cloth-base: #2c5aa6; --brand-dark: #142a4d; }
+:root[data-accent="gron"] { --accent: #1f5a3d; --brand: #1f5a3d; --cloth-base: #2b8156; --brand-dark: #133826; }
+:root[data-accent="lila"] { --accent: #4e2a6e; --brand: #4e2a6e; --cloth-base: #6d3c99; --brand-dark: #301843; }
+:root[data-accent="orange"] { --accent: #a3440e; --brand: #a3440e; --cloth-base: #e5631a; --brand-dark: #6a2b08; }
+.accents { display: flex; flex-wrap: wrap; gap: 6px 4px; }
+.accents button { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 60px; padding: 4px 2px; border: 0; background: none; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; }
+.accents button span { width: 34px; height: 34px; border-radius: 50%; background: var(--sw); box-shadow: inset 0 0 0 1px rgb(0 0 0 / .08); }
+.accents [aria-checked="true"] { color: var(--text); font-weight: 600; }
+.accents [aria-checked="true"] span { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--sw); }
 </style>
 
 
@@ -2148,6 +2161,17 @@ body, body::before, .lock, .sheet-panel, .sheet-grab, .reader, .reader-head, .fi
     </div>
 
     <div class="group">
+      <h2>Färg</h2>
+      <div class="accents" id="set-accent" role="radiogroup" aria-label="Huvudfärg">
+        <button type="button" role="radio" aria-checked="false" data-accent="" style="--sw: #800020"><span></span>Vinröd</button>
+        <button type="button" role="radio" aria-checked="false" data-accent="bla" style="--sw: #1f3f73"><span></span>Blå</button>
+        <button type="button" role="radio" aria-checked="false" data-accent="gron" style="--sw: #1f5a3d"><span></span>Grön</button>
+        <button type="button" role="radio" aria-checked="false" data-accent="lila" style="--sw: #4e2a6e"><span></span>Lila</button>
+        <button type="button" role="radio" aria-checked="false" data-accent="orange" style="--sw: #a3440e"><span></span>Orange</button>
+      </div>
+    </div>
+
+    <div class="group">
       <h2>Daglig påminnelse</h2>
       <div class="remind-row">
         <span class="lbl">Tid</span>
@@ -2194,7 +2218,7 @@ body, body::before, .lock, .sheet-panel, .sheet-grab, .reader, .reader-head, .fi
       <p class="muted" id="wipe-msg" aria-live="polite"></p>
     </div>
     <div class="group about">
-      <svg viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="112" fill="#800020"/><path d="M140 100h120a140 140 0 0 1 0 280H140z" fill="#F3E6D5"/><rect x="140" y="100" width="40" height="280" fill="#e3cdb3"/><path d="M236 168h96M236 214h120M236 260h112M236 306h84" stroke="#800020" stroke-width="12" stroke-linecap="round" opacity=".3"/><path d="M188 100h30v330l-15-15-15 15z" fill="#5c0017" stroke="#F3E6D5" stroke-width="6" stroke-linejoin="round"/></svg>
+      <svg viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="112" style="fill: var(--brand)"/><path d="M140 100h120a140 140 0 0 1 0 280H140z" fill="#F3E6D5"/><rect x="140" y="100" width="40" height="280" fill="#e3cdb3"/><path d="M236 168h96M236 214h120M236 260h112M236 306h84" style="stroke: var(--brand)" stroke-width="12" stroke-linecap="round" opacity=".3"/><path d="M188 100h30v330l-15-15-15 15z" style="fill: var(--brand-dark)" stroke="#F3E6D5" stroke-width="6" stroke-linejoin="round"/></svg>
       <div><strong>Daysake</strong><span>Version 1.0</span></div>
     </div>
   </section>
@@ -2249,7 +2273,7 @@ body, body::before, .lock, .sheet-panel, .sheet-grab, .reader, .reader-head, .fi
 
 <div class="lock" id="lock" role="dialog" aria-modal="true" aria-labelledby="lock-title" hidden>
   <div class="lock-inner">
-    <svg class="lock-logo" viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="112" fill="#800020"/><path d="M140 100h120a140 140 0 0 1 0 280H140z" fill="#F3E6D5"/><rect x="140" y="100" width="40" height="280" fill="#e3cdb3"/><path d="M236 168h96M236 214h120M236 260h112M236 306h84" stroke="#800020" stroke-width="12" stroke-linecap="round" opacity=".3"/><path d="M188 100h30v330l-15-15-15 15z" fill="#5c0017" stroke="#F3E6D5" stroke-width="6" stroke-linejoin="round"/></svg>
+    <svg class="lock-logo" viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="112" style="fill: var(--brand)"/><path d="M140 100h120a140 140 0 0 1 0 280H140z" fill="#F3E6D5"/><rect x="140" y="100" width="40" height="280" fill="#e3cdb3"/><path d="M236 168h96M236 214h120M236 260h112M236 306h84" style="stroke: var(--brand)" stroke-width="12" stroke-linecap="round" opacity=".3"/><path d="M188 100h30v330l-15-15-15 15z" style="fill: var(--brand-dark)" stroke="#F3E6D5" stroke-width="6" stroke-linejoin="round"/></svg>
     <p class="lock-app">Daysake</p>
     <h2 id="lock-title">Skriv din kod</h2>
     <div class="dots" id="lock-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
@@ -3069,6 +3093,26 @@ try { Object.assign(settings, JSON.parse(localStorage.getItem(SETTINGS_KEY) || '
 function saveSettings() {
   try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch {}
 }
+
+/* Huvudfärgen: vinröd, blå, grön, lila eller orange */
+const ACCENT_KEY = 'dagbok.farg';
+const ACCENTS = ['', 'bla', 'gron', 'lila', 'orange'];
+function applyAccent(a) {
+  if (a) document.documentElement.dataset.accent = a;
+  else delete document.documentElement.dataset.accent;
+  document.querySelectorAll('#set-accent [data-accent]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.accent === a)));
+}
+let accent = '';
+try { accent = localStorage.getItem(ACCENT_KEY) || ''; } catch {}
+if (!ACCENTS.includes(accent)) accent = '';
+applyAccent(accent);
+$('set-accent').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-accent]');
+  if (!b) return;
+  accent = b.dataset.accent;
+  try { localStorage.setItem(ACCENT_KEY, accent); } catch {}
+  applyAccent(accent);
+});
 
 function renderSettings() {
   $('set-memories').checked = settings.memories;

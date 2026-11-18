@@ -13,6 +13,7 @@
   <link rel="icon" href="icons/icon-192.png" type="image/png">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
+  <script>try { var c = localStorage.getItem('dagbok.farg'); if (c) document.documentElement.dataset.accent = c; } catch (e) {}</script>
   <!-- Startskärmen ritas direkt, innan resten av appen har laddats -->
   <style>
     .splash { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: #800020; transition: opacity .3s ease-out; }
@@ -21,7 +22,7 @@
   </style>
 </head>
 <body>
-  <div class="splash" id="splash"><svg viewBox="0 0 512 512" aria-hidden="true"><path d="M140 100h120a140 140 0 0 1 0 280H140z" fill="#F3E6D5"/><rect x="140" y="100" width="40" height="280" fill="#e3cdb3"/><path d="M236 168h96M236 214h120M236 260h112M236 306h84" stroke="#800020" stroke-width="12" stroke-linecap="round" opacity=".3"/><path d="M188 100h30v330l-15-15-15 15z" fill="#5c0017" stroke="#F3E6D5" stroke-width="6" stroke-linejoin="round"/></svg></div>
+  <div class="splash" id="splash"><svg viewBox="0 0 512 512" aria-hidden="true"><path d="M140 100h120a140 140 0 0 1 0 280H140z" fill="#F3E6D5"/><rect x="140" y="100" width="40" height="280" fill="#e3cdb3"/><path d="M236 168h96M236 214h120M236 260h112M236 306h84" style="stroke: var(--brand)" stroke-width="12" stroke-linecap="round" opacity=".3"/><path d="M188 100h30v330l-15-15-15 15z" style="fill: var(--brand-dark)" stroke="#F3E6D5" stroke-width="6" stroke-linejoin="round"/></svg></div>
 
   <main>
 
@@ -160,6 +161,17 @@
       </div>
 
       <div class="group">
+        <h2>Färg</h2>
+        <div class="accents" id="set-accent" role="radiogroup" aria-label="Huvudfärg">
+          <button type="button" role="radio" aria-checked="false" data-accent="" style="--sw: #800020"><span></span>Vinröd</button>
+          <button type="button" role="radio" aria-checked="false" data-accent="bla" style="--sw: #1f3f73"><span></span>Blå</button>
+          <button type="button" role="radio" aria-checked="false" data-accent="gron" style="--sw: #1f5a3d"><span></span>Grön</button>
+          <button type="button" role="radio" aria-checked="false" data-accent="lila" style="--sw: #4e2a6e"><span></span>Lila</button>
+          <button type="button" role="radio" aria-checked="false" data-accent="orange" style="--sw: #a3440e"><span></span>Orange</button>
+        </div>
+      </div>
+
+      <div class="group">
         <h2>Daglig påminnelse</h2>
         <div class="remind-row">
           <span class="lbl">Tid</span>
@@ -206,7 +218,7 @@
         <p class="muted" id="wipe-msg" aria-live="polite"></p>
       </div>
       <div class="group about">
-        <svg viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="112" fill="#800020"/><path d="M140 100h120a140 140 0 0 1 0 280H140z" fill="#F3E6D5"/><rect x="140" y="100" width="40" height="280" fill="#e3cdb3"/><path d="M236 168h96M236 214h120M236 260h112M236 306h84" stroke="#800020" stroke-width="12" stroke-linecap="round" opacity=".3"/><path d="M188 100h30v330l-15-15-15 15z" fill="#5c0017" stroke="#F3E6D5" stroke-width="6" stroke-linejoin="round"/></svg>
+        <svg viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="112" style="fill: var(--brand)"/><path d="M140 100h120a140 140 0 0 1 0 280H140z" fill="#F3E6D5"/><rect x="140" y="100" width="40" height="280" fill="#e3cdb3"/><path d="M236 168h96M236 214h120M236 260h112M236 306h84" style="stroke: var(--brand)" stroke-width="12" stroke-linecap="round" opacity=".3"/><path d="M188 100h30v330l-15-15-15 15z" style="fill: var(--brand-dark)" stroke="#F3E6D5" stroke-width="6" stroke-linejoin="round"/></svg>
         <div><strong>Daysake</strong><span>Version 1.0</span></div>
       </div>
     </section>
@@ -238,7 +250,7 @@
 
   <div class="lock" id="lock" role="dialog" aria-modal="true" aria-labelledby="lock-title" hidden>
     <div class="lock-inner">
-      <svg class="lock-logo" viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="112" fill="#800020"/><path d="M140 100h120a140 140 0 0 1 0 280H140z" fill="#F3E6D5"/><rect x="140" y="100" width="40" height="280" fill="#e3cdb3"/><path d="M236 168h96M236 214h120M236 260h112M236 306h84" stroke="#800020" stroke-width="12" stroke-linecap="round" opacity=".3"/><path d="M188 100h30v330l-15-15-15 15z" fill="#5c0017" stroke="#F3E6D5" stroke-width="6" stroke-linejoin="round"/></svg>
+      <svg class="lock-logo" viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="112" style="fill: var(--brand)"/><path d="M140 100h120a140 140 0 0 1 0 280H140z" fill="#F3E6D5"/><rect x="140" y="100" width="40" height="280" fill="#e3cdb3"/><path d="M236 168h96M236 214h120M236 260h112M236 306h84" style="stroke: var(--brand)" stroke-width="12" stroke-linecap="round" opacity=".3"/><path d="M188 100h30v330l-15-15-15 15z" style="fill: var(--brand-dark)" stroke="#F3E6D5" stroke-width="6" stroke-linejoin="round"/></svg>
       <p class="lock-app">Daysake</p>
       <h2 id="lock-title">Skriv din kod</h2>
       <div class="dots" id="lock-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
