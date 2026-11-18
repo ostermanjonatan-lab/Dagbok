@@ -2069,3 +2069,7 @@ body, body::before, .lock, .sheet-panel, .sheet-grab, .reader, .reader-head, .fi
 .ri-person { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; }
 .ri-person .ri-face { width: 24px; height: 24px; font-size: 11px; box-shadow: none; }
 .ri-names { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+
+/* Läsläget har samma höjd för alla dagar, så att rutan inte hoppar när man bläddrar.
+   Långa dagar rullar inuti. */
+.reader { height: 82vh; height: 82dvh; }
