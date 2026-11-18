@@ -1638,25 +1638,31 @@ function postHtml(k, e, today, searching) {
   const d = parseKey(k);
   const yesterday = shiftKey(today, -1);
   const rel = k === today ? 'Idag' : k === yesterday ? 'Igår' : '';
-  const g = e.weather ? weatherGroup(e.weather.code) : null;
-  const icon = g != null ? `<svg viewBox="0 0 24 24" aria-hidden="true">${WEATHER_ICONS[g]}</svg>` : '';
-  const wx = e.weather ? icon + escapeHtml(fmtWeather(e.weather)) : '';
-  const sub = [rel, wx].filter(Boolean).join('<span class="sep" aria-hidden="true">·</span>');
+  // Raden längst ner, som under en tweet: väder och vem man var med
+  const foot = [];
+  if (e.weather) {
+    const g = weatherGroup(e.weather.code);
+    foot.push(`<span class="pf-i">${g != null ? `<svg viewBox="0 0 24 24" aria-hidden="true">${WEATHER_ICONS[g]}</svg>` : ''}${escapeHtml(fmtWeather(e.weather))}</span>`);
+  }
+  if (e.people && e.people.length) {
+    foot.push(`<span class="pf-i" title="${escapeHtml(joinNames(e.people))}"><svg viewBox="0 0 24 24" aria-hidden="true">${PEOPLE_ICON}</svg>${e.people.length === 1 ? escapeHtml(e.people[0]) : `${e.people.length} personer`}</span>`);
+  }
   return `<article class="post${k === today ? ' today' : ''}" data-key="${k}">
-    <header class="post-head">
-      <span class="avatar${e.mood ? '' : ' none'}" data-m="${e.mood || ''}" style="--m: var(--m${e.mood || 6})" aria-hidden="true">${['sön', 'mån', 'tis', 'ons', 'tor', 'fre', 'lör'][d.getDay()]}${MARK_OF[e.mark] ? `<span class="av-mk">${miniIcon(e.mark)}</span>` : ''}</span>
-      <div class="who">
-        <button type="button" class="when"${MARK_OF[e.mark] ? ` aria-label="${shortDate(k)}, ${MARK_OF[e.mark].label.toLowerCase()}"` : ''}>${shortDate(k)}</button>
-        ${sub ? `<span class="sub">${sub}</span>` : ''}
-      </div>
-    </header>
-    ${e.text ? `<div class="prose${searching ? '' : ' clamp'}">${Paper.mdToHtml(e.text)}</div>
-    <button type="button" class="link more" hidden>Visa mer</button>` : ''}
-    ${(e.media || []).map((f) => `<div class="post-film">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
-      <span class="pf-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</span><span class="pf-title">${escapeHtml(f.title || 'Utan titel')}</span>${f.rating ? starsHtml(f.rating) : ''}</div>`).join('')}
-    ${postMedia(e.photos)}
+    <span class="avatar${e.mood ? '' : ' none'}" data-m="${e.mood || ''}" style="--m: var(--m${e.mood || 6})" aria-hidden="true">${['sön', 'mån', 'tis', 'ons', 'tor', 'fre', 'lör'][d.getDay()]}${MARK_OF[e.mark] ? `<span class="av-mk">${miniIcon(e.mark)}</span>` : ''}</span>
+    <div class="post-body">
+      <header class="post-head">
+        <button type="button" class="when"${MARK_OF[e.mark] ? ` aria-label="${shortDate(k)}, ${MARK_OF[e.mark].label.toLowerCase()}"` : ''}>${shortDate(k)}</button>${rel ? `<span class="rel">· ${rel}</span>` : ''}
+      </header>
+      ${e.text ? `<div class="prose${searching ? '' : ' clamp'}">${Paper.mdToHtml(e.text)}</div>
+      <button type="button" class="link more" hidden>Visa mer</button>` : ''}
+      ${(e.media || []).map((f) => `<div class="post-film">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
+        <span class="pf-text"><span class="pf-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</span><span class="pf-title">${escapeHtml(f.title || 'Utan titel')}</span></span>${f.rating ? starsHtml(f.rating) : ''}</div>`).join('')}
+      ${postMedia(e.photos)}
+      ${foot.length ? `<div class="post-foot">${foot.join('')}</div>` : ''}
+    </div>
   </article>`;
 }
+const PEOPLE_ICON = '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.5" cy="9" r="2.6"/><path d="M15.5 14.2c2.3.1 4.1 1.6 4.8 4.3"/>';
 
 // Långa inlägg visas förkortade tills man trycker på Visa mer
 function markLongPosts(list) {
@@ -2120,7 +2126,7 @@ function renderList() {
   }
   if (!whole) html += moreMonthHtml();
   list.innerHTML = html;
-  if (text) list.querySelectorAll('.when, .prose, .sub').forEach((el) => Paper.highlight(el, text));
+  if (text) list.querySelectorAll('.when, .prose, .post-foot').forEach((el) => Paper.highlight(el, text));
   else markLongPosts(list);
 }
 
