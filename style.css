@@ -2008,7 +2008,9 @@ body, body::before, .lock, .sheet-panel, .sheet-grab, .reader, .reader-head, .fi
 @font-face { font-family: 'Mali'; font-style: normal; font-weight: 600; font-display: swap; src: url('fonts/mali-600-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 /* När man skriver ser texten handskriven ut, med grått som blyerts. Bara i skrivytan,
    flödet och läsläget har det vanliga typsnittet. Mali hämtas från Google Fonts och ligger i appen. */
-:root { --hand: 'Mali', var(--system); --pencil: #5b5553; }
+/* Blyerts: kallt grafitgrått som är lite genomskinligt så att papperet syns igenom, och
+   markören i samma grå. Bara färger, så det kostar inget extra att rita. */
+:root { --hand: 'Mali', var(--system); --pencil: rgb(72 74 80 / .86); }
 /* Ingen textskugga: den gör varje tangenttryck märkbart långsammare i en lång text */
-.paper { font-family: var(--hand); font-size: 18px; line-height: 30.4px; color: var(--pencil); }
-.paper strong { color: #46403f; }
+.paper { font-family: var(--hand); font-size: 18px; line-height: 30.4px; color: var(--pencil); caret-color: #55575d; }
+.paper strong { color: rgb(52 54 60 / .92); }
