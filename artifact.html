@@ -1944,6 +1944,10 @@ body, body::before, .lock, .sheet-panel, .sheet-grab, .reader, .reader-head, .fi
 .fmt button { min-width: 34px; height: 32px; padding: 0 8px; font-size: 14px; }
 .fmt button b, .fmt button i { font-size: 16px; }
 .writer .paper { border-radius: 10px; }
+
+/* Understruket i texten */
+.fmt button u { font-family: var(--serif); font-size: 16px; text-underline-offset: 2px; }
+.paper u, .prose u { text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
 </style>
 
 
@@ -2237,6 +2241,7 @@ body, body::before, .lock, .sheet-panel, .sheet-grab, .reader, .reader-head, .fi
               <div class="fmt" id="fmt" role="toolbar" aria-label="Formatering" aria-controls="f-text">
                 <button type="button" data-cmd="bold" aria-label="Fet"><b>B</b></button>
                 <button type="button" data-cmd="italic" aria-label="Kursiv"><i>K</i></button>
+                <button type="button" data-cmd="underline" aria-label="Understruken"><u>U</u></button>
                 <button type="button" data-cmd="h2">Rubrik</button>
                 <button type="button" data-cmd="ul">Lista</button>
               </div>
@@ -2369,7 +2374,8 @@ const Paper = (() => {
   function inline(s) {
     return esc(s)
       .replace(/\*\*(?=\S)(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/(^|[^*])\*(?=[^\s*])([^*]+?)\*(?!\*)/g, '$1<em>$2</em>');
+      .replace(/(^|[^*])\*(?=[^\s*])([^*]+?)\*(?!\*)/g, '$1<em>$2</em>')
+      .replace(/\+\+(?=\S)(.+?)\+\+/g, '<u>$1</u>');
   }
 
   function mdToHtml(md) {
@@ -2410,7 +2416,8 @@ const Paper = (() => {
       .map((l) => l.replace(/^(#{1,6}|\s*[-*+]|\s*\d+[.)])\s+/, ''))
       .join('\n')
       .replace(/\*\*(?=\S)(.+?)\*\*/g, '$1')
-      .replace(/(^|[^*])\*(?=[^\s*])([^*]+?)\*(?!\*)/g, '$1$2');
+      .replace(/(^|[^*])\*(?=[^\s*])([^*]+?)\*(?!\*)/g, '$1$2')
+      .replace(/\+\+(?=\S)(.+?)\+\+/g, '$1');
   }
 
   /* Från redigeraren tillbaka till Markdown */
@@ -2432,6 +2439,7 @@ const Paper = (() => {
         if (t === 'BR') out += '\n';
         else if (t === 'STRONG' || t === 'B') out += wrap(inlineMd(n), '**');
         else if (t === 'EM' || t === 'I') out += wrap(inlineMd(n), '*');
+        else if (t === 'U') out += wrap(inlineMd(n), '++');
         else if (t !== 'UL' && t !== 'OL') out += inlineMd(n);
       }
     }
@@ -2622,7 +2630,7 @@ const Paper = (() => {
         try {
           // Rubriker är feta i sig och räknas inte som fetstil
           if (c === 'bold') on = document.queryCommandState(c) && !/^H/.test((block() || {}).tagName);
-          else if (c === 'italic') on = document.queryCommandState(c);
+          else if (c === 'italic' || c === 'underline') on = document.queryCommandState(c);
           else if (c === 'h2') on = /^H[23]$/.test((block() || {}).tagName);
           else if (c === 'ul') on = inside('UL');
         } catch {}
@@ -2647,9 +2655,9 @@ const Paper = (() => {
 
     el.addEventListener('keydown', (ev) => {
       const mod = (ev.metaKey || ev.ctrlKey) && !ev.altKey;
-      if (mod && /^[bi]$/i.test(ev.key)) {
+      if (mod && /^[biu]$/i.test(ev.key)) {
         ev.preventDefault();
-        exec(ev.key.toLowerCase() === 'b' ? 'bold' : 'italic');
+        exec({ b: 'bold', i: 'italic', u: 'underline' }[ev.key.toLowerCase()]);
         changed();
         return;
       }

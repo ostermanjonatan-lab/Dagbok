@@ -1,7 +1,7 @@
 'use strict';
 
 // Skrivytan. Texten sparas som Markdown: # och ## för rubriker, - och 1. för listor,
-// **fet** och *kursiv*. Varje rad blir ett eget stycke.
+// **fet**, *kursiv* och ++understruket++. Varje rad blir ett eget stycke.
 const Paper = (() => {
   function esc(s) {
     return s.replace(/[&<>"']/g, (c) => ({
@@ -12,7 +12,8 @@ const Paper = (() => {
   function inline(s) {
     return esc(s)
       .replace(/\*\*(?=\S)(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/(^|[^*])\*(?=[^\s*])([^*]+?)\*(?!\*)/g, '$1<em>$2</em>');
+      .replace(/(^|[^*])\*(?=[^\s*])([^*]+?)\*(?!\*)/g, '$1<em>$2</em>')
+      .replace(/\+\+(?=\S)(.+?)\+\+/g, '<u>$1</u>');
   }
 
   function mdToHtml(md) {
@@ -53,7 +54,8 @@ const Paper = (() => {
       .map((l) => l.replace(/^(#{1,6}|\s*[-*+]|\s*\d+[.)])\s+/, ''))
       .join('\n')
       .replace(/\*\*(?=\S)(.+?)\*\*/g, '$1')
-      .replace(/(^|[^*])\*(?=[^\s*])([^*]+?)\*(?!\*)/g, '$1$2');
+      .replace(/(^|[^*])\*(?=[^\s*])([^*]+?)\*(?!\*)/g, '$1$2')
+      .replace(/\+\+(?=\S)(.+?)\+\+/g, '$1');
   }
 
   /* Från redigeraren tillbaka till Markdown */
@@ -75,6 +77,7 @@ const Paper = (() => {
         if (t === 'BR') out += '\n';
         else if (t === 'STRONG' || t === 'B') out += wrap(inlineMd(n), '**');
         else if (t === 'EM' || t === 'I') out += wrap(inlineMd(n), '*');
+        else if (t === 'U') out += wrap(inlineMd(n), '++');
         else if (t !== 'UL' && t !== 'OL') out += inlineMd(n);
       }
     }
@@ -265,7 +268,7 @@ const Paper = (() => {
         try {
           // Rubriker är feta i sig och räknas inte som fetstil
           if (c === 'bold') on = document.queryCommandState(c) && !/^H/.test((block() || {}).tagName);
-          else if (c === 'italic') on = document.queryCommandState(c);
+          else if (c === 'italic' || c === 'underline') on = document.queryCommandState(c);
           else if (c === 'h2') on = /^H[23]$/.test((block() || {}).tagName);
           else if (c === 'ul') on = inside('UL');
         } catch {}
@@ -290,9 +293,9 @@ const Paper = (() => {
 
     el.addEventListener('keydown', (ev) => {
       const mod = (ev.metaKey || ev.ctrlKey) && !ev.altKey;
-      if (mod && /^[bi]$/i.test(ev.key)) {
+      if (mod && /^[biu]$/i.test(ev.key)) {
         ev.preventDefault();
-        exec(ev.key.toLowerCase() === 'b' ? 'bold' : 'italic');
+        exec({ b: 'bold', i: 'italic', u: 'underline' }[ev.key.toLowerCase()]);
         changed();
         return;
       }
