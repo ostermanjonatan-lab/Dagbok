@@ -2127,3 +2127,6 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 
 /* Cirkeln i flödet visar humörets siffra */
 .post .avatar { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* Den särskilda dagen står i huvudfärgen efter datumet */
+.post .special { flex-basis: 100%; font-size: 14px; font-weight: 600; color: var(--accent); }

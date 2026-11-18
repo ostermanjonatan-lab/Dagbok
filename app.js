@@ -1638,6 +1638,8 @@ function postHtml(k, e, today, searching) {
   const d = parseKey(k);
   const yesterday = shiftKey(today, -1);
   const rel = k === today ? 'Idag' : k === yesterday ? 'Igår' : '';
+  // Vilken särskild dag det är: ens eget märke och helgdagen, om det finns
+  const special = [MARK_OF[e.mark] && MARK_OF[e.mark].label, holidays(d.getFullYear())[k]].filter(Boolean).join(', ');
   // Raden längst ner, som under en tweet: väder och vem man var med
   const foot = [];
   if (e.weather) {
@@ -1651,7 +1653,7 @@ function postHtml(k, e, today, searching) {
     <span class="avatar${e.mood ? '' : ' none'}" data-m="${e.mood || ''}" style="--m: var(--m${e.mood || 6})" aria-hidden="true">${e.mood || ''}${MARK_OF[e.mark] ? `<span class="av-mk">${miniIcon(e.mark)}</span>` : ''}</span>
     <div class="post-body">
       <header class="post-head">
-        <button type="button" class="when"${MARK_OF[e.mark] ? ` aria-label="${WEEKDAY_CAP[d.getDay()]} ${shortDate(k)}, ${MARK_OF[e.mark].label.toLowerCase()}"` : ''}>${WEEKDAY_CAP[d.getDay()]} - ${shortDate(k)}</button>${rel ? `<span class="rel">· ${rel}</span>` : ''}
+        <button type="button" class="when"${MARK_OF[e.mark] ? ` aria-label="${WEEKDAY_CAP[d.getDay()]} ${shortDate(k)}, ${MARK_OF[e.mark].label.toLowerCase()}"` : ''}>${WEEKDAY_CAP[d.getDay()]} - ${shortDate(k)}</button>${rel ? `<span class="rel">· ${rel}</span>` : ''}${special ? `<span class="special">${escapeHtml(special)}</span>` : ''}
       </header>
       ${e.text ? `<div class="prose${searching ? '' : ' clamp'}">${Paper.mdToHtml(e.text)}</div>
       <button type="button" class="link more" hidden>Visa mer</button>` : ''}
