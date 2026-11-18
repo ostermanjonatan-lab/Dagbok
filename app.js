@@ -740,12 +740,14 @@ function stepDay(dir) { go(`#/dag/${shiftKey(current, dir)}`); }
 
 // area tar emot svepet, moving är det som följer fingret. canNext säger om det går
 // att gå framåt, step(dir) byter med -1 eller 1. Svep som börjar i skip räknas inte.
-function attachSwipe({ area, moving, skip, canNext, step, turn }) {
+function attachSwipe({ area, moving, skip, canNext, step, curl }) {
   const reduce = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let sx = 0;
   let sy = 0;
   let dx = 0;
   let mode = null; // null, 'start', 'x' (sidled) eller 'y' (vanlig scroll)
+  let turning = null;   // pågående sidvändning som följer fingret
+  let turnDir = 0;
 
   function reset(animated) {
     moving.style.transition = animated && !reduce() ? 'transform .16s ease-out, opacity .16s' : 'none';
@@ -772,6 +774,14 @@ function attachSwipe({ area, moving, skip, canNext, step, turn }) {
     }
     if (mode !== 'x') return;
     dx = mx;
+    if (curl && !reduce() && (turning || !(dx < 0 && !canNext()))) {
+      if (!turning) {
+        turnDir = dx < 0 ? 1 : -1;
+        turning = curl(turnDir);
+      }
+      turning.set((turnDir > 0 ? -dx : dx) / area.clientWidth * 1.2);
+      return;
+    }
     const blocked = dx < 0 && !canNext();
     moving.style.transition = 'none';
     moving.style.transform = `translateX(${dx * (blocked ? 0.12 : 0.5)}px)`;
@@ -784,14 +794,19 @@ function attachSwipe({ area, moving, skip, canNext, step, turn }) {
       return;
     }
     mode = null;
+    if (turning) {
+      turning.finish((turnDir > 0 ? -dx : dx) > 70);
+      turning = null;
+      return;
+    }
     const dir = dx < 0 ? 1 : -1;
     if (Math.abs(dx) < 70 || (dir > 0 && !canNext())) {
       reset(true);
       return;
     }
-    if (reduce() || turn) {
+    if (reduce()) {
       reset(false);
-      (turn || step)(dir);
+      step(dir);
       return;
     }
     // Glid ut åt samma håll som fingret, byt och glid in från andra sidan
@@ -816,11 +831,11 @@ attachSwipe({
   skip: '.photos, .fmt, .date-pop, .people, .people-suggest, .film-list, .mood-slider',
   canNext: () => current < todayKey(),
   step: (dir) => stepDay(dir),
-  turn: (dir) => turnDay(dir, () => stepDay(dir)),
+  curl: (dir) => startTurn($('sheet-panel'), $('day-sheet'), dir, stepDayNow),
 });
 
-$('prev').addEventListener('click', () => turnDay(-1, () => go(`#/dag/${shiftKey(current, -1)}`)));
-$('next').addEventListener('click', () => turnDay(1, () => go(`#/dag/${shiftKey(current, 1)}`)));
+$('prev').addEventListener('click', () => turnDay(-1));
+$('next').addEventListener('click', () => turnDay(1));
 $('to-today').addEventListener('click', () => go('#/dag'));
 // Egen datumväljare: en liten månadskalender under datumet
 let dpMonth = '';
@@ -2512,52 +2527,160 @@ function stepReader(dir) {
   turnPage($('reader-track'), $('reader'), dir, () => showReaderDay(target));
 }
 
-/* Bläddra som i en bok. En kopia av den gamla sidan läggs ovanpå och vänds bort kring
-   ryggen, medan den nya sidan redan ligger under. Framåt vänds den åt vänster, bakåt åt höger. */
-function turnPage(el, host, dir, change) {
-  if (!el.animate || matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    change();
-    return;
-  }
-  const r = el.getBoundingClientRect();
-  const h = host.getBoundingClientRect();
-  const leaf = document.createElement('div');
-  leaf.className = 'leaf';
-  leaf.inert = true;
-  leaf.setAttribute('aria-hidden', 'true');
-  Object.assign(leaf.style, {
-    left: `${r.left - h.left + host.scrollLeft}px`,
-    top: `${r.top - h.top + host.scrollTop}px`,
-    width: `${r.width}px`,
-    height: `${r.height}px`,
-    transformOrigin: dir > 0 ? 'left center' : 'right center',
+/* Sidvändning som i en riktig bok. Sidans nedre hörn viks upp längs en linje som vandrar
+   över sidan. Det vikta ligger spegelvänt över sidan med baksidan uppåt, där texten skymtar
+   igenom, och den nya sidan syns under med en skugga vid vikningen. Framåt vänds den gamla
+   sidan bort åt vänster. Bakåt kommer den nya sidan tillbaka från vänster och läggs ovanpå. */
+
+// Den del av en månghörning som ligger på ena sidan av en linje genom M med normalen n
+function clipHalf(poly, M, n, near) {
+  const side = (p) => ((p[0] - M[0]) * n[0] + (p[1] - M[1]) * n[1]) * (near ? -1 : 1);
+  const out = [];
+  poly.forEach((a, i) => {
+    const b = poly[(i + 1) % poly.length];
+    const sa = side(a);
+    const sb = side(b);
+    if (sa >= 0) out.push(a);
+    if ((sa >= 0) !== (sb >= 0)) {
+      const k = sa / (sa - sb);
+      out.push([a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k]);
+    }
   });
-  // Kopian behåller sina id:n så att den ser likadan ut. Den ligger sist i sidan,
-  // så att sökningar på id hittar originalet först, och tas bort efter vändningen.
-  const copy = el.cloneNode(true);
-  copy.classList.add('leaf-copy');
-  const shade = document.createElement('div');
-  shade.className = 'leaf-shade';
-  shade.style.background = `linear-gradient(${dir > 0 ? 270 : 90}deg, rgb(42 20 24 / .4), transparent 70%)`;
-  leaf.append(copy, shade);
-  host.appendChild(leaf);
-  copy.scrollTop = el.scrollTop;
-  copy.scrollLeft = el.scrollLeft;
+  return out;
+}
+const polyCss = (pts) => (pts.length > 2 ? `polygon(${pts.map((p) => `${p[0].toFixed(1)}px ${p[1].toFixed(1)}px`).join(',')})` : 'polygon(0 0, 0 0, 0 0)');
+
+// Startar en vändning och returnerar { set(p), finish(commit) } där p går från 0 till 1.
+// change(dir) byter till den nya sidan direkt, change(-dir) byter tillbaka om man ångrar.
+function startTurn(el, host, dir, change) {
+  const r = el.getBoundingClientRect();
+  const hr = host.getBoundingClientRect();
+  const W = r.width;
+  const H = r.height;
+  const div = (cls) => { const d = document.createElement('div'); d.className = cls; return d; };
+  const scroll = [el.scrollTop, el.scrollLeft];
+  const copyOf = () => { const c = el.cloneNode(true); c.classList.add('turn-copy'); return c; };
+  const box = div('turn');
+  box.inert = true;
+  box.setAttribute('aria-hidden', 'true');
+  Object.assign(box.style, { left: `${r.left - hr.left + host.scrollLeft}px`, top: `${r.top - hr.top + host.scrollTop}px`, width: `${W}px`, height: `${H}px` });
+
+  const old = copyOf();
+  let page = old;
+  if (dir < 0) {
+    // Bakåt: den gamla sidan ligger kvar under tills den nya har lagts över
+    const base = div('turn-page');
+    base.appendChild(old);
+    box.appendChild(base);
+  }
+  change(dir);
+  if (dir < 0) page = copyOf();
+
+  const under = div('turn-under');
+  const underShade = div('turn-shade');
+  under.appendChild(underShade);
+  const front = div('turn-page');
+  front.appendChild(page);
+  const frontShade = div('turn-shade');
+  front.appendChild(frontShade);
+  const flapWrap = div('turn-flapwrap');
+  const flap = div('turn-flap');
+  const ghost = page.cloneNode(true);
+  ghost.classList.add('turn-ghost');
+  const flapShade = div('turn-shade');
+  flap.append(ghost, flapShade);
+  flapWrap.appendChild(flap);
+  box.append(under, front, flapWrap);
+  host.appendChild(box);
+  for (const c of [old, page, ghost]) { c.scrollTop = scroll[0]; c.scrollLeft = scroll[1]; }
   const clip = host.style.overflowX;
   host.style.overflowX = 'clip';
-  change();
-  const anim = leaf.animate([
-    { transform: 'perspective(1600px) rotateY(0deg)' },
-    { transform: `perspective(1600px) rotateY(${dir > 0 ? -95 : 95}deg)` },
-  ], { duration: 460, easing: 'cubic-bezier(.45, .05, .35, 1)' });
-  shade.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 460, easing: 'ease-in' });
-  anim.onfinish = anim.oncancel = () => {
-    leaf.remove();
-    host.style.overflowX = clip;
+
+  const D = Math.hypot(W, H) * 2;
+  // Lägger en skuggremsa vinkelrätt mot vikningen, med början vid vikningen
+  const orient = (s, M, a) => {
+    Object.assign(s.style, { left: `${M[0]}px`, top: `${M[1] - D}px`, width: `${D}px`, height: `${2 * D}px`, transform: `rotate(${a}rad)` });
+  };
+  function draw(t) {
+    if (t <= 0.001) {
+      front.style.clipPath = 'none';
+      under.style.display = flapWrap.style.display = 'none';
+      return;
+    }
+    under.style.display = flapWrap.style.display = '';
+    const C = [W, H];
+    // Hörnet vandrar till vänster och lyfts lite på vägen, som när man tar tag i det
+    const P = [W - 2 * W * t, H - H * 0.2 * Math.sin(Math.PI * t)];
+    const M = [(C[0] + P[0]) / 2, (C[1] + P[1]) / 2];
+    const len = Math.hypot(C[0] - P[0], C[1] - P[1]) || 1;
+    const n = [(C[0] - P[0]) / len, (C[1] - P[1]) / len];
+    const rect = [[0, 0], [W, 0], [W, H], [0, H]];
+    const near = polyCss(clipHalf(rect, M, n, true));
+    const far = polyCss(clipHalf(rect, M, n, false));
+    const a = Math.atan2(n[1], n[0]);
+    front.style.clipPath = near;
+    under.style.clipPath = far;
+    flap.style.clipPath = far;
+    const k = 2 * (M[0] * n[0] + M[1] * n[1]);
+    flap.style.transform = `matrix(${1 - 2 * n[0] * n[0]},${-2 * n[0] * n[1]},${-2 * n[0] * n[1]},${1 - 2 * n[1] * n[1]},${k * n[0]},${k * n[1]})`;
+    orient(underShade, M, a);
+    orient(flapShade, M, a);
+    orient(frontShade, M, a + Math.PI);
+    // Skuggorna är starkast mitt i vändningen, när sidan står högst
+    const lift = Math.sin(Math.PI * Math.min(1, t * 1.15));
+    underShade.style.opacity = String(0.4 + 0.6 * lift);
+    frontShade.style.opacity = String(lift);
+  }
+  const tOf = (p) => (dir > 0 ? p : 1 - p);
+  let p = 0;
+  draw(tOf(0));
+  let done = false;
+  return {
+    set(np) {
+      p = Math.max(0, Math.min(1, np));
+      draw(tOf(p));
+    },
+    finish(commit) {
+      if (done) return;
+      done = true;
+      const from = p;
+      const to = commit ? 1 : 0;
+      const dur = 140 + 520 * Math.abs(to - from);
+      const t0 = performance.now();
+      const ease = (x) => 1 - (1 - x) ** 3;
+      const tick = (now) => {
+        const x = Math.min(1, (now - t0) / dur);
+        p = from + (to - from) * ease(x);
+        draw(tOf(p));
+        if (x < 1) {
+          requestAnimationFrame(tick);
+          return;
+        }
+        if (!commit) change(-dir);
+        box.remove();
+        host.style.overflowX = clip;
+      };
+      requestAnimationFrame(tick);
+    },
   };
 }
-const turnDay = (dir, change) => turnPage($('sheet-panel'), $('day-sheet'), dir, change);
-const turnMonth = (dir) => turnPage($('cal-grid'), $('view-cal'), dir, () => shiftMonth(dir));
+
+const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+function turnPage(el, host, dir, change) {
+  if (reduceMotion()) {
+    change(dir);
+    return;
+  }
+  startTurn(el, host, dir, change).finish(true);
+}
+// Dagen byts direkt, så att den nya sidan finns under den som vänds
+function stepDayNow(dir) {
+  const k = shiftKey(current, dir);
+  showDay(k);
+  if (location.hash.startsWith('#/dag')) history.pushState(null, '', `#/dag/${k}`);
+}
+const turnDay = (dir) => turnPage($('sheet-panel'), $('day-sheet'), dir, stepDayNow);
+const turnMonth = (dir) => turnPage($('cal-grid'), $('view-cal'), dir, shiftMonth);
 
 // När svepningen har stannat byts dagen om den hamnat på en annan panel
 let snapTimer = null;
@@ -3240,7 +3363,7 @@ attachSwipe({
   skip: '.seg, #feed-panel, #month-stats, #media-panel, .layers',
   canNext: () => (calYear ? calMonth.slice(0, 4) < todayKey().slice(0, 4) : calMonth < todayKey().slice(0, 7)),
   step: (dir) => shiftMonth(dir),
-  turn: (dir) => turnMonth(dir),
+  curl: (dir) => startTurn($('cal-grid'), $('view-cal'), dir, shiftMonth),
 });
 
 $('cal-prev').addEventListener('click', () => turnMonth(-1));

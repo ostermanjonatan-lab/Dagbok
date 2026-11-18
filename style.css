@@ -1977,24 +1977,21 @@ body, body::before, .lock, .sheet-panel, .sheet-grab, .reader, .reader-head, .fi
 }
 .memory, .post { background-color: var(--page); background-image: var(--page-grain); }
 
-/* Sidan som vänds när man bläddrar */
+
+/* Sidan som vänds: framsida, den vikta baksidan och skuggorna */
 #view-cal { position: relative; }
-.leaf {
-  position: absolute;
-  z-index: 60;
-  overflow: hidden;
-  pointer-events: none;
-  background-color: #fbefe0;
-  background-image: var(--paper-tex);
-  background-attachment: fixed;
-  box-shadow: 0 0 22px rgb(42 20 24 / .2);
-  backface-visibility: hidden;
-  will-change: transform;
-}
-.leaf > .leaf-copy { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; margin: 0; overflow: hidden; animation: none; transform: none; }
-.leaf-shade { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
-/* Kopian ska stå still medan den vänds */
-.leaf-copy, .leaf-copy *, .leaf-copy *::before, .leaf-copy *::after { animation: none !important; transition: none !important; }
+.turn { position: absolute; z-index: 60; overflow: hidden; pointer-events: none; }
+.turn-page, .turn-under, .turn-flapwrap { position: absolute; inset: 0; overflow: hidden; }
+.turn-page { background-color: #fbefe0; background-image: var(--paper-tex); background-attachment: fixed; }
+.turn-flapwrap { overflow: visible; filter: drop-shadow(0 2px 7px rgb(42 20 24 / .35)); }
+.turn-flap { position: absolute; inset: 0; overflow: hidden; transform-origin: 0 0; background: #f6ead8; }
+.turn-copy, .turn-ghost { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; margin: 0; overflow: hidden; transform: none; }
+.turn-ghost { opacity: .09; }
+.turn-copy, .turn-copy *, .turn-copy *::before, .turn-copy *::after, .turn-ghost * { animation: none !important; transition: none !important; }
+.turn-shade { position: absolute; transform-origin: 0 50%; pointer-events: none; }
+.turn-under .turn-shade { background: linear-gradient(90deg, rgb(42 20 24 / .38), rgb(42 20 24 / .14) 22px, transparent 70px); }
+.turn-page .turn-shade { background: linear-gradient(90deg, rgb(42 20 24 / .16), transparent 46px); }
+.turn-flap .turn-shade { background: linear-gradient(90deg, rgb(255 255 255 / .6), rgb(255 255 255 / 0) 30px, rgb(42 20 24 / 0) 90px, rgb(42 20 24 / .13) 320px); }
 
 /* Bokmärket faller ner från överkanten och gungar till när dagen öppnas */
 .day-sheet:not([hidden]) .sheet-grab::before { transform-origin: top center; animation: ribbon-drop .75s .18s cubic-bezier(.3, 1.3, .5, 1) both; }
