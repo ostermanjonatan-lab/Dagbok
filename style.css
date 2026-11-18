@@ -2042,12 +2042,23 @@ body, body::before, .lock, .sheet-panel, .sheet-grab, .reader, .reader-head, .fi
 .reader .prose strong { color: rgb(52 54 60 / .92); }
 .reader .prose h2, .reader .prose h3 { line-height: 30.4px; }
 
-/* Under sidan i läsläget: humör, väder och personer med en ikon var */
-.reader-info { display: grid; gap: 9px; margin: 18px 2px 0; font-size: 15px; color: var(--text); }
-.ri { display: flex; align-items: center; gap: 11px; min-width: 0; }
-.ri svg { width: 22px; height: 22px; flex: none; fill: none; stroke: var(--muted); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-.ri-gap { width: 22px; flex: none; }
-.ri-num { display: grid; place-items: center; width: 22px; height: 22px; flex: none; border-radius: 50%; background: var(--m); color: var(--on-mood); font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.ri-num[data-m="1"], .ri-num[data-m="2"], .ri-num[data-m="9"], .ri-num[data-m="10"] { color: #fff; }
-.ri-mood b { font-weight: 600; }
-.ri-sub { margin-left: 4px; color: var(--muted); font-size: 14px; }
+/* Under sidan i läsläget: humöret som en liten färgskala, sedan väder och personer bredvid varandra */
+.reader-info { margin: 20px 2px 0; }
+.ri-mood { position: relative; height: 28px; margin: 0 13px; }
+.ri-track { position: absolute; left: -13px; right: -13px; top: 10px; height: 8px; border-radius: 4px; opacity: .55;
+  background: linear-gradient(90deg, var(--m1), var(--m2) 11%, var(--m3) 22%, var(--m4) 33%, var(--m5) 44%, var(--m6) 56%, var(--m7) 67%, var(--m8) 78%, var(--m9) 89%, var(--m10)); }
+.ri-thumb { position: absolute; top: 0; display: grid; place-items: center; width: 28px; height: 28px; margin-left: -14px; border-radius: 50%;
+  background: var(--m); color: var(--on-mood); font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums;
+  box-shadow: 0 0 0 3px var(--bg), 0 2px 6px rgb(42 20 24 / .22); }
+.ri-thumb[data-m="1"], .ri-thumb[data-m="2"], .ri-thumb[data-m="9"], .ri-thumb[data-m="10"] { color: #fff; }
+.ri-row { display: grid; gap: 14px; margin-top: 16px; }
+.ri-row.two { grid-template-columns: 1fr 1fr; }
+.ri-row.two .ri-cell + .ri-cell { padding-left: 14px; border-left: 1px solid var(--line); }
+.ri-cell { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.ri-wx { width: 34px; height: 34px; flex: none; fill: none; stroke: var(--text); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.ri-big { font-size: 24px; font-weight: 600; line-height: 1.1; letter-spacing: -.02em; }
+.ri-small { font-size: 13px; color: var(--muted); line-height: 1.3; }
+.ri-faces { display: flex; flex: none; }
+.ri-face { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: #fff; font-size: 13px; font-weight: 700; box-shadow: 0 0 0 2px var(--bg); }
+.ri-face + .ri-face { margin-left: -9px; }
+.ri-names { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }

@@ -2454,23 +2454,31 @@ function bigPhotos(list) {
       <img src="${escapeHtml(photoUrl(id))}" data-id="${escapeHtml(id)}" alt="" loading="lazy"></button>`).join('')}</div>`;
 }
 
-// Under sidan i läsläget: hur dagen kändes, vädret och vem man var med, med en ikon var
-const MOOD_WORDS = ['', 'En riktigt tung dag', 'En tung dag', 'En ganska tung dag', 'En lite tung dag', 'En sådär dag',
-  'En okej dag', 'En bra dag', 'En riktigt bra dag', 'En mycket bra dag', 'En toppendag'];
-const PEOPLE_SVG = '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.5" cy="9" r="2.6"/><path d="M15.5 14.2c2.3.1 4.1 1.6 4.8 4.3"/>';
+// Under sidan i läsläget: humöret som en liten skala, vädret och vem man var med
+const PEOPLE_TINTS = ['#c9826b', '#8aa37a', '#7f97b5', '#c2a35a', '#a58bb4', '#6fa3a0'];
 function readerInfo(e) {
-  const rows = [];
+  let html = '';
   if (e.mood) {
-    rows.push(`<div class="ri ri-mood"><span class="ri-num" data-m="${e.mood}" style="--m: var(--m${e.mood})">${e.mood}</span><span><b>${MOOD_WORDS[e.mood]}</b> <span class="ri-sub">${e.mood} av 10</span></span></div>`);
+    // Samma färgskala som när man väljer humör, med knappen där dagen hamnade
+    html += `<div class="ri-mood" role="img" aria-label="Humör ${e.mood} av 10"><span class="ri-track"></span>
+      <span class="ri-thumb" data-m="${e.mood}" style="--m: var(--m${e.mood}); left: ${((e.mood - 1) / 9) * 100}%">${e.mood}</span></div>`;
   }
+  const cells = [];
   if (e.weather) {
     const g = weatherGroup(e.weather.code);
-    rows.push(`<div class="ri">${g != null ? `<svg viewBox="0 0 24 24" aria-hidden="true">${WEATHER_ICONS[g]}</svg>` : '<span class="ri-gap"></span>'}<span>${escapeHtml(fmtWeather(e.weather))}</span></div>`);
+    const temp = e.weather.temp != null ? `${String(Math.round(e.weather.temp)).replace('-', '−')}°` : '';
+    const what = e.weather.code != null ? (e.weather.code === 0 ? 'Sol' : WEATHER_TEXT[e.weather.code] || '') : '';
+    cells.push(`<div class="ri-cell">${g != null ? `<svg class="ri-wx" viewBox="0 0 24 24" aria-hidden="true">${WEATHER_ICONS[g]}</svg>` : ''}
+      <div>${temp ? `<div class="ri-big">${temp}</div>` : ''}${what ? `<div class="ri-small">${escapeHtml(what)}</div>` : ''}</div></div>`);
   }
   if (e.people && e.people.length) {
-    rows.push(`<div class="ri"><svg viewBox="0 0 24 24" aria-hidden="true">${PEOPLE_SVG}</svg><span>Med ${escapeHtml(joinNames(e.people))}</span></div>`);
+    const tint = (n) => PEOPLE_TINTS[[...n].reduce((a, c) => a + c.charCodeAt(0), 0) % PEOPLE_TINTS.length];
+    const faces = e.people.slice(0, 4).map((n) => `<span class="ri-face" style="background: ${tint(n)}">${escapeHtml(n.charAt(0).toUpperCase())}</span>`).join('');
+    cells.push(`<div class="ri-cell"><div class="ri-faces" aria-hidden="true">${faces}</div>
+      <div class="ri-small ri-names">Med ${escapeHtml(joinNames(e.people))}</div></div>`);
   }
-  return rows.length ? `<div class="reader-info">${rows.join('')}</div>` : '';
+  if (cells.length) html += `<div class="ri-row${cells.length > 1 ? ' two' : ''}">${cells.join('')}</div>`;
+  return html ? `<div class="reader-info">${html}</div>` : '';
 }
 
 function readerPane(key) {
