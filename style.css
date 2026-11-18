@@ -2124,3 +2124,6 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .post .av-mk { position: absolute; inset: 0; top: 0; right: 0; z-index: 0; display: grid; place-items: center; width: auto; height: auto; border-radius: 50%; background: none; box-shadow: none; color: currentColor; opacity: .14; pointer-events: none; }
 .post .av-mk .mk-mini { width: 32px; height: 32px; }
 .post .avatar { isolation: isolate; }
+
+/* Cirkeln i flödet visar humörets siffra */
+.post .avatar { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }

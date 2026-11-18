@@ -2070,6 +2070,9 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .post .av-mk { position: absolute; inset: 0; top: 0; right: 0; z-index: 0; display: grid; place-items: center; width: auto; height: auto; border-radius: 50%; background: none; box-shadow: none; color: currentColor; opacity: .14; pointer-events: none; }
 .post .av-mk .mk-mini { width: 32px; height: 32px; }
 .post .avatar { isolation: isolate; }
+
+/* Cirkeln i flödet visar humörets siffra */
+.post .avatar { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
 </style>
 
 
@@ -4578,10 +4581,10 @@ function postHtml(k, e, today, searching) {
     foot.push(`<span class="pf-i" title="${escapeHtml(joinNames(e.people))}"><svg viewBox="0 0 24 24" aria-hidden="true">${PEOPLE_ICON}</svg>${e.people.length === 1 ? escapeHtml(e.people[0]) : `${e.people.length} personer`}</span>`);
   }
   return `<article class="post${k === today ? ' today' : ''}" data-key="${k}">
-    <span class="avatar${e.mood ? '' : ' none'}" data-m="${e.mood || ''}" style="--m: var(--m${e.mood || 6})" aria-hidden="true">${['sön', 'mån', 'tis', 'ons', 'tor', 'fre', 'lör'][d.getDay()]}${MARK_OF[e.mark] ? `<span class="av-mk">${miniIcon(e.mark)}</span>` : ''}</span>
+    <span class="avatar${e.mood ? '' : ' none'}" data-m="${e.mood || ''}" style="--m: var(--m${e.mood || 6})" aria-hidden="true">${e.mood || ''}${MARK_OF[e.mark] ? `<span class="av-mk">${miniIcon(e.mark)}</span>` : ''}</span>
     <div class="post-body">
       <header class="post-head">
-        <button type="button" class="when"${MARK_OF[e.mark] ? ` aria-label="${shortDate(k)}, ${MARK_OF[e.mark].label.toLowerCase()}"` : ''}>${shortDate(k)}</button>${rel ? `<span class="rel">· ${rel}</span>` : ''}
+        <button type="button" class="when"${MARK_OF[e.mark] ? ` aria-label="${WEEKDAY_CAP[d.getDay()]} ${shortDate(k)}, ${MARK_OF[e.mark].label.toLowerCase()}"` : ''}>${WEEKDAY_CAP[d.getDay()]} - ${shortDate(k)}</button>${rel ? `<span class="rel">· ${rel}</span>` : ''}
       </header>
       ${e.text ? `<div class="prose${searching ? '' : ' clamp'}">${Paper.mdToHtml(e.text)}</div>
       <button type="button" class="link more" hidden>Visa mer</button>` : ''}
@@ -4592,6 +4595,7 @@ function postHtml(k, e, today, searching) {
     </div>
   </article>`;
 }
+const WEEKDAY_CAP = ['Söndag', 'Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag'];
 const PEOPLE_ICON = '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.5" cy="9" r="2.6"/><path d="M15.5 14.2c2.3.1 4.1 1.6 4.8 4.3"/>';
 
 // Långa inlägg visas förkortade tills man trycker på Visa mer
