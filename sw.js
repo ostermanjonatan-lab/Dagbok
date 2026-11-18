@@ -1,5 +1,5 @@
 // Höj versionen när filerna ändras så att telefonen hämtar de nya.
-const CACHE = 'dagbok-v148';
+const CACHE = 'dagbok-v149';
 const FILES = [
   './',
   'index.html',
@@ -7,6 +7,10 @@ const FILES = [
   'editor.js',
   'app.js',
   'manifest.webmanifest',
+  'fonts/mali-400-latin.woff2',
+  'fonts/mali-400-latin-ext.woff2',
+  'fonts/mali-600-latin.woff2',
+  'fonts/mali-600-latin-ext.woff2',
   'icons/icon-192.png',
   'icons/icon-512.png',
   'icons/apple-touch-icon.png',
