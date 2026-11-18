@@ -2108,3 +2108,14 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .post-foot { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-top: 10px; font-size: 13px; color: var(--muted); }
 .pf-i { display: inline-flex; align-items: center; gap: 5px; min-width: 0; }
 .pf-i svg { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Ikonen för en särskild dag ligger stor och svag bakom siffran, som ett vattenmärke i rutan */
+.day .mk, .moods .day.has[style] .mk {
+  position: absolute; inset: 0; top: 0; right: 0; z-index: 0; display: grid; place-items: center;
+  padding: 0; border-radius: inherit; background: none; box-shadow: none; pointer-events: none;
+  color: var(--accent); opacity: .16;
+}
+.day .mk.auto, .moods .day.has[style] .mk.auto { color: var(--text); opacity: .1; }
+.moods .day.has[style] .mk, .moods .day.has[style] .mk.auto { color: var(--on-mood); opacity: .2; }
+.day .mk .mk-mini, .moods .day.has[style] .mk .mk-mini { width: 32px; height: 32px; }
+.day > span:first-child { position: relative; z-index: 1; }
