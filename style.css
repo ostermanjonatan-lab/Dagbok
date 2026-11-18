@@ -1976,3 +1976,25 @@ body, body::before, .lock, .sheet-panel, .sheet-grab, .reader, .reader-head, .fi
   background-clip: content-box;
 }
 .memory, .post { background-color: var(--page); background-image: var(--page-grain); }
+
+/* Formateringen ligger ovanför sidan, på samma rad som rubriken, så att sidan
+   bara är papper. Raden följer med när man scrollar i en lång text. */
+.text-head {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 6px;
+  background-color: #fbefe0;
+  background-image: var(--paper-tex);
+  background-attachment: fixed;
+}
+.sheet-panel .text-head { top: 44px; }
+.text-head > span { font-size: 14px; font-weight: 500; color: var(--muted); }
+.fmt { position: static; gap: 0; margin-right: -8px; padding: 0; border: 0; border-radius: 0; background: none; }
+.fmt button { min-width: 34px; height: 32px; padding: 0 8px; font-size: 14px; }
+.fmt button b, .fmt button i { font-size: 16px; }
+.writer .paper { border-radius: 10px; }
