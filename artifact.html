@@ -1987,6 +1987,16 @@ body, body::before, .lock, .sheet-panel, .sheet-grab, .reader, .reader-head, .fi
 }
 .reader .prose strong { color: rgb(52 54 60 / .92); }
 .reader .prose h2, .reader .prose h3 { line-height: 30.4px; }
+
+/* Under sidan i läsläget: humör, väder och personer med en ikon var */
+.reader-info { display: grid; gap: 9px; margin: 18px 2px 0; font-size: 15px; color: var(--text); }
+.ri { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.ri svg { width: 22px; height: 22px; flex: none; fill: none; stroke: var(--muted); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.ri-gap { width: 22px; flex: none; }
+.ri-num { display: grid; place-items: center; width: 22px; height: 22px; flex: none; border-radius: 50%; background: var(--m); color: var(--on-mood); font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.ri-num[data-m="1"], .ri-num[data-m="2"], .ri-num[data-m="9"], .ri-num[data-m="10"] { color: #fff; }
+.ri-mood b { font-weight: 600; }
+.ri-sub { margin-left: 4px; color: var(--muted); font-size: 14px; }
 </style>
 
 
@@ -5292,6 +5302,25 @@ function bigPhotos(list) {
       <img src="${escapeHtml(photoUrl(id))}" data-id="${escapeHtml(id)}" alt="" loading="lazy"></button>`).join('')}</div>`;
 }
 
+// Under sidan i läsläget: hur dagen kändes, vädret och vem man var med, med en ikon var
+const MOOD_WORDS = ['', 'En riktigt tung dag', 'En tung dag', 'En ganska tung dag', 'En lite tung dag', 'En sådär dag',
+  'En okej dag', 'En bra dag', 'En riktigt bra dag', 'En mycket bra dag', 'En toppendag'];
+const PEOPLE_SVG = '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.5" cy="9" r="2.6"/><path d="M15.5 14.2c2.3.1 4.1 1.6 4.8 4.3"/>';
+function readerInfo(e) {
+  const rows = [];
+  if (e.mood) {
+    rows.push(`<div class="ri ri-mood"><span class="ri-num" data-m="${e.mood}" style="--m: var(--m${e.mood})">${e.mood}</span><span><b>${MOOD_WORDS[e.mood]}</b> <span class="ri-sub">${e.mood} av 10</span></span></div>`);
+  }
+  if (e.weather) {
+    const g = weatherGroup(e.weather.code);
+    rows.push(`<div class="ri">${g != null ? `<svg viewBox="0 0 24 24" aria-hidden="true">${WEATHER_ICONS[g]}</svg>` : '<span class="ri-gap"></span>'}<span>${escapeHtml(fmtWeather(e.weather))}</span></div>`);
+  }
+  if (e.people && e.people.length) {
+    rows.push(`<div class="ri"><svg viewBox="0 0 24 24" aria-hidden="true">${PEOPLE_SVG}</svg><span>Med ${escapeHtml(joinNames(e.people))}</span></div>`);
+  }
+  return rows.length ? `<div class="reader-info">${rows.join('')}</div>` : '';
+}
+
 function readerPane(key) {
   const e = entries[key];
   if (!e) {
@@ -5300,17 +5329,14 @@ function readerPane(key) {
       <div class="reader-foot"><button type="button" class="link reader-edit" data-key="${key}">Skriv för den här dagen</button></div>
     </div>`;
   }
-  const meta = [];
-  if (e.mood) meta.push(`<span class="dot" style="--m: var(--m${e.mood})"></span>Humör ${e.mood}`);
-  if (e.weather) meta.push(escapeHtml(fmtWeather(e.weather)));
+  const info = readerInfo(e);
   return `<div class="reader-pane" data-key="${key}">${readerTop(key)}
     ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
+    ${info}
     ${(e.media || []).map((f, i) => `<button type="button" class="reader-film" data-key="${key}" data-i="${i}">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
       <div><div class="fs-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</div><div class="rf-title">${escapeHtml(f.title || 'Utan titel')}</div>${f.rating ? starsHtml(f.rating) : ''}</div></button>
 `).join('')}
     ${bigPhotos(e.photos)}
-    ${meta.length ? `<div class="meta">${meta.join(', ')}</div>` : ''}
-    ${e.people && e.people.length ? `<div class="meta">Taggade personer: ${escapeHtml(joinNames(e.people))}</div>` : ''}
     <div class="reader-foot"><button type="button" class="link reader-edit" data-key="${key}">Redigera dagen</button></div>
   </div>`;
 }

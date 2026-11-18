@@ -2041,3 +2041,13 @@ body, body::before, .lock, .sheet-panel, .sheet-grab, .reader, .reader-head, .fi
 }
 .reader .prose strong { color: rgb(52 54 60 / .92); }
 .reader .prose h2, .reader .prose h3 { line-height: 30.4px; }
+
+/* Under sidan i läsläget: humör, väder och personer med en ikon var */
+.reader-info { display: grid; gap: 9px; margin: 18px 2px 0; font-size: 15px; color: var(--text); }
+.ri { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.ri svg { width: 22px; height: 22px; flex: none; fill: none; stroke: var(--muted); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.ri-gap { width: 22px; flex: none; }
+.ri-num { display: grid; place-items: center; width: 22px; height: 22px; flex: none; border-radius: 50%; background: var(--m); color: var(--on-mood); font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.ri-num[data-m="1"], .ri-num[data-m="2"], .ri-num[data-m="9"], .ri-num[data-m="10"] { color: #fff; }
+.ri-mood b { font-weight: 600; }
+.ri-sub { margin-left: 4px; color: var(--muted); font-size: 14px; }
