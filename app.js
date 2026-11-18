@@ -68,6 +68,7 @@ function normalize(e) {
     photos: Array.isArray(e.photos) ? e.photos.filter((id) => /^[A-Za-z0-9_-]{8,64}$/.test(id)) : [],
     people: cleanPeople(e.people),
     mark: cleanMark(e.mark),
+    star: e.star === true,
     media: cleanMedia(e),
     updated: typeof e.updated === 'string' ? e.updated : new Date().toISOString(),
   };
@@ -267,6 +268,39 @@ $('set-accent').addEventListener('click', (ev) => {
   accent = b.dataset.accent;
   try { localStorage.setItem(ACCENT_KEY, accent); } catch {}
   applyAccent(accent);
+});
+
+// Sparar en dag som ändrats utanför skrivytan
+function saveEntry() { persist(); }
+/* Stjärnmärkta dagar. Stjärnan finns på korten i flödet och i läsläget, och sorteringen
+   Stjärnmärkta visar bara dem. */
+const STAR_SVG = '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>';
+function starBtn(key) {
+  const on = !!(entries[key] && entries[key].star);
+  return `<button type="button" class="star-btn${on ? ' on' : ''}" data-star="${key}" aria-pressed="${on}" aria-label="${on ? 'Ta bort stjärnan' : 'Stjärnmärk dagen'}"><svg viewBox="0 0 24 24" aria-hidden="true">${STAR_SVG}</svg></button>`;
+}
+function toggleStar(key) {
+  const e = entries[key];
+  if (!e) return;
+  e.star = !e.star;
+  e.updated = new Date().toISOString();
+  saveEntry(key);
+  buzz(8);
+  document.querySelectorAll(`.star-btn[data-star="${key}"]`).forEach((b) => {
+    b.classList.toggle('on', e.star);
+    b.setAttribute('aria-pressed', String(e.star));
+    b.setAttribute('aria-label', e.star ? 'Ta bort stjärnan' : 'Stjärnmärk dagen');
+    if (e.star) {
+      b.classList.remove('pop');
+      void b.offsetWidth;
+      b.classList.add('pop');
+    }
+  });
+  if (sortBy === 'starred') renderList();
+}
+document.addEventListener('click', (ev) => {
+  const b = ev.target.closest('.star-btn[data-star]');
+  if (b) toggleStar(b.dataset.star);
 });
 
 function renderSettings() {
@@ -511,6 +545,7 @@ function readForm() {
     mood: moodValue,
     moodScale: 10,
     mark: markValue,
+    star: !!(entries[current] && entries[current].star),
     photos: photos.slice(),
     people: people.slice(),
     media: currentMedia(),
@@ -1653,7 +1688,7 @@ function postHtml(k, e, today, searching) {
     <span class="avatar${e.mood ? '' : ' none'}" data-m="${e.mood || ''}" style="--m: var(--m${e.mood || 6})" aria-hidden="true">${e.mood || ''}${MARK_OF[e.mark] ? `<span class="av-mk">${miniIcon(e.mark)}</span>` : ''}</span>
     <div class="post-body">
       <header class="post-head">
-        <button type="button" class="when"${MARK_OF[e.mark] ? ` aria-label="${WEEKDAY_CAP[d.getDay()]} ${shortDate(k)}, ${MARK_OF[e.mark].label.toLowerCase()}"` : ''}>${WEEKDAY_CAP[d.getDay()]} - ${shortDate(k)}</button>${rel ? `<span class="rel">· ${rel}</span>` : ''}${special ? `<span class="special">${escapeHtml(special)}</span>` : ''}
+        <button type="button" class="when"${MARK_OF[e.mark] ? ` aria-label="${WEEKDAY_CAP[d.getDay()]} ${shortDate(k)}, ${MARK_OF[e.mark].label.toLowerCase()}"` : ''}>${WEEKDAY_CAP[d.getDay()]} - ${shortDate(k)}</button>${rel ? `<span class="rel">· ${rel}</span>` : ''}${starBtn(k)}${special ? `<span class="special">${escapeHtml(special)}</span>` : ''}
       </header>
       ${e.text ? `<div class="prose${searching ? '' : ' clamp'}">${Paper.mdToHtml(e.text)}</div>
       <button type="button" class="link more" hidden>Visa mer</button>` : ''}
@@ -2041,6 +2076,7 @@ const SORTS = {
   worst: { note: 'Sämsta dagarna i hela dagboken', keep: (e) => e.mood != null, order: (a, b) => entries[a].mood - entries[b].mood || (a < b ? 1 : -1) },
   words: { note: 'Mest skrivet i hela dagboken', keep: (e) => wordCount(e) > 0, order: (a, b) => wordCount(entries[b]) - wordCount(entries[a]) || (a < b ? 1 : -1) },
   photos: { note: 'Flest bilder i hela dagboken', keep: (e) => (e.photos || []).length > 0, order: (a, b) => entries[b].photos.length - entries[a].photos.length || (a < b ? 1 : -1) },
+  starred: { note: 'Stjärnmärkta dagar', keep: (e) => e.star, order: (a, b) => (a < b ? 1 : -1) },
 };
 const PAGE = 30;
 let sortBy = 'newest';
@@ -2105,13 +2141,14 @@ function renderList() {
       isAt && !at ? 'Känner inte igen det. Prova @julafton, @24 dec, @maj 2025, @lördagar eller @film.'
         : at && text ? 'Inga dagar matchar.'
         : at ? 'Inget skrivet då.'
+        : sortBy === 'starred' && !lt ? 'Inga stjärnmärkta dagar ännu.'
         : whole ? 'Inga dagar matchar.' : `Inget skrivet i ${monthFmt.format(parseKey(calMonth + '-01'))}.`
     }</p>${whole ? '' : moreMonthHtml()}`;
     return;
   }
 
   const today = todayKey();
-  const byMonth = (whole && (sortBy === 'newest' || sortBy === 'oldest')) || (!whole && !!feedFrom);
+  const byMonth = (whole && (sortBy === 'newest' || sortBy === 'oldest' || sortBy === 'starred')) || (!whole && !!feedFrom);
   let html = '';
   let month = '';
   // Månaderna i flödet visas hela, sökningar en sida i taget
@@ -2550,6 +2587,7 @@ function showReaderDay(key) {
   // Panelen för dagen läggs i mitten så att man kan svepa åt båda hållen
   track.scrollLeft = keys.indexOf(key) * track.clientWidth;
   $('reader-title').textContent = shortDate(key);
+  $('reader-star').innerHTML = entries[key] ? starBtn(key) : '';
   $('reader-prev').disabled = !prev;
   $('reader-next').disabled = !next;
 
