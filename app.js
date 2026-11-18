@@ -2473,9 +2473,15 @@ function readerInfo(e) {
   }
   if (e.people && e.people.length) {
     const tint = (n) => PEOPLE_TINTS[[...n].reduce((a, c) => a + c.charCodeAt(0), 0) % PEOPLE_TINTS.length];
-    const faces = e.people.slice(0, 4).map((n) => `<span class="ri-face" style="background: ${tint(n)}">${escapeHtml(n.charAt(0).toUpperCase())}</span>`).join('');
+    // Högst tre cirklar. Med fler personer blir den sista en cirkel med resten och texten antalet.
+    const many = e.people.length > 3;
+    const shown = many ? e.people.slice(0, 2) : e.people;
+    const rest = e.people.length - shown.length;
+    const faces = shown.map((n) => `<span class="ri-face" style="background: ${tint(n)}">${escapeHtml(n.charAt(0).toUpperCase())}</span>`).join('') +
+      (many ? `<span class="ri-face ri-more">+${rest}</span>` : '');
+    const names = many ? `${e.people.length} personer` : escapeHtml(joinNames(e.people));
     cells.push(`<div class="ri-cell"><div class="ri-faces" aria-hidden="true">${faces}</div>
-      <div class="ri-small ri-names">Med ${escapeHtml(joinNames(e.people))}</div></div>`);
+      <div class="ri-small ri-names" title="${escapeHtml(joinNames(e.people))}">Med ${names}</div></div>`);
   }
   if (cells.length) html += `<div class="ri-row${cells.length > 1 ? ' two' : ''}">${cells.join('')}</div>`;
   return html ? `<div class="reader-info">${html}</div>` : '';

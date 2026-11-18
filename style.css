@@ -2061,4 +2061,5 @@ body, body::before, .lock, .sheet-panel, .sheet-grab, .reader, .reader-head, .fi
 .ri-faces { display: flex; flex: none; }
 .ri-face { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: #fff; font-size: 13px; font-weight: 700; box-shadow: 0 0 0 2px var(--bg); }
 .ri-face + .ri-face { margin-left: -9px; }
+.ri-more { background: var(--line); color: var(--text); font-size: 12px; }
 .ri-names { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }

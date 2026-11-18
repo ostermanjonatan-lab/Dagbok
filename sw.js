@@ -1,5 +1,5 @@
 // Höj versionen när filerna ändras så att telefonen hämtar de nya.
-const CACHE = 'dagbok-v156';
+const CACHE = 'dagbok-v157';
 const FILES = [
   './',
   'index.html',

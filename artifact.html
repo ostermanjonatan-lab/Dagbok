@@ -2007,6 +2007,7 @@ body, body::before, .lock, .sheet-panel, .sheet-grab, .reader, .reader-head, .fi
 .ri-faces { display: flex; flex: none; }
 .ri-face { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: #fff; font-size: 13px; font-weight: 700; box-shadow: 0 0 0 2px var(--bg); }
 .ri-face + .ri-face { margin-left: -9px; }
+.ri-more { background: var(--line); color: var(--text); font-size: 12px; }
 .ri-names { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 </style>
 
@@ -5332,9 +5333,15 @@ function readerInfo(e) {
   }
   if (e.people && e.people.length) {
     const tint = (n) => PEOPLE_TINTS[[...n].reduce((a, c) => a + c.charCodeAt(0), 0) % PEOPLE_TINTS.length];
-    const faces = e.people.slice(0, 4).map((n) => `<span class="ri-face" style="background: ${tint(n)}">${escapeHtml(n.charAt(0).toUpperCase())}</span>`).join('');
+    // Högst tre cirklar. Med fler personer blir den sista en cirkel med resten och texten antalet.
+    const many = e.people.length > 3;
+    const shown = many ? e.people.slice(0, 2) : e.people;
+    const rest = e.people.length - shown.length;
+    const faces = shown.map((n) => `<span class="ri-face" style="background: ${tint(n)}">${escapeHtml(n.charAt(0).toUpperCase())}</span>`).join('') +
+      (many ? `<span class="ri-face ri-more">+${rest}</span>` : '');
+    const names = many ? `${e.people.length} personer` : escapeHtml(joinNames(e.people));
     cells.push(`<div class="ri-cell"><div class="ri-faces" aria-hidden="true">${faces}</div>
-      <div class="ri-small ri-names">Med ${escapeHtml(joinNames(e.people))}</div></div>`);
+      <div class="ri-small ri-names" title="${escapeHtml(joinNames(e.people))}">Med ${names}</div></div>`);
   }
   if (cells.length) html += `<div class="ri-row${cells.length > 1 ? ' two' : ''}">${cells.join('')}</div>`;
   return html ? `<div class="reader-info">${html}</div>` : '';
