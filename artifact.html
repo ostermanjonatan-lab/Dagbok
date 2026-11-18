@@ -2233,7 +2233,7 @@ body, body::before, .lock, .sheet-panel, .sheet-grab, .reader, .reader-head, .fi
         <form id="entry" autocomplete="off">
           <div class="field">
             <div class="text-head">
-              <span id="text-label">Vad som hänt idag</span>
+              <span id="text-label">Vad har hänt idag?</span>
               <div class="fmt" id="fmt" role="toolbar" aria-label="Formatering" aria-controls="f-text">
                 <button type="button" data-cmd="bold" aria-label="Fet"><b>B</b></button>
                 <button type="button" data-cmd="italic" aria-label="Kursiv"><i>K</i></button>
@@ -3312,7 +3312,7 @@ function showDay(key) {
   toggleDatePop(false);
   $('next').disabled = key >= today;
   $('to-today').hidden = key === today;
-  $('text-label').textContent = key === today ? 'Vad som hänt idag' : 'Vad som hände';
+  $('text-label').textContent = key === today ? 'Vad har hänt idag?' : 'Vad som hände';
   $('delete').hidden = !entries[key];
   setStatus(e ? savedText(e.updated) : '');
   renderMemories(key);

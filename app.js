@@ -530,7 +530,7 @@ function showDay(key) {
   toggleDatePop(false);
   $('next').disabled = key >= today;
   $('to-today').hidden = key === today;
-  $('text-label').textContent = key === today ? 'Vad som hänt idag' : 'Vad som hände';
+  $('text-label').textContent = key === today ? 'Vad har hänt idag?' : 'Vad som hände';
   $('delete').hidden = !e;
   setStatus(e ? savedText(e.updated) : '');
   renderMemories(key);
