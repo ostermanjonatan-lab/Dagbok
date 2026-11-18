@@ -2113,9 +2113,9 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .day .mk, .moods .day.has[style] .mk {
   position: absolute; inset: 0; top: 0; right: 0; z-index: 0; display: grid; place-items: center;
   padding: 0; border-radius: inherit; background: none; box-shadow: none; pointer-events: none;
-  color: var(--accent); opacity: .16;
+  color: var(--accent); opacity: .09;
 }
-.day .mk.auto, .moods .day.has[style] .mk.auto { color: var(--text); opacity: .1; }
-.moods .day.has[style] .mk, .moods .day.has[style] .mk.auto { color: var(--on-mood); opacity: .2; }
-.day .mk .mk-mini, .moods .day.has[style] .mk .mk-mini { width: 32px; height: 32px; }
+.day .mk.auto, .moods .day.has[style] .mk.auto { color: var(--text); opacity: .06; }
+.moods .day.has[style] .mk, .moods .day.has[style] .mk.auto { color: var(--on-mood); opacity: .12; }
+.day .mk .mk-mini, .moods .day.has[style] .mk .mk-mini { width: 42px; height: 42px; }
 .day > span:first-child { position: relative; z-index: 1; }
