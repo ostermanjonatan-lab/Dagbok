@@ -1946,7 +1946,8 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 :root {
   --paper-tex: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .34 0 0 0 0 .24 0 0 0 0 .13 .95 0 0 0 -.33'/%3E%3C/filter%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.04 .28' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .4 0 0 0 0 .3 0 0 0 0 .18 .8 0 0 0 -.36'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23g)' opacity='.75'/%3E%3Crect width='240' height='240' filter='url(%23f)' opacity='.3'/%3E%3C/svg%3E");
 }
-body, body::before, .lock, .sheet-panel, .sheet-grab, .reader, .reader-head, .film-dialog, .cal-head, .cal-top {
+/* Bara på dagen och i läsläget. Kalendern, flödet och resten har den släta bakgrunden. */
+.sheet-panel, .sheet-grab, .reader, .reader-head {
   /* Strukturen gör ytan mörkare, så grunden under är lite ljusare för att helheten ska bli samma ton */
   background-color: #fef3e4;
   background-image: var(--paper-tex);
