@@ -2464,6 +2464,7 @@ function readerInfo(e) {
       <span class="ri-thumb" data-m="${e.mood}" style="--m: var(--m${e.mood}); left: ${((e.mood - 1) / 9) * 100}%">${e.mood}</span></div>`;
   }
   const cells = [];
+  let all = '';
   if (e.weather) {
     const g = weatherGroup(e.weather.code);
     const temp = e.weather.temp != null ? `${String(Math.round(e.weather.temp)).replace('-', '−')}°` : '';
@@ -2480,10 +2481,12 @@ function readerInfo(e) {
     const faces = shown.map((n) => `<span class="ri-face" style="background: ${tint(n)}">${escapeHtml(n.charAt(0).toUpperCase())}</span>`).join('') +
       (many ? `<span class="ri-face ri-more">+${rest}</span>` : '');
     const names = many ? `${e.people.length} personer` : escapeHtml(joinNames(e.people));
-    cells.push(`<div class="ri-cell"><div class="ri-faces" aria-hidden="true">${faces}</div>
-      <div class="ri-small ri-names" title="${escapeHtml(joinNames(e.people))}">Med ${names}</div></div>`);
+    // Ett tryck visar alla som var med
+    cells.push(`<button type="button" class="ri-cell ri-people" aria-expanded="false"><span class="ri-faces" aria-hidden="true">${faces}</span>
+      <span class="ri-small ri-names">Med ${names}</span></button>`);
+    all = `<div class="ri-all" hidden>${e.people.map((n) => `<span class="ri-person"><span class="ri-face" style="background: ${tint(n)}">${escapeHtml(n.charAt(0).toUpperCase())}</span>${escapeHtml(n)}</span>`).join('')}</div>`;
   }
-  if (cells.length) html += `<div class="ri-row${cells.length > 1 ? ' two' : ''}">${cells.join('')}</div>`;
+  if (cells.length) html += `<div class="ri-row${cells.length > 1 ? ' two' : ''}">${cells.join('')}</div>${all}`;
   return html ? `<div class="reader-info">${html}</div>` : '';
 }
 
@@ -2598,6 +2601,15 @@ $('fv-edit').addEventListener('click', () => {
     go(`#/dag/${key}`);
     setTimeout(() => openFilm(i), 60);
   }
+});
+// Personerna i läsläget fälls ut och ihop
+document.addEventListener('click', (ev) => {
+  const b = ev.target.closest('.ri-people');
+  if (!b) return;
+  const list = b.closest('.reader-info').querySelector('.ri-all');
+  const open = list.hidden;
+  list.hidden = !open;
+  b.setAttribute('aria-expanded', String(open));
 });
 document.addEventListener('click', (ev) => {
   const b = ev.target.closest('.reader-film[data-i]');

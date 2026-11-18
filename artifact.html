@@ -2008,6 +2008,12 @@ body, body::before, .lock, .sheet-panel, .sheet-grab, .reader, .reader-head, .fi
 .ri-face { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: #fff; font-size: 13px; font-weight: 700; box-shadow: 0 0 0 2px var(--bg); }
 .ri-face + .ri-face { margin-left: -9px; }
 .ri-more { background: var(--line); color: var(--text); font-size: 12px; }
+.ri-people { padding: 4px 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.ri-people .ri-names { text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--muted) 45%, transparent); text-underline-offset: 3px; }
+.ri-all { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.ri-all[hidden] { display: none; }
+.ri-person { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; }
+.ri-person .ri-face { width: 24px; height: 24px; font-size: 11px; box-shadow: none; }
 .ri-names { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 </style>
 
@@ -5324,6 +5330,7 @@ function readerInfo(e) {
       <span class="ri-thumb" data-m="${e.mood}" style="--m: var(--m${e.mood}); left: ${((e.mood - 1) / 9) * 100}%">${e.mood}</span></div>`;
   }
   const cells = [];
+  let all = '';
   if (e.weather) {
     const g = weatherGroup(e.weather.code);
     const temp = e.weather.temp != null ? `${String(Math.round(e.weather.temp)).replace('-', '−')}°` : '';
@@ -5340,10 +5347,12 @@ function readerInfo(e) {
     const faces = shown.map((n) => `<span class="ri-face" style="background: ${tint(n)}">${escapeHtml(n.charAt(0).toUpperCase())}</span>`).join('') +
       (many ? `<span class="ri-face ri-more">+${rest}</span>` : '');
     const names = many ? `${e.people.length} personer` : escapeHtml(joinNames(e.people));
-    cells.push(`<div class="ri-cell"><div class="ri-faces" aria-hidden="true">${faces}</div>
-      <div class="ri-small ri-names" title="${escapeHtml(joinNames(e.people))}">Med ${names}</div></div>`);
+    // Ett tryck visar alla som var med
+    cells.push(`<button type="button" class="ri-cell ri-people" aria-expanded="false"><span class="ri-faces" aria-hidden="true">${faces}</span>
+      <span class="ri-small ri-names">Med ${names}</span></button>`);
+    all = `<div class="ri-all" hidden>${e.people.map((n) => `<span class="ri-person"><span class="ri-face" style="background: ${tint(n)}">${escapeHtml(n.charAt(0).toUpperCase())}</span>${escapeHtml(n)}</span>`).join('')}</div>`;
   }
-  if (cells.length) html += `<div class="ri-row${cells.length > 1 ? ' two' : ''}">${cells.join('')}</div>`;
+  if (cells.length) html += `<div class="ri-row${cells.length > 1 ? ' two' : ''}">${cells.join('')}</div>${all}`;
   return html ? `<div class="reader-info">${html}</div>` : '';
 }
 
@@ -5458,6 +5467,15 @@ $('fv-edit').addEventListener('click', () => {
     openSheet(key);
     openFilm(i);
   }
+});
+// Personerna i läsläget fälls ut och ihop
+document.addEventListener('click', (ev) => {
+  const b = ev.target.closest('.ri-people');
+  if (!b) return;
+  const list = b.closest('.reader-info').querySelector('.ri-all');
+  const open = list.hidden;
+  list.hidden = !open;
+  b.setAttribute('aria-expanded', String(open));
 });
 document.addEventListener('click', (ev) => {
   const b = ev.target.closest('.reader-film[data-i]');
