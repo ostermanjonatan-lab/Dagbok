@@ -1922,39 +1922,6 @@ body, body::before, .lock, .sheet-panel, .sheet-grab, .reader, .reader-head, .fi
   background-clip: content-box;
 }
 .memory, .post { background-color: var(--page); background-image: var(--page-grain); }
-
-
-/* Sidan som vänds: framsida, baksida, glans och skuggor. Bara transform och opacitet
-   ändras under vändningen. Papperet följer med sidan i stället för att ligga fast mot
-   skärmen, annars måste det ritas om i varje bild. */
-#view-cal { position: relative; }
-.turn { position: absolute; z-index: 60; overflow: hidden; pointer-events: none; perspective: 1500px; }
-.turn-sheet { position: absolute; inset: 0; transform-origin: 0 50%; transform-style: preserve-3d; will-change: transform; }
-.turn-face { position: absolute; inset: 0; overflow: hidden; backface-visibility: hidden; -webkit-backface-visibility: hidden; background-color: #fbefe0; background-image: var(--paper-tex); }
-.turn-base { backface-visibility: visible; }
-.turn-back { transform: rotateY(180deg); background-color: #f6ead8; }
-.turn-copy, .turn-ghost { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; margin: 0; overflow: hidden; transform: none; background-attachment: scroll !important; }
-.turn-copy *, .turn-ghost * { background-attachment: scroll !important; }
-/* Texten på framsidan skymtar spegelvänd genom baksidan */
-.turn-ghost { opacity: .08; transform: scaleX(-1); }
-.turn-copy, .turn-copy *, .turn-copy *::before, .turn-copy *::after, .turn-ghost * { animation: none !important; transition: none !important; }
-.turn-shade { position: absolute; inset: 0; pointer-events: none; opacity: 0; }
-.turn-front .turn-shade { background: linear-gradient(90deg, rgb(42 20 24 / .22), rgb(42 20 24 / .04) 35%, rgb(42 20 24 / .12) 100%); }
-.turn-back .turn-shade { background: linear-gradient(90deg, rgb(42 20 24 / .05), rgb(42 20 24 / .2)); }
-.turn-sheen { position: absolute; top: 0; bottom: 0; left: -40%; width: 60%; pointer-events: none; opacity: 0; background: linear-gradient(90deg, transparent, rgb(255 255 255 / .45) 50%, transparent); will-change: transform, opacity; }
-.turn-cast { position: absolute; inset: 0; pointer-events: none; opacity: 0; transform-origin: 0 50%; background: linear-gradient(90deg, rgb(42 20 24 / .32), rgb(42 20 24 / .1) 50%, transparent); will-change: transform, opacity; }
-.turn-base + .turn-cast { z-index: 1; }
-
-/* Bokmärket faller ner från överkanten och gungar till när dagen öppnas */
-.day-sheet:not([hidden]) .sheet-grab::before { transform-origin: top center; animation: ribbon-drop .75s .18s cubic-bezier(.3, 1.3, .5, 1) both; }
-@keyframes ribbon-drop {
-  0% { transform: translateY(-105%); }
-  55% { transform: translateY(6%) rotate(0deg); }
-  72% { transform: translateY(0) rotate(4deg); }
-  86% { transform: rotate(-2deg); }
-  100% { transform: none; }
-}
-@media (prefers-reduced-motion: reduce) { .day-sheet:not([hidden]) .sheet-grab::before { animation: none; } }
 </style>
 
 
@@ -3702,14 +3669,12 @@ function stepDay(dir) { showDay(shiftKey(current, dir)); }
 
 // area tar emot svepet, moving är det som följer fingret. canNext säger om det går
 // att gå framåt, step(dir) byter med -1 eller 1. Svep som börjar i skip räknas inte.
-function attachSwipe({ area, moving, skip, canNext, step, curl }) {
+function attachSwipe({ area, moving, skip, canNext, step }) {
   const reduce = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let sx = 0;
   let sy = 0;
   let dx = 0;
   let mode = null; // null, 'start', 'x' (sidled) eller 'y' (vanlig scroll)
-  let turning = null;   // pågående sidvändning som följer fingret
-  let turnDir = 0;
 
   function reset(animated) {
     moving.style.transition = animated && !reduce() ? 'transform .16s ease-out, opacity .16s' : 'none';
@@ -3736,14 +3701,6 @@ function attachSwipe({ area, moving, skip, canNext, step, curl }) {
     }
     if (mode !== 'x') return;
     dx = mx;
-    if (curl && !reduce() && (turning || !(dx < 0 && !canNext()))) {
-      if (!turning) {
-        turnDir = dx < 0 ? 1 : -1;
-        turning = curl(turnDir);
-      }
-      turning.set((turnDir > 0 ? -dx : dx) / area.clientWidth * 1.2);
-      return;
-    }
     const blocked = dx < 0 && !canNext();
     moving.style.transition = 'none';
     moving.style.transform = `translateX(${dx * (blocked ? 0.12 : 0.5)}px)`;
@@ -3756,11 +3713,6 @@ function attachSwipe({ area, moving, skip, canNext, step, curl }) {
       return;
     }
     mode = null;
-    if (turning) {
-      turning.finish((turnDir > 0 ? -dx : dx) > 70);
-      turning = null;
-      return;
-    }
     const dir = dx < 0 ? 1 : -1;
     if (Math.abs(dx) < 70 || (dir > 0 && !canNext())) {
       reset(true);
@@ -3793,11 +3745,10 @@ attachSwipe({
   skip: '.photos, .fmt, .date-pop, .people, .people-suggest, .film-list, .mood-slider',
   canNext: () => current < todayKey(),
   step: (dir) => stepDay(dir),
-  curl: (dir) => startTurn($('sheet-panel'), $('day-sheet'), dir, stepDayNow),
 });
 
-$('prev').addEventListener('click', () => turnDay(-1));
-$('next').addEventListener('click', () => turnDay(1));
+$('prev').addEventListener('click', () => showDay(shiftKey(current, -1)));
+$('next').addEventListener('click', () => showDay(shiftKey(current, 1)));
 $('to-today').addEventListener('click', () => showDay(todayKey()));
 // Egen datumväljare: en liten månadskalender under datumet
 let dpMonth = '';
@@ -5310,119 +5261,14 @@ function stepReader(dir) {
   const { prev, next } = writtenNeighbors(readerKey);
   const target = dir < 0 ? prev : next;
   if (!target) return;
-  // Pilarna vänder sidan, svep glider som förut
-  turnPage($('reader-track'), $('reader'), dir, () => showReaderDay(target));
-}
-
-/* Sidvändning som i en riktig bok. Sidan roteras i 3D kring ryggen till vänster, med
-   baksidan uppåt när den har vänts, en glans som sveper över och skugga på sidan under.
-   Bara transform och opacitet ändras under vändningen, så att det går mjukt även på telefon.
-   Framåt vänds den gamla sidan bort. Bakåt kommer den nya sidan tillbaka och läggs ovanpå. */
-
-// Startar en vändning och returnerar { set(p), finish(commit) } där p går från 0 till 1.
-// change(dir) byter till den nya sidan direkt, change(-dir) byter tillbaka om man ångrar.
-function startTurn(el, host, dir, change) {
-  const r = el.getBoundingClientRect();
-  const hr = host.getBoundingClientRect();
-  const div = (cls) => { const d = document.createElement('div'); d.className = cls; return d; };
-  const scroll = [el.scrollTop, el.scrollLeft];
-  const copyOf = () => { const c = el.cloneNode(true); c.classList.add('turn-copy'); return c; };
-  const box = div('turn');
-  box.inert = true;
-  box.setAttribute('aria-hidden', 'true');
-  Object.assign(box.style, { left: `${r.left - hr.left + host.scrollLeft}px`, top: `${r.top - hr.top + host.scrollTop}px`, width: `${r.width}px`, height: `${r.height}px` });
-
-  const old = copyOf();
-  if (dir < 0) {
-    // Bakåt: den gamla sidan ligger kvar under tills den nya har lagts över
-    const base = div('turn-face turn-base');
-    base.appendChild(old);
-    box.appendChild(base);
+  const pane = $('reader-track').querySelector(`[data-key="${target}"]`);
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (pane && !reduce) {
+    $('reader-track').scrollTo({ left: pane.offsetLeft, behavior: 'smooth' });
+  } else {
+    showReaderDay(target);
   }
-  change(dir);
-  const page = dir > 0 ? old : copyOf();
-
-  // Skuggan som sidan kastar på sidan under
-  const cast = div('turn-cast');
-  const sheet = div('turn-sheet');
-  const front = div('turn-face turn-front');
-  const frontShade = div('turn-shade');
-  const sheen = div('turn-sheen');
-  front.append(page, frontShade, sheen);
-  const back = div('turn-face turn-back');
-  const ghost = page.cloneNode(true);
-  ghost.classList.add('turn-ghost');
-  const backShade = div('turn-shade');
-  back.append(ghost, backShade);
-  sheet.append(front, back);
-  box.append(cast, sheet);
-  host.appendChild(box);
-  for (const c of [old, page, ghost]) { c.scrollTop = scroll[0]; c.scrollLeft = scroll[1]; }
-  const clip = host.style.overflowX;
-  host.style.overflowX = 'clip';
-
-  // p är hur långt vändningen har kommit. Vinkeln väljs så att sidans kant följer fingret.
-  function draw(p) {
-    const turned = dir > 0 ? p : 1 - p;
-    const deg = (Math.acos(1 - 2 * turned) * 180) / Math.PI;
-    const lift = Math.sin((deg * Math.PI) / 180);
-    sheet.style.transform = `rotateY(${-deg}deg)`;
-    frontShade.style.opacity = String(Math.min(1, deg / 90) * 0.9);
-    backShade.style.opacity = String(Math.max(0, 1 - (deg - 90) / 90));
-    sheen.style.transform = `translateX(${(1 - Math.min(1, deg / 90)) * 100}%)`;
-    sheen.style.opacity = String(lift * 0.9);
-    cast.style.opacity = String(lift);
-    cast.style.transform = `scaleX(${Math.max(0, Math.cos((deg * Math.PI) / 180))})`;
-  }
-  let p = 0;
-  draw(0);
-  let done = false;
-  return {
-    set(np) {
-      p = Math.max(0, Math.min(1, np));
-      draw(p);
-    },
-    finish(commit) {
-      if (done) return;
-      done = true;
-      const from = p;
-      const to = commit ? 1 : 0;
-      const dur = 160 + 480 * Math.abs(to - from);
-      const t0 = performance.now();
-      const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - (-2 * x + 2) ** 3 / 2);
-      const tick = (now) => {
-        const x = Math.min(1, (now - t0) / dur);
-        p = from + (to - from) * ease(x);
-        draw(p);
-        if (x < 1) {
-          requestAnimationFrame(tick);
-          return;
-        }
-        if (!commit) change(-dir);
-        box.remove();
-        host.style.overflowX = clip;
-      };
-      requestAnimationFrame(tick);
-    },
-  };
 }
-
-const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
-function turnPage(el, host, dir, change) {
-  if (reduceMotion()) {
-    change(dir);
-    return;
-  }
-  startTurn(el, host, dir, change).finish(true);
-}
-// Dagen byts direkt, så att den nya sidan finns under den som vänds
-function stepDayNow(dir) {
-  const k = shiftKey(current, dir);
-  showDay(k);
-  if (location.hash.startsWith('#/dag')) history.pushState(null, '', `#/dag/${k}`);
-}
-const turnDay = (dir) => turnPage($('sheet-panel'), $('day-sheet'), dir, stepDayNow);
-const turnMonth = (dir) => turnPage($('cal-grid'), $('view-cal'), dir, shiftMonth);
 
 // När svepningen har stannat byts dagen om den hamnat på en annan panel
 let snapTimer = null;
@@ -6105,11 +5951,10 @@ attachSwipe({
   skip: '.seg, #feed-panel, #month-stats, #media-panel, .layers',
   canNext: () => (calYear ? calMonth.slice(0, 4) < todayKey().slice(0, 4) : calMonth < todayKey().slice(0, 7)),
   step: (dir) => shiftMonth(dir),
-  curl: (dir) => startTurn($('cal-grid'), $('view-cal'), dir, shiftMonth),
 });
 
-$('cal-prev').addEventListener('click', () => turnMonth(-1));
-$('cal-next').addEventListener('click', () => turnMonth(1));
+$('cal-prev').addEventListener('click', () => shiftMonth(-1));
+$('cal-next').addEventListener('click', () => shiftMonth(1));
 $('cal-title').addEventListener('click', () => setYearView(!calYear));
 $('cal-mode').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-mode]');
