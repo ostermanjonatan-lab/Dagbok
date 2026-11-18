@@ -1956,7 +1956,8 @@ body, body::before, .lock, .sheet-panel, .sheet-grab, .reader, .reader-head, .fi
 /* När man skriver ser texten handskriven ut, med grått som blyerts. Bara i skrivytan,
    flödet och läsläget har det vanliga typsnittet. Mali hämtas från Google Fonts och ligger i appen. */
 :root { --hand: 'Mali', var(--system); --pencil: #5b5553; }
-.paper { font-family: var(--hand); font-size: 18px; line-height: 30.4px; color: var(--pencil); text-shadow: 0 0 .5px rgb(70 64 62 / .35); }
+/* Ingen textskugga: den gör varje tangenttryck märkbart långsammare i en lång text */
+.paper { font-family: var(--hand); font-size: 18px; line-height: 30.4px; color: var(--pencil); }
 .paper strong { color: #46403f; }
 </style>
 
@@ -2632,8 +2633,19 @@ const Paper = (() => {
         !el.querySelector('li, h2, h3'));
     }
 
+    // Knapparnas läge kollas högst en gång per bild. Kollen är dyr i en lång text och
+    // både input och selectionchange ber om den vid varje tangent.
+    let barQueued = false;
     function updateBar() {
-      if (!bar) return;
+      if (!bar || barQueued) return;
+      barQueued = true;
+      requestAnimationFrame(() => {
+        barQueued = false;
+        refreshBar();
+      });
+    }
+
+    function refreshBar() {
       for (const b of bar.querySelectorAll('button')) {
         const c = b.dataset.cmd;
         let on = false;
@@ -2707,6 +2719,8 @@ const Paper = (() => {
           exec(c);
         }
         changed();
+        // Efter ett tryck på en knapp syns läget direkt
+        refreshBar();
       });
     }
 
@@ -6229,6 +6243,7 @@ document.addEventListener('keydown', (ev) => {
   const paper = $('f-text');
   if (!vv || !paper) return;
   let raf = 0;
+  let lastKb = -1;
   function caretBottom() {
     const sel = window.getSelection();
     if (sel.rangeCount && paper.contains(sel.anchorNode)) {
@@ -6243,8 +6258,12 @@ document.addEventListener('keydown', (ev) => {
     raf = 0;
     if (document.activeElement !== paper || daySheet.hidden) return;
     // Tangentbordets höjd, så att arket kan rullas så långt att texten hamnar ovanför det
-    const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-    dayPanel.style.setProperty('--kb', `${Math.round(kb)}px`);
+    const kb = Math.round(Math.max(0, window.innerHeight - vv.height - vv.offsetTop));
+    // Sätts bara när höjden ändras, annars räknas stilen om för hela dagen vid varje tangent
+    if (kb !== lastKb) {
+      lastKb = kb;
+      dayPanel.style.setProperty('--kb', `${kb}px`);
+    }
     const visible = Math.min(vv.offsetTop + vv.height, dayPanel.getBoundingClientRect().bottom) - 24;
     const over = caretBottom() - visible;
     if (over > 0) dayPanel.scrollTop += over;
@@ -6257,7 +6276,10 @@ document.addEventListener('keydown', (ev) => {
     setTimeout(soon, 650);
   });
   paper.addEventListener('input', soon);
-  paper.addEventListener('blur', () => dayPanel.style.setProperty('--kb', '0px'));
+  paper.addEventListener('blur', () => {
+    lastKb = 0;
+    dayPanel.style.setProperty('--kb', '0px');
+  });
   vv.addEventListener('resize', soon);
   vv.addEventListener('scroll', soon);
 })();

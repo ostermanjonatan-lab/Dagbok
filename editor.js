@@ -260,8 +260,19 @@ const Paper = (() => {
         !el.querySelector('li, h2, h3'));
     }
 
+    // Knapparnas läge kollas högst en gång per bild. Kollen är dyr i en lång text och
+    // både input och selectionchange ber om den vid varje tangent.
+    let barQueued = false;
     function updateBar() {
-      if (!bar) return;
+      if (!bar || barQueued) return;
+      barQueued = true;
+      requestAnimationFrame(() => {
+        barQueued = false;
+        refreshBar();
+      });
+    }
+
+    function refreshBar() {
       for (const b of bar.querySelectorAll('button')) {
         const c = b.dataset.cmd;
         let on = false;
@@ -335,6 +346,8 @@ const Paper = (() => {
           exec(c);
         }
         changed();
+        // Efter ett tryck på en knapp syns läget direkt
+        refreshBar();
       });
     }
 

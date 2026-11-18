@@ -2010,5 +2010,6 @@ body, body::before, .lock, .sheet-panel, .sheet-grab, .reader, .reader-head, .fi
 /* När man skriver ser texten handskriven ut, med grått som blyerts. Bara i skrivytan,
    flödet och läsläget har det vanliga typsnittet. Mali hämtas från Google Fonts och ligger i appen. */
 :root { --hand: 'Mali', var(--system); --pencil: #5b5553; }
-.paper { font-family: var(--hand); font-size: 18px; line-height: 30.4px; color: var(--pencil); text-shadow: 0 0 .5px rgb(70 64 62 / .35); }
+/* Ingen textskugga: den gör varje tangenttryck märkbart långsammare i en lång text */
+.paper { font-family: var(--hand); font-size: 18px; line-height: 30.4px; color: var(--pencil); }
 .paper strong { color: #46403f; }

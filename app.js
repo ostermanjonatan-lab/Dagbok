@@ -3467,6 +3467,7 @@ document.addEventListener('keydown', (ev) => {
   const paper = $('f-text');
   if (!vv || !paper) return;
   let raf = 0;
+  let lastKb = -1;
   function caretBottom() {
     const sel = window.getSelection();
     if (sel.rangeCount && paper.contains(sel.anchorNode)) {
@@ -3481,8 +3482,12 @@ document.addEventListener('keydown', (ev) => {
     raf = 0;
     if (document.activeElement !== paper || daySheet.hidden) return;
     // Tangentbordets höjd, så att arket kan rullas så långt att texten hamnar ovanför det
-    const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-    dayPanel.style.setProperty('--kb', `${Math.round(kb)}px`);
+    const kb = Math.round(Math.max(0, window.innerHeight - vv.height - vv.offsetTop));
+    // Sätts bara när höjden ändras, annars räknas stilen om för hela dagen vid varje tangent
+    if (kb !== lastKb) {
+      lastKb = kb;
+      dayPanel.style.setProperty('--kb', `${kb}px`);
+    }
     const visible = Math.min(vv.offsetTop + vv.height, dayPanel.getBoundingClientRect().bottom) - 24;
     const over = caretBottom() - visible;
     if (over > 0) dayPanel.scrollTop += over;
@@ -3495,7 +3500,10 @@ document.addEventListener('keydown', (ev) => {
     setTimeout(soon, 650);
   });
   paper.addEventListener('input', soon);
-  paper.addEventListener('blur', () => dayPanel.style.setProperty('--kb', '0px'));
+  paper.addEventListener('blur', () => {
+    lastKb = 0;
+    dayPanel.style.setProperty('--kb', '0px');
+  });
   vv.addEventListener('resize', soon);
   vv.addEventListener('scroll', soon);
 })();
