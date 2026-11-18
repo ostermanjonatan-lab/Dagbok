@@ -2119,3 +2119,8 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .moods .day.has[style] .mk, .moods .day.has[style] .mk.auto { color: var(--on-mood); opacity: .12; }
 .day .mk .mk-mini, .moods .day.has[style] .mk .mk-mini { width: 42px; height: 42px; }
 .day > span:first-child { position: relative; z-index: 1; }
+
+/* Märket i flödet ligger som ett svagt vattenmärke i cirkeln, bakom veckodagen, som i kalendern */
+.post .av-mk { position: absolute; inset: 0; top: 0; right: 0; z-index: 0; display: grid; place-items: center; width: auto; height: auto; border-radius: 50%; background: none; box-shadow: none; color: currentColor; opacity: .14; pointer-events: none; }
+.post .av-mk .mk-mini { width: 32px; height: 32px; }
+.post .avatar { isolation: isolate; }
