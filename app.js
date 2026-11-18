@@ -740,7 +740,7 @@ function stepDay(dir) { go(`#/dag/${shiftKey(current, dir)}`); }
 
 // area tar emot svepet, moving är det som följer fingret. canNext säger om det går
 // att gå framåt, step(dir) byter med -1 eller 1. Svep som börjar i skip räknas inte.
-function attachSwipe({ area, moving, skip, canNext, step }) {
+function attachSwipe({ area, moving, skip, canNext, step, turn }) {
   const reduce = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let sx = 0;
   let sy = 0;
@@ -789,9 +789,9 @@ function attachSwipe({ area, moving, skip, canNext, step }) {
       reset(true);
       return;
     }
-    if (reduce()) {
+    if (reduce() || turn) {
       reset(false);
-      step(dir);
+      (turn || step)(dir);
       return;
     }
     // Glid ut åt samma håll som fingret, byt och glid in från andra sidan
@@ -816,10 +816,11 @@ attachSwipe({
   skip: '.photos, .fmt, .date-pop, .people, .people-suggest, .film-list, .mood-slider',
   canNext: () => current < todayKey(),
   step: (dir) => stepDay(dir),
+  turn: (dir) => turnDay(dir, () => stepDay(dir)),
 });
 
-$('prev').addEventListener('click', () => go(`#/dag/${shiftKey(current, -1)}`));
-$('next').addEventListener('click', () => go(`#/dag/${shiftKey(current, 1)}`));
+$('prev').addEventListener('click', () => turnDay(-1, () => go(`#/dag/${shiftKey(current, -1)}`)));
+$('next').addEventListener('click', () => turnDay(1, () => go(`#/dag/${shiftKey(current, 1)}`)));
 $('to-today').addEventListener('click', () => go('#/dag'));
 // Egen datumväljare: en liten månadskalender under datumet
 let dpMonth = '';
@@ -2507,14 +2508,56 @@ function stepReader(dir) {
   const { prev, next } = writtenNeighbors(readerKey);
   const target = dir < 0 ? prev : next;
   if (!target) return;
-  const pane = $('reader-track').querySelector(`[data-key="${target}"]`);
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (pane && !reduce) {
-    $('reader-track').scrollTo({ left: pane.offsetLeft, behavior: 'smooth' });
-  } else {
-    showReaderDay(target);
-  }
+  // Pilarna vänder sidan, svep glider som förut
+  turnPage($('reader-track'), $('reader'), dir, () => showReaderDay(target));
 }
+
+/* Bläddra som i en bok. En kopia av den gamla sidan läggs ovanpå och vänds bort kring
+   ryggen, medan den nya sidan redan ligger under. Framåt vänds den åt vänster, bakåt åt höger. */
+function turnPage(el, host, dir, change) {
+  if (!el.animate || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    change();
+    return;
+  }
+  const r = el.getBoundingClientRect();
+  const h = host.getBoundingClientRect();
+  const leaf = document.createElement('div');
+  leaf.className = 'leaf';
+  leaf.inert = true;
+  leaf.setAttribute('aria-hidden', 'true');
+  Object.assign(leaf.style, {
+    left: `${r.left - h.left + host.scrollLeft}px`,
+    top: `${r.top - h.top + host.scrollTop}px`,
+    width: `${r.width}px`,
+    height: `${r.height}px`,
+    transformOrigin: dir > 0 ? 'left center' : 'right center',
+  });
+  // Kopian behåller sina id:n så att den ser likadan ut. Den ligger sist i sidan,
+  // så att sökningar på id hittar originalet först, och tas bort efter vändningen.
+  const copy = el.cloneNode(true);
+  copy.classList.add('leaf-copy');
+  const shade = document.createElement('div');
+  shade.className = 'leaf-shade';
+  shade.style.background = `linear-gradient(${dir > 0 ? 270 : 90}deg, rgb(42 20 24 / .4), transparent 70%)`;
+  leaf.append(copy, shade);
+  host.appendChild(leaf);
+  copy.scrollTop = el.scrollTop;
+  copy.scrollLeft = el.scrollLeft;
+  const clip = host.style.overflowX;
+  host.style.overflowX = 'clip';
+  change();
+  const anim = leaf.animate([
+    { transform: 'perspective(1600px) rotateY(0deg)' },
+    { transform: `perspective(1600px) rotateY(${dir > 0 ? -95 : 95}deg)` },
+  ], { duration: 460, easing: 'cubic-bezier(.45, .05, .35, 1)' });
+  shade.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 460, easing: 'ease-in' });
+  anim.onfinish = anim.oncancel = () => {
+    leaf.remove();
+    host.style.overflowX = clip;
+  };
+}
+const turnDay = (dir, change) => turnPage($('sheet-panel'), $('day-sheet'), dir, change);
+const turnMonth = (dir) => turnPage($('cal-grid'), $('view-cal'), dir, () => shiftMonth(dir));
 
 // När svepningen har stannat byts dagen om den hamnat på en annan panel
 let snapTimer = null;
@@ -3197,10 +3240,11 @@ attachSwipe({
   skip: '.seg, #feed-panel, #month-stats, #media-panel, .layers',
   canNext: () => (calYear ? calMonth.slice(0, 4) < todayKey().slice(0, 4) : calMonth < todayKey().slice(0, 7)),
   step: (dir) => shiftMonth(dir),
+  turn: (dir) => turnMonth(dir),
 });
 
-$('cal-prev').addEventListener('click', () => shiftMonth(-1));
-$('cal-next').addEventListener('click', () => shiftMonth(1));
+$('cal-prev').addEventListener('click', () => turnMonth(-1));
+$('cal-next').addEventListener('click', () => turnMonth(1));
 $('cal-title').addEventListener('click', () => setYearView(!calYear));
 $('cal-mode').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-mode]');
