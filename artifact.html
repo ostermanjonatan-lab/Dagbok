@@ -1960,6 +1960,33 @@ body, body::before, .lock, .sheet-panel, .sheet-grab, .reader, .reader-head, .fi
 /* Ingen textskugga: den gör varje tangenttryck märkbart långsammare i en lång text */
 .paper { font-family: var(--hand); font-size: 18px; line-height: 30.4px; color: var(--pencil); caret-color: #55575d; }
 .paper strong { color: rgb(52 54 60 / .92); }
+
+/* Läsläget visar dagen på samma boksida som när man skriver: elfenbensvitt papper med
+   linjer, skugga mot ryggen, sidbunt i kanten och blyertstext */
+.reader .prose {
+  padding: 14px 16px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-family: var(--hand);
+  font-size: 18px;
+  line-height: 30.4px;
+  color: var(--pencil);
+  background-color: var(--page);
+  background-image:
+    linear-gradient(to bottom, transparent 29.4px, var(--rule, color-mix(in srgb, var(--line) 80%, transparent)) 0),
+    linear-gradient(90deg, rgb(90 55 30 / .16), rgb(90 55 30 / .05) 12px, transparent 32px),
+    var(--page-grain);
+  background-size: 100% 30.4px, auto, auto;
+  background-repeat: repeat-y, no-repeat, repeat;
+  background-origin: content-box, padding-box, padding-box;
+  background-clip: content-box, padding-box, padding-box;
+  box-shadow:
+    2px 2px 0 -1px var(--page), 2px 2px 0 0 var(--line),
+    4px 4px 0 -1px var(--page), 4px 4px 0 0 var(--line),
+    0 6px 14px -8px rgb(42 20 24 / .25);
+}
+.reader .prose strong { color: rgb(52 54 60 / .92); }
+.reader .prose h2, .reader .prose h3 { line-height: 30.4px; }
 </style>
 
 
