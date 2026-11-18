@@ -2527,131 +2527,86 @@ function stepReader(dir) {
   turnPage($('reader-track'), $('reader'), dir, () => showReaderDay(target));
 }
 
-/* Sidvändning som i en riktig bok. Sidans nedre hörn viks upp längs en linje som vandrar
-   över sidan. Det vikta ligger spegelvänt över sidan med baksidan uppåt, där texten skymtar
-   igenom, och den nya sidan syns under med en skugga vid vikningen. Framåt vänds den gamla
-   sidan bort åt vänster. Bakåt kommer den nya sidan tillbaka från vänster och läggs ovanpå. */
-
-// Den del av en månghörning som ligger på ena sidan av en linje genom M med normalen n
-function clipHalf(poly, M, n, near) {
-  const side = (p) => ((p[0] - M[0]) * n[0] + (p[1] - M[1]) * n[1]) * (near ? -1 : 1);
-  const out = [];
-  poly.forEach((a, i) => {
-    const b = poly[(i + 1) % poly.length];
-    const sa = side(a);
-    const sb = side(b);
-    if (sa >= 0) out.push(a);
-    if ((sa >= 0) !== (sb >= 0)) {
-      const k = sa / (sa - sb);
-      out.push([a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k]);
-    }
-  });
-  return out;
-}
-const polyCss = (pts) => (pts.length > 2 ? `polygon(${pts.map((p) => `${p[0].toFixed(1)}px ${p[1].toFixed(1)}px`).join(',')})` : 'polygon(0 0, 0 0, 0 0)');
+/* Sidvändning som i en riktig bok. Sidan roteras i 3D kring ryggen till vänster, med
+   baksidan uppåt när den har vänts, en glans som sveper över och skugga på sidan under.
+   Bara transform och opacitet ändras under vändningen, så att det går mjukt även på telefon.
+   Framåt vänds den gamla sidan bort. Bakåt kommer den nya sidan tillbaka och läggs ovanpå. */
 
 // Startar en vändning och returnerar { set(p), finish(commit) } där p går från 0 till 1.
 // change(dir) byter till den nya sidan direkt, change(-dir) byter tillbaka om man ångrar.
 function startTurn(el, host, dir, change) {
   const r = el.getBoundingClientRect();
   const hr = host.getBoundingClientRect();
-  const W = r.width;
-  const H = r.height;
   const div = (cls) => { const d = document.createElement('div'); d.className = cls; return d; };
   const scroll = [el.scrollTop, el.scrollLeft];
   const copyOf = () => { const c = el.cloneNode(true); c.classList.add('turn-copy'); return c; };
   const box = div('turn');
   box.inert = true;
   box.setAttribute('aria-hidden', 'true');
-  Object.assign(box.style, { left: `${r.left - hr.left + host.scrollLeft}px`, top: `${r.top - hr.top + host.scrollTop}px`, width: `${W}px`, height: `${H}px` });
+  Object.assign(box.style, { left: `${r.left - hr.left + host.scrollLeft}px`, top: `${r.top - hr.top + host.scrollTop}px`, width: `${r.width}px`, height: `${r.height}px` });
 
   const old = copyOf();
-  let page = old;
   if (dir < 0) {
     // Bakåt: den gamla sidan ligger kvar under tills den nya har lagts över
-    const base = div('turn-page');
+    const base = div('turn-face turn-base');
     base.appendChild(old);
     box.appendChild(base);
   }
   change(dir);
-  if (dir < 0) page = copyOf();
+  const page = dir > 0 ? old : copyOf();
 
-  const under = div('turn-under');
-  const underShade = div('turn-shade');
-  under.appendChild(underShade);
-  const front = div('turn-page');
-  front.appendChild(page);
+  // Skuggan som sidan kastar på sidan under
+  const cast = div('turn-cast');
+  const sheet = div('turn-sheet');
+  const front = div('turn-face turn-front');
   const frontShade = div('turn-shade');
-  front.appendChild(frontShade);
-  const flapWrap = div('turn-flapwrap');
-  const flap = div('turn-flap');
+  const sheen = div('turn-sheen');
+  front.append(page, frontShade, sheen);
+  const back = div('turn-face turn-back');
   const ghost = page.cloneNode(true);
   ghost.classList.add('turn-ghost');
-  const flapShade = div('turn-shade');
-  flap.append(ghost, flapShade);
-  flapWrap.appendChild(flap);
-  box.append(under, front, flapWrap);
+  const backShade = div('turn-shade');
+  back.append(ghost, backShade);
+  sheet.append(front, back);
+  box.append(cast, sheet);
   host.appendChild(box);
   for (const c of [old, page, ghost]) { c.scrollTop = scroll[0]; c.scrollLeft = scroll[1]; }
   const clip = host.style.overflowX;
   host.style.overflowX = 'clip';
 
-  const D = Math.hypot(W, H) * 2;
-  // Lägger en skuggremsa vinkelrätt mot vikningen, med början vid vikningen
-  const orient = (s, M, a) => {
-    Object.assign(s.style, { left: `${M[0]}px`, top: `${M[1] - D}px`, width: `${D}px`, height: `${2 * D}px`, transform: `rotate(${a}rad)` });
-  };
-  function draw(t) {
-    if (t <= 0.001) {
-      front.style.clipPath = 'none';
-      under.style.display = flapWrap.style.display = 'none';
-      return;
-    }
-    under.style.display = flapWrap.style.display = '';
-    const C = [W, H];
-    // Hörnet vandrar till vänster och lyfts lite på vägen, som när man tar tag i det
-    const P = [W - 2 * W * t, H - H * 0.2 * Math.sin(Math.PI * t)];
-    const M = [(C[0] + P[0]) / 2, (C[1] + P[1]) / 2];
-    const len = Math.hypot(C[0] - P[0], C[1] - P[1]) || 1;
-    const n = [(C[0] - P[0]) / len, (C[1] - P[1]) / len];
-    const rect = [[0, 0], [W, 0], [W, H], [0, H]];
-    const near = polyCss(clipHalf(rect, M, n, true));
-    const far = polyCss(clipHalf(rect, M, n, false));
-    const a = Math.atan2(n[1], n[0]);
-    front.style.clipPath = near;
-    under.style.clipPath = far;
-    flap.style.clipPath = far;
-    const k = 2 * (M[0] * n[0] + M[1] * n[1]);
-    flap.style.transform = `matrix(${1 - 2 * n[0] * n[0]},${-2 * n[0] * n[1]},${-2 * n[0] * n[1]},${1 - 2 * n[1] * n[1]},${k * n[0]},${k * n[1]})`;
-    orient(underShade, M, a);
-    orient(flapShade, M, a);
-    orient(frontShade, M, a + Math.PI);
-    // Skuggorna är starkast mitt i vändningen, när sidan står högst
-    const lift = Math.sin(Math.PI * Math.min(1, t * 1.15));
-    underShade.style.opacity = String(0.4 + 0.6 * lift);
-    frontShade.style.opacity = String(lift);
+  // p är hur långt vändningen har kommit. Vinkeln väljs så att sidans kant följer fingret.
+  function draw(p) {
+    const turned = dir > 0 ? p : 1 - p;
+    const deg = (Math.acos(1 - 2 * turned) * 180) / Math.PI;
+    const lift = Math.sin((deg * Math.PI) / 180);
+    sheet.style.transform = `rotateY(${-deg}deg)`;
+    frontShade.style.opacity = String(Math.min(1, deg / 90) * 0.9);
+    backShade.style.opacity = String(Math.max(0, 1 - (deg - 90) / 90));
+    sheen.style.transform = `translateX(${(1 - Math.min(1, deg / 90)) * 100}%)`;
+    sheen.style.opacity = String(lift * 0.9);
+    cast.style.opacity = String(lift);
+    cast.style.transform = `scaleX(${Math.max(0, Math.cos((deg * Math.PI) / 180))})`;
   }
-  const tOf = (p) => (dir > 0 ? p : 1 - p);
   let p = 0;
-  draw(tOf(0));
+  draw(0);
   let done = false;
   return {
     set(np) {
       p = Math.max(0, Math.min(1, np));
-      draw(tOf(p));
+      draw(p);
     },
     finish(commit) {
       if (done) return;
       done = true;
       const from = p;
       const to = commit ? 1 : 0;
-      const dur = 140 + 520 * Math.abs(to - from);
+      const dur = 160 + 480 * Math.abs(to - from);
       const t0 = performance.now();
-      const ease = (x) => 1 - (1 - x) ** 3;
+      const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - (-2 * x + 2) ** 3 / 2);
       const tick = (now) => {
         const x = Math.min(1, (now - t0) / dur);
         p = from + (to - from) * ease(x);
-        draw(tOf(p));
+        draw(p);
         if (x < 1) {
           requestAnimationFrame(tick);
           return;
