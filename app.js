@@ -3326,7 +3326,7 @@ function renderMediaAll() {
     aria-label="${escapeHtml(f.title || 'Utan titel')}${id ? '' : `, ${shortDate(k)}`}${f.rating ? `, betyg ${f.rating} av 10` : ''}">
     ${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : `<span class="mt-blank">${escapeHtml(f.title || 'Utan titel')}</span>`}
     <span class="mt-title">${escapeHtml(f.title || 'Utan titel')}</span>${f.rating ? starsHtml(f.rating) : ''}</button>`).join('')
-    : rows.map(([k, f, i, id]) => `<button type="button" class="media-row" data-key="${k}" data-i="${i}"${id ? ` data-shelf="${id}"` : ''}>
+    : rows.map(([k, f, i, id]) => `<button type="button" class="media-row${all ? ` kind-${f.kind}` : ''}" data-key="${k}" data-i="${i}"${id ? ` data-shelf="${id}"` : ''}>
     ${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : '<span class="mr-blank" aria-hidden="true"></span>'}
     <span class="fs-text"><span class="fs-title">${escapeHtml(f.title || 'Utan titel')}</span>
       <span class="mr-meta">${all ? `<span class="mr-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</span>` : ''}${id ? '' : shortDate(k)}${f.rating ? starsHtml(f.rating) : ''}</span></span></button>`).join('');

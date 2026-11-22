@@ -1594,7 +1594,14 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
 .media-row img { object-fit: cover; }
 .mr-blank { background: color-mix(in srgb, var(--accent) 8%, var(--line)); }
 .mr-meta { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
-.mr-kind { display: inline-flex; align-items: center; gap: 4px; }
+.mr-kind { display: inline-flex; align-items: center; gap: 4px; color: var(--kc); font-weight: 600; }
+/* Under Alla har varje typ en egen färg: en kant till vänster och färgad typ */
+.kind-film { --kc: #b0453f; }
+.kind-serie { --kc: #3f6fa8; }
+.kind-bok { --kc: #4f8a5b; }
+.kind-spel { --kc: #c0712a; }
+.kind-forestallning { --kc: #8a5a9e; }
+.media-row[class*="kind-"] { border-left: 4px solid var(--kc); padding-left: 5px; }
 .seg svg path[stroke-linejoin] { stroke-width: 1.7; }
 /* Läsrutan för en film, serie eller bok */
 .fv-top { display: flex; gap: 14px; align-items: flex-start; }
@@ -6299,7 +6306,7 @@ function renderMediaAll() {
     aria-label="${escapeHtml(f.title || 'Utan titel')}${id ? '' : `, ${shortDate(k)}`}${f.rating ? `, betyg ${f.rating} av 10` : ''}">
     ${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : `<span class="mt-blank">${escapeHtml(f.title || 'Utan titel')}</span>`}
     <span class="mt-title">${escapeHtml(f.title || 'Utan titel')}</span>${f.rating ? starsHtml(f.rating) : ''}</button>`).join('')
-    : rows.map(([k, f, i, id]) => `<button type="button" class="media-row" data-key="${k}" data-i="${i}"${id ? ` data-shelf="${id}"` : ''}>
+    : rows.map(([k, f, i, id]) => `<button type="button" class="media-row${all ? ` kind-${f.kind}` : ''}" data-key="${k}" data-i="${i}"${id ? ` data-shelf="${id}"` : ''}>
     ${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : '<span class="mr-blank" aria-hidden="true"></span>'}
     <span class="fs-text"><span class="fs-title">${escapeHtml(f.title || 'Utan titel')}</span>
       <span class="mr-meta">${all ? `<span class="mr-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</span>` : ''}${id ? '' : shortDate(k)}${f.rating ? starsHtml(f.rating) : ''}</span></span></button>`).join('');
