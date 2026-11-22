@@ -2788,10 +2788,9 @@ function renderStats() {
   const keys = periodKeys(statPeriod, ym);
   const monthName = monthFmt.format(parseKey(ym + '-01'));
 
-  document.querySelectorAll('#stat-period .pill').forEach((b, i) => {
+  document.querySelectorAll('#stat-period .pill').forEach((b) => {
     b.setAttribute('aria-checked', String(b.dataset.period === statPeriod));
     b.tabIndex = b.dataset.period === statPeriod ? 0 : -1;
-    if (b.dataset.period === statPeriod) $('stat-period').style.setProperty('--i', i);
   });
 
   // Perioden syns redan i valet och i kalendern, bara veckans datum behöver stå ut
