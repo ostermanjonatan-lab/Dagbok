@@ -5940,8 +5940,9 @@ const TEMP_COLORS = [[-15, '#3a63c8'], [-5, '#4a95dc'], [0, '#62bdd3'], [7, '#93
 // på varje höjd, med snittet som en prick och siffran ovanför
 function renderTempMonths(data) {
   const shown = data.filter((d) => d.v != null);
-  $('temp-title').hidden = shown.length < 2;
-  if (shown.length < 2) {
+  // En enda stapel räcker, till exempel första året under Totalt
+  $('temp-title').hidden = !shown.length;
+  if (!shown.length) {
     $('temp-trend').innerHTML = '';
     return;
   }
