@@ -1646,6 +1646,7 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
 .media-row img { object-fit: cover; }
 .mr-blank { background: color-mix(in srgb, var(--accent) 8%, var(--line)); }
 .mr-meta { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
+.mr-kind { display: inline-flex; align-items: center; gap: 4px; }
 .seg svg path[stroke-linejoin] { stroke-width: 1.7; }
 
 /* Läsrutan för en film, serie eller bok */

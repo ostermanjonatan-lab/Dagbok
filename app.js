@@ -3273,7 +3273,8 @@ document.querySelector('.seg').addEventListener('keydown', (ev) => {
 
 /* Underhållning i hela dagboken, en typ i taget, det senaste först */
 
-let mediaKind = 'film';
+// Alla typer eller en i taget
+let mediaKind = 'alla';
 // Lista eller rutnät, och sortering på datum, betyg eller namn. Sparas till nästa gång.
 const MEDIA_KEY = 'dagbok.settlast';
 let mediaOpts = { view: 'list', sort: 'date' };
@@ -3287,7 +3288,7 @@ const MEDIA_SORTS = {
   // Utan titel sist åt båda hållen
   name: (a, b, d) => (!a[1].title) - (!b[1].title) || a[1].title.localeCompare(b[1].title, 'sv') * d || byNewest(a, b),
 };
-const KIND_COUNT = { film: ['film', 'filmer'], serie: ['serie', 'serier'], bok: ['bok', 'böcker'], spel: ['spel', 'spel'], forestallning: ['föreställning', 'föreställningar'] };
+const KIND_COUNT = { film: ['film', 'filmer'], serie: ['serie', 'serier'], bok: ['bok', 'böcker'], spel: ['spel', 'spel'], forestallning: ['föreställning', 'föreställningar'], alla: ['titel', 'titlar'] };
 
 function renderMediaAll() {
   document.querySelectorAll('#media-kind [data-kind]').forEach((b) => {
@@ -3309,17 +3310,18 @@ function renderMediaAll() {
     b.setAttribute('aria-pressed', String(b.dataset.view === mediaOpts.view));
   });
   const rows = [];
+  const all = mediaKind === 'alla';
   for (const k of Object.keys(entries).sort().reverse()) {
-    (entries[k].media || []).forEach((f, i) => { if (f.kind === mediaKind) rows.push([k, f, i]); });
+    (entries[k].media || []).forEach((f, i) => { if (all || f.kind === mediaKind) rows.push([k, f, i]); });
   }
-  for (const [id, f] of Object.entries(shelf)) if (f.kind === mediaKind) rows.push([f.added, f, -1, id]);
+  for (const [id, f] of Object.entries(shelf)) if (all || f.kind === mediaKind) rows.push([f.added, f, -1, id]);
   const by = MEDIA_SORTS[mediaOpts.sort] || MEDIA_SORTS.date;
   rows.sort((a, b) => by(a, b, mediaOpts.rev ? -1 : 1));
   const grid = mediaOpts.view === 'grid';
   $('media-all').classList.toggle('grid-view', grid);
   const [one, many] = KIND_COUNT[mediaKind];
-  $('media-add').textContent = `Lägg till ${one}`;
-  $('media-count').textContent = rows.length ? `${rows.length} ${rows.length === 1 ? one : many}` : `Inga ${many} ännu.`;
+  $('media-add').textContent = all ? 'Lägg till underhållning' : `Lägg till ${one}`;
+  $('media-count').textContent = rows.length ? `${rows.length} ${rows.length === 1 ? one : many}` : all ? 'Inget ännu.' : `Inga ${many} ännu.`;
   $('media-all').innerHTML = grid ? rows.map(([k, f, i, id]) => `<button type="button" class="media-row media-tile" data-key="${k}" data-i="${i}"${id ? ` data-shelf="${id}"` : ''}
     aria-label="${escapeHtml(f.title || 'Utan titel')}${id ? '' : `, ${shortDate(k)}`}${f.rating ? `, betyg ${f.rating} av 10` : ''}">
     ${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : `<span class="mt-blank">${escapeHtml(f.title || 'Utan titel')}</span>`}
@@ -3327,7 +3329,7 @@ function renderMediaAll() {
     : rows.map(([k, f, i, id]) => `<button type="button" class="media-row" data-key="${k}" data-i="${i}"${id ? ` data-shelf="${id}"` : ''}>
     ${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : '<span class="mr-blank" aria-hidden="true"></span>'}
     <span class="fs-text"><span class="fs-title">${escapeHtml(f.title || 'Utan titel')}</span>
-      <span class="mr-meta">${id ? '' : shortDate(k)}${f.rating ? starsHtml(f.rating) : ''}</span></span></button>`).join('');
+      <span class="mr-meta">${all ? `<span class="mr-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</span>` : ''}${id ? '' : shortDate(k)}${f.rating ? starsHtml(f.rating) : ''}</span></span></button>`).join('');
 }
 
 function setMediaOpt(key, value) {
@@ -3356,7 +3358,7 @@ $('media-all').addEventListener('click', (ev) => {
   const b = ev.target.closest('.media-row');
   if (b) openMediaRow(b);
 });
-$('media-add').addEventListener('click', () => openShelfFilm(null, mediaKind));
+$('media-add').addEventListener('click', () => openShelfFilm(null, mediaKind === 'alla' ? 'film' : mediaKind));
 syncPanel();
 
 function shiftMonth(n) {
