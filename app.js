@@ -1690,7 +1690,7 @@ function postHtml(k, e, today, searching) {
     <span class="avatar${e.mood ? '' : ' none'}" data-m="${e.mood || ''}" style="--m: var(--m${e.mood || 6})" aria-hidden="true">${e.mood || ''}${MARK_OF[e.mark] ? `<span class="av-mk">${miniIcon(e.mark)}</span>` : ''}</span>
     <div class="post-body">
       <header class="post-head">
-        <button type="button" class="when"${MARK_OF[e.mark] ? ` aria-label="${WEEKDAY_CAP[d.getDay()]} ${shortDate(k)}, ${MARK_OF[e.mark].label.toLowerCase()}"` : ''}>${WEEKDAY_CAP[d.getDay()]} - ${shortDate(k)}</button>${rel ? `<span class="rel">· ${rel}</span>` : ''}${starBtn(k)}${special ? `<span class="special">${escapeHtml(special)}</span>` : ''}
+        <button type="button" class="when"${MARK_OF[e.mark] ? ` aria-label="${WEEKDAY_CAP[d.getDay()]} ${shortDate(k)}, ${MARK_OF[e.mark].label.toLowerCase()}"` : ''}>${WEEKDAY_CAP[d.getDay()]} ${shortDate(k)}</button>${rel ? `<span class="rel">· ${rel}</span>` : ''}${starBtn(k)}${special ? `<span class="special">${escapeHtml(special)}</span>` : ''}
       </header>
       ${e.text ? `<div class="prose${searching ? '' : ' clamp'}">${Paper.mdToHtml(e.text)}</div>
       <button type="button" class="link more" hidden>Visa mer</button>` : ''}
