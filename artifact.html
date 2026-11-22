@@ -2066,11 +2066,15 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 :root[data-accent="lila"] { --accent: #4e2a6e; --brand: #4e2a6e; --cloth-base: #6d3c99; --brand-dark: #301843; }
 :root[data-accent="orange"] { --accent: #a3440e; --brand: #a3440e; --cloth-base: #e5631a; --brand-dark: #6a2b08; }
 :root[data-accent="rosa"] { --accent: #9c3a5e; --brand: #9c3a5e; --cloth-base: #d65282; --brand-dark: #5e1f37; }
-.accents { display: flex; flex-wrap: wrap; gap: 6px 4px; }
-.accents button { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 60px; padding: 4px 2px; border: 0; background: none; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; }
-.accents button span { width: 34px; height: 34px; border-radius: 50%; background: var(--sw); box-shadow: inset 0 0 0 1px rgb(0 0 0 / .08); }
-.accents [aria-checked="true"] { color: var(--text); font-weight: 600; }
-.accents [aria-checked="true"] span { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--sw); }
+.accents { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+.accents button { display: flex; flex-direction: column; align-items: center; gap: 7px; min-width: 0; padding: 6px 0 4px; border: 0; background: none; color: var(--muted); font: inherit; font-size: 12px; cursor: pointer; }
+.accents button span { position: relative; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: var(--sw); box-shadow: inset 0 0 0 1px rgb(0 0 0 / .08); transition: box-shadow .2s, transform .2s; }
+.accents button:active span { transform: scale(.92); }
+/* Vald färg: en ring runt och en bock i mitten */
+.accents button span::after { content: ''; width: 7px; height: 13px; margin-top: -3px; border: solid #fff; border-width: 0 2.4px 2.4px 0; transform: rotate(45deg) scale(0); transition: transform .2s; }
+.accents [aria-checked="true"] { color: var(--text); }
+.accents [aria-checked="true"] span { box-shadow: 0 0 0 2.5px var(--bg), 0 0 0 4.5px var(--sw); }
+.accents [aria-checked="true"] span::after { transform: rotate(45deg) scale(1); }
 
 /* Flödet som tweets: veckodagen till vänster och allt innehåll i en kolumn bredvid,
    bilder och filmer med rundade hörn i kolumnen, och en tunn rad med väder och personer längst ner */
