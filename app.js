@@ -2991,7 +2991,7 @@ function renderTempMonths(data) {
   const fmt = (v) => `${fmtDec(v).replace('-', '−')}${tight ? '' : '°'}`;
   // En gradient över hela höjden, så att varje stapel får färgen för sin temperatur
   const stops = TEMP_COLORS.map(([t, c]) => `<stop offset="${Math.max(0, Math.min(1, (hi - t) / (hi - lo))).toFixed(3)}" stop-color="${c}"/>`).reverse().join('');
-  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Temperatur per månad"><defs><linearGradient id="temp-grad" gradientUnits="userSpaceOnUse" x1="0" y1="${yOf(hi)}" x2="0" y2="${yOf(lo)}">${stops}</linearGradient></defs>`;
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${$('temp-title').textContent}"><defs><linearGradient id="temp-grad" gradientUnits="userSpaceOnUse" x1="0" y1="${yOf(hi)}" x2="0" y2="${yOf(lo)}">${stops}</linearGradient></defs>`;
   // Stödlinjer på jämna tal, så att nollan alltid finns med när den ryms
   const gstep = hi - lo > 20 ? 10 : 5;
   for (let v = Math.ceil(lo / gstep) * gstep; v <= hi; v += gstep) {
@@ -3074,6 +3074,26 @@ function renderTempTrend() {
     const data = days.map((k, i) => ({ v: tempOf(k), label: statPeriod === 'week' ? weekdayFmt.format(parseKey(k)).slice(0, 3) : (i === 0 || (i + 1) % 5 === 0 ? String(i + 1) : ''), name: shortDate(k) }));
     $('temp-title').textContent = 'Temperatur per dag';
     renderTempDays(data);
+    return;
+  }
+  // Totalt har ett år per stapel, År och de senaste tolv månaderna en månad per stapel
+  if (statPeriod === 'all') {
+    const first = Object.keys(entries).sort()[0];
+    const end = Number(todayKey().slice(0, 4));
+    const data = [];
+    for (let y = first ? Math.min(Number(first.slice(0, 4)), end) : end; y <= end; y++) {
+      const ts = Object.keys(entries).filter((k) => k.startsWith(`${y}-`)).map(tempOf).filter((x) => x != null);
+      data.push({
+        v: ts.length ? ts.reduce((s, x) => s + x, 0) / ts.length : null,
+        lo: ts.length ? Math.min(...ts) : null,
+        hi: ts.length ? Math.max(...ts) : null,
+        label: String(y),
+        name: String(y),
+      });
+    }
+    if (data.length > 8) data.forEach((d, i) => { if (i % 2 && i !== data.length - 1) d.label = ''; });
+    $('temp-title').textContent = 'Temperatur per år';
+    renderTempMonths(data);
     return;
   }
   const data = trendMonths().map((ym) => {
