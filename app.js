@@ -3320,7 +3320,7 @@ function renderMediaAll() {
   const grid = mediaOpts.view === 'grid';
   $('media-all').classList.toggle('grid-view', grid);
   const [one, many] = KIND_COUNT[mediaKind];
-  $('media-add').textContent = all ? 'Lägg till underhållning' : `Lägg till ${one}`;
+  $('media-add').setAttribute('aria-label', all ? 'Lägg till underhållning' : `Lägg till ${one}`);
   $('media-count').textContent = rows.length ? `${rows.length} ${rows.length === 1 ? one : many}` : all ? 'Inget ännu.' : `Inga ${many} ännu.`;
   // Under Alla har omslaget en rund bricka med typens ikon i typens färg
   $('media-all').innerHTML = grid ? rows.map(([k, f, i, id]) => `<button type="button" class="media-row media-tile${all ? ` kind-${f.kind}` : ''}" data-key="${k}" data-i="${i}"${id ? ` data-shelf="${id}"` : ''}

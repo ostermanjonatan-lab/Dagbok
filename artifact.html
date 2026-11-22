@@ -1631,8 +1631,29 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .media-views .hd-btn svg circle { fill: currentColor; stroke: none; }
 .media-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 0 10px; }
 .media-head .media-count { margin: 0; }
-.media-add { padding: 4px 0; border: 0; background: none; color: var(--accent); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
-.media-add::before { content: "+"; margin-right: 5px; font-size: 17px; font-weight: 500; }
+.media-panel { padding-bottom: 72px; }
+/* Lägg till underhållning: rund knapp nere till höger, ovanför menyn */
+.media-fab {
+  position: fixed;
+  z-index: 35;
+  right: max(16px, calc((100vw - 640px) / 2 + 16px), env(safe-area-inset-right, 0px));
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 16px);
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(42, 20, 24, .28);
+  cursor: pointer;
+  transition: transform .15s;
+}
+.media-fab:active { transform: scale(.94); }
+.media-fab svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; }
+.media-panel[hidden] .media-fab, body.sheet-open .media-fab { display: none; }
 /* Ikoner för film, serie och bok, ifyllda när de är valda */
 .ki { width: 1.1em; height: 1.1em; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
 .ki-f { display: none; fill: currentColor; stroke: none; }
@@ -2200,9 +2221,9 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
       </div>
       <div class="media-head">
         <p class="media-count" id="media-count"></p>
-        <button type="button" class="media-add" id="media-add">Lägg till film</button>
       </div>
       <div class="media-all" id="media-all"></div>
+        <button type="button" class="media-fab" id="media-add" aria-label="Lägg till underhållning"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
     </section>
     <section class="stats" id="month-stats" role="tabpanel" aria-labelledby="seg-stats" hidden>
       <div class="pills period" id="stat-period" role="radiogroup" aria-label="Period">
@@ -6303,7 +6324,7 @@ function renderMediaAll() {
   const grid = mediaOpts.view === 'grid';
   $('media-all').classList.toggle('grid-view', grid);
   const [one, many] = KIND_COUNT[mediaKind];
-  $('media-add').textContent = all ? 'Lägg till underhållning' : `Lägg till ${one}`;
+  $('media-add').setAttribute('aria-label', all ? 'Lägg till underhållning' : `Lägg till ${one}`);
   $('media-count').textContent = rows.length ? `${rows.length} ${rows.length === 1 ? one : many}` : all ? 'Inget ännu.' : `Inga ${many} ännu.`;
   // Under Alla har omslaget en rund bricka med typens ikon i typens färg
   $('media-all').innerHTML = grid ? rows.map(([k, f, i, id]) => `<button type="button" class="media-row media-tile${all ? ` kind-${f.kind}` : ''}" data-key="${k}" data-i="${i}"${id ? ` data-shelf="${id}"` : ''}
