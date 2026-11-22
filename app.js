@@ -3043,15 +3043,18 @@ function renderTempDays(data) {
   data.forEach((d, i) => {
     const x = xOf(i);
     if (d.v != null) {
-      // Stapeln går från nollan och är minst lika hög som den är bred
-      let y1 = Math.min(yOf(0), yOf(d.v));
-      let y2 = Math.max(yOf(0), yOf(d.v));
+      // Stapeln går från nollan och är minst lika hög som den är bred.
+      // Den avrundade siffran styr riktningen, 0° blir en prick på nollstrecket.
+      const r = Math.round(d.v) || 0;
+      let y1 = Math.min(yOf(0), yOf(r));
+      let y2 = Math.max(yOf(0), yOf(r));
       if (y2 - y1 < w) {
-        if (d.v >= 0) y1 = y2 - w;
-        else y2 = y1 + w;
+        if (r > 0) y1 = y2 - w;
+        else if (r < 0) y2 = y1 + w;
+        else { y1 = yOf(0) - w / 2; y2 = yOf(0) + w / 2; }
       }
-      svg += `<rect class="tbar${d.v < 0 ? ' neg' : ''}" x="${(x - w / 2).toFixed(1)}" y="${y1.toFixed(1)}" width="${w.toFixed(1)}" height="${(y2 - y1).toFixed(1)}" rx="${(w / 2).toFixed(1)}" fill="url(#temp-grad-d)" style="animation-delay: ${Math.round(i * Math.min(40, 360 / data.length))}ms"><title>${d.name}: ${fmtTemp(d.v)}</title></rect>`;
-      if (few) svg += `<text class="tval" x="${x}" y="${(d.v >= 0 ? y1 - 5 : y2 + 12).toFixed(1)}" text-anchor="middle">${String(Math.round(d.v)).replace('-', '−')}°</text>`;
+      svg += `<rect class="tbar${r < 0 ? ' neg' : ''}" x="${(x - w / 2).toFixed(1)}" y="${y1.toFixed(1)}" width="${w.toFixed(1)}" height="${(y2 - y1).toFixed(1)}" rx="${(w / 2).toFixed(1)}" fill="url(#temp-grad-d)" style="animation-delay: ${Math.round(i * Math.min(40, 360 / data.length))}ms"><title>${d.name}: ${fmtTemp(d.v)}</title></rect>`;
+      if (few) svg += `<text class="tval" x="${x}" y="${(r >= 0 ? y1 - 5 : y2 + 12).toFixed(1)}" text-anchor="middle">${String(r).replace('-', '−')}°</text>`;
     }
     if (d.label) svg += `<text class="lbl" x="${x}" y="${H - 4}" text-anchor="middle">${d.label}</text>`;
   });
