@@ -639,12 +639,14 @@ mark {
   background: none;
   border: 0;
   border-radius: 0;
-  gap: 24px;
-  justify-content: center;
+  gap: 0;
+  justify-content: stretch;
   border-bottom: 1px solid var(--line);
 }
+/* Flikarna fyller hela bredden, utan tomma ytor på sidorna */
 .seg button {
-  flex: none;
+  flex: 1 1 auto;
+  white-space: nowrap;
   padding: 10px 0;
   border: 0;
   border-radius: 0;
