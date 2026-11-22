@@ -2089,6 +2089,13 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .post .post-head .star-btn { margin: -7px -9px -7px auto; }
 .post .post-head .special { order: 5; }
 .reader-head #reader-star { display: flex; }
+
+/* Temperatur per månad: stapel från kallast till varmast i temperaturens färg, snittet som prick */
+#temp-trend .tbar { transform-box: fill-box; transform-origin: bottom; animation: bar-grow .45s cubic-bezier(.2, .8, .2, 1) backwards; }
+#temp-trend .tavg { fill: #fff; stroke: rgb(42 20 24 / .35); stroke-width: 1; }
+#temp-trend .tval { fill: var(--text); font-size: 11px; font-weight: 600; font-family: var(--sans); }
+#temp-trend .gl.zero { stroke-dasharray: 3 3; }
+@media (prefers-reduced-motion: reduce) { #temp-trend .tbar { animation: none; } }
 </style>
 
 
@@ -5917,7 +5924,57 @@ function renderWeatherStats(keys) {
   renderTempTrend();
 }
 
-// Temperatur per dag för vecka och månad, snittet per månad för år och totalt
+// Färgen för en temperatur, från blått när det är kallt till rött när det är varmt
+const TEMP_COLORS = [[-15, '#3a63c8'], [-5, '#4a95dc'], [0, '#62bdd3'], [7, '#93cc8a'], [13, '#e6c34e'], [19, '#ee9840'], [27, '#d6553a']];
+
+// Varje månad är en stapel från kallaste till varmaste dagen, färgad efter temperaturen
+// på varje höjd, med snittet som en prick och siffran ovanför
+function renderTempMonths(data) {
+  const shown = data.filter((d) => d.v != null);
+  $('temp-title').hidden = shown.length < 2;
+  if (shown.length < 2) {
+    $('temp-trend').innerHTML = '';
+    return;
+  }
+  const W = 340;
+  const H = 168;
+  const x0 = 26;
+  const x1 = W - 6;
+  const top = 26;
+  const bottom = H - 22;
+  let lo = Math.floor(Math.min(...shown.map((d) => d.lo)) / 5) * 5;
+  let hi = Math.ceil(Math.max(...shown.map((d) => d.hi)) / 5) * 5;
+  if (hi === lo) hi = lo + 5;
+  const yOf = (v) => top + ((hi - v) * (bottom - top)) / (hi - lo);
+  const step = (x1 - x0) / data.length;
+  const xOf = (i) => x0 + (i + 0.5) * step;
+  const w = Math.min(16, step * 0.5);
+  const fmt = (v) => `${String(Math.round(v)).replace('-', '−')}°`;
+  // En gradient över hela höjden, så att varje stapel får färgen för sin temperatur
+  const stops = TEMP_COLORS.map(([t, c]) => `<stop offset="${Math.max(0, Math.min(1, (hi - t) / (hi - lo))).toFixed(3)}" stop-color="${c}"/>`).reverse().join('');
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Temperatur per månad"><defs><linearGradient id="temp-grad" gradientUnits="userSpaceOnUse" x1="0" y1="${yOf(hi)}" x2="0" y2="${yOf(lo)}">${stops}</linearGradient></defs>`;
+  // Stödlinjer på jämna tal, så att nollan alltid finns med när den ryms
+  const gstep = hi - lo > 20 ? 10 : 5;
+  for (let v = Math.ceil(lo / gstep) * gstep; v <= hi; v += gstep) {
+    svg += `<line class="gl${v === 0 ? ' zero' : ''}" x1="${x0}" x2="${x1}" y1="${yOf(v)}" y2="${yOf(v)}"/>`;
+    svg += `<text class="lbl" x="${x0 - 6}" y="${yOf(v) + 3.5}" text-anchor="end">${String(v).replace('-', '−')}°</text>`;
+  }
+  data.forEach((d, i) => {
+    const x = xOf(i);
+    if (d.v != null) {
+      const yTop = yOf(d.hi);
+      const h = Math.max(w, yOf(d.lo) - yTop);
+      const y = Math.min(yTop, yOf(d.v) - w / 2);
+      svg += `<rect class="tbar" x="${(x - w / 2).toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="${(w / 2).toFixed(1)}" fill="url(#temp-grad)" style="animation-delay: ${Math.round(i * Math.min(40, 360 / data.length))}ms"><title>${d.name}: snitt ${fmtTemp(d.v, true)}, ${fmtTemp(d.lo)} till ${fmtTemp(d.hi)}</title></rect>`;
+      svg += `<circle class="tavg" cx="${x}" cy="${yOf(d.v)}" r="${Math.max(2.5, w / 2 - 3)}"/>`;
+      svg += `<text class="tval" x="${x}" y="${y - 5}" text-anchor="middle">${fmt(d.v)}</text>`;
+    }
+    if (d.label) svg += `<text class="lbl" x="${x}" y="${H - 4}" text-anchor="middle">${d.label}</text>`;
+  });
+  $('temp-trend').innerHTML = svg + '</svg>';
+}
+
+// Temperatur per dag för vecka och månad, per månad för år och totalt
 function renderTempTrend() {
   const tempOf = (k) => (entries[k] && entries[k].weather && entries[k].weather.temp != null ? entries[k].weather.temp : null);
   let data;
@@ -5930,10 +5987,18 @@ function renderTempTrend() {
   } else {
     data = trendMonths().map((ym) => {
       const ts = Object.keys(entries).filter((k) => k.slice(0, 7) === ym).map(tempOf).filter((x) => x != null);
-      return { v: ts.length ? ts.reduce((s, x) => s + x, 0) / ts.length : null, label: monthShortFmt.format(parseKey(ym + '-01')).replace('.', '').slice(0, 3), name: cap(monthFmt.format(parseKey(ym + '-01'))) };
+      return {
+        v: ts.length ? ts.reduce((s, x) => s + x, 0) / ts.length : null,
+        lo: ts.length ? Math.min(...ts) : null,
+        hi: ts.length ? Math.max(...ts) : null,
+        label: monthShortFmt.format(parseKey(ym + '-01')).replace('.', '').slice(0, 3),
+        name: cap(monthFmt.format(parseKey(ym + '-01'))),
+      };
     });
     if (data.length > 12) data.forEach((d, i) => { if (i % Math.ceil(data.length / 12)) d.label = ''; });
-    $('temp-title').textContent = 'Snittemperatur per månad';
+    $('temp-title').textContent = 'Temperatur per månad';
+    renderTempMonths(data);
+    return;
   }
   const vals = data.map((d) => d.v).filter((v) => v != null);
   $('temp-title').hidden = vals.length < 2;

@@ -2143,3 +2143,10 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .post .post-head .star-btn { margin: -7px -9px -7px auto; }
 .post .post-head .special { order: 5; }
 .reader-head #reader-star { display: flex; }
+
+/* Temperatur per månad: stapel från kallast till varmast i temperaturens färg, snittet som prick */
+#temp-trend .tbar { transform-box: fill-box; transform-origin: bottom; animation: bar-grow .45s cubic-bezier(.2, .8, .2, 1) backwards; }
+#temp-trend .tavg { fill: #fff; stroke: rgb(42 20 24 / .35); stroke-width: 1; }
+#temp-trend .tval { fill: var(--text); font-size: 11px; font-weight: 600; font-family: var(--sans); }
+#temp-trend .gl.zero { stroke-dasharray: 3 3; }
+@media (prefers-reduced-motion: reduce) { #temp-trend .tbar { animation: none; } }
