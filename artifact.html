@@ -2096,6 +2096,7 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 #temp-trend .tval { fill: var(--text); font-size: 11px; font-weight: 600; font-family: var(--sans); }
 #temp-trend .gl.zero { stroke-dasharray: 3 3; }
 @media (prefers-reduced-motion: reduce) { #temp-trend .tbar { animation: none; } }
+#temp-trend .tbar.neg { transform-origin: top; }
 </style>
 
 
@@ -5974,70 +5975,79 @@ function renderTempMonths(data) {
   $('temp-trend').innerHTML = svg + '</svg>';
 }
 
-// Temperatur per dag för vecka och månad, per månad för år och totalt
-function renderTempTrend() {
-  const tempOf = (k) => (entries[k] && entries[k].weather && entries[k].weather.temp != null ? entries[k].weather.temp : null);
-  let data;
-  if (statPeriod === 'week' || statPeriod === 'month') {
-    const days = statPeriod === 'week'
-      ? [...Array(7)].map((_, i) => shiftKey(weekStart(), i))
-      : [...Array(new Date(...calMonth.split('-').map(Number), 0).getDate())].map((_, i) => `${calMonth}-${pad(i + 1)}`);
-    data = days.map((k, i) => ({ v: tempOf(k), label: statPeriod === 'week' ? weekdayFmt.format(parseKey(k)).slice(0, 3) : (i === 0 || (i + 1) % 5 === 0 ? String(i + 1) : ''), name: shortDate(k) }));
-    $('temp-title').textContent = 'Temperatur per dag';
-  } else {
-    data = trendMonths().map((ym) => {
-      const ts = Object.keys(entries).filter((k) => k.slice(0, 7) === ym).map(tempOf).filter((x) => x != null);
-      return {
-        v: ts.length ? ts.reduce((s, x) => s + x, 0) / ts.length : null,
-        lo: ts.length ? Math.min(...ts) : null,
-        hi: ts.length ? Math.max(...ts) : null,
-        label: monthShortFmt.format(parseKey(ym + '-01')).replace('.', '').slice(0, 3),
-        name: cap(monthFmt.format(parseKey(ym + '-01'))),
-      };
-    });
-    if (data.length > 12) data.forEach((d, i) => { if (i % Math.ceil(data.length / 12)) d.label = ''; });
-    $('temp-title').textContent = 'Temperatur per månad';
-    renderTempMonths(data);
-    return;
-  }
-  const vals = data.map((d) => d.v).filter((v) => v != null);
-  $('temp-title').hidden = vals.length < 2;
-  if (vals.length < 2) {
+// Varje dag är en stapel från nollan upp till dagens temperatur, eller ner vid minusgrader,
+// i samma färger som månaderna. Siffran står ovanför när det är få dagar.
+function renderTempDays(data) {
+  const shown = data.filter((d) => d.v != null);
+  $('temp-title').hidden = shown.length < 2;
+  if (shown.length < 2) {
     $('temp-trend').innerHTML = '';
     return;
   }
   const W = 340;
-  const H = 120;
-  const x0 = 30;
-  const x1 = W - 8;
-  let lo = Math.floor(Math.min(...vals) / 5) * 5;
-  let hi = Math.ceil(Math.max(...vals) / 5) * 5;
+  const H = 168;
+  const x0 = 26;
+  const x1 = W - 6;
+  const top = 24;
+  const bottom = H - 22;
+  let lo = Math.min(0, Math.floor(Math.min(...shown.map((d) => d.v)) / 5) * 5);
+  let hi = Math.max(0, Math.ceil(Math.max(...shown.map((d) => d.v)) / 5) * 5);
   if (hi === lo) hi = lo + 5;
-  const yOf = (v) => 10 + ((hi - v) * (H - 34)) / (hi - lo);
-  const xOf = (i) => x0 + ((i + 0.5) * (x1 - x0)) / data.length;
-  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${$('temp-title').textContent}">`;
-  const lines = [lo, hi];
-  if (lo < 0 && hi > 0) lines.push(0);
-  for (const v of lines) {
+  const yOf = (v) => top + ((hi - v) * (bottom - top)) / (hi - lo);
+  const step = (x1 - x0) / data.length;
+  const xOf = (i) => x0 + (i + 0.5) * step;
+  const w = Math.min(14, step * 0.6);
+  const few = data.length <= 7;
+  const stops = TEMP_COLORS.map(([t, c]) => `<stop offset="${Math.max(0, Math.min(1, (hi - t) / (hi - lo))).toFixed(3)}" stop-color="${c}"/>`).reverse().join('');
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Temperatur per dag"><defs><linearGradient id="temp-grad-d" gradientUnits="userSpaceOnUse" x1="0" y1="${yOf(hi)}" x2="0" y2="${yOf(lo)}">${stops}</linearGradient></defs>`;
+  const gstep = hi - lo > 20 ? 10 : 5;
+  for (let v = Math.ceil(lo / gstep) * gstep; v <= hi; v += gstep) {
     svg += `<line class="gl${v === 0 ? ' zero' : ''}" x1="${x0}" x2="${x1}" y1="${yOf(v)}" y2="${yOf(v)}"/>`;
     svg += `<text class="lbl" x="${x0 - 6}" y="${yOf(v) + 3.5}" text-anchor="end">${String(v).replace('-', '−')}°</text>`;
   }
-  let path = '';
-  let pen = false;
   data.forEach((d, i) => {
-    if (d.v == null) {
-      pen = false;
-      return;
+    const x = xOf(i);
+    if (d.v != null) {
+      // Stapeln går från nollan och är minst lika hög som den är bred
+      let y1 = Math.min(yOf(0), yOf(d.v));
+      let y2 = Math.max(yOf(0), yOf(d.v));
+      if (y2 - y1 < w) {
+        if (d.v >= 0) y1 = y2 - w;
+        else y2 = y1 + w;
+      }
+      svg += `<rect class="tbar${d.v < 0 ? ' neg' : ''}" x="${(x - w / 2).toFixed(1)}" y="${y1.toFixed(1)}" width="${w.toFixed(1)}" height="${(y2 - y1).toFixed(1)}" rx="${(w / 2).toFixed(1)}" fill="url(#temp-grad-d)" style="animation-delay: ${Math.round(i * Math.min(40, 360 / data.length))}ms"><title>${d.name}: ${fmtTemp(d.v)}</title></rect>`;
+      if (few) svg += `<text class="tval" x="${x}" y="${(d.v >= 0 ? y1 - 5 : y2 + 12).toFixed(1)}" text-anchor="middle">${String(Math.round(d.v)).replace('-', '−')}°</text>`;
     }
-    path += `${pen ? 'L' : 'M'}${xOf(i).toFixed(1)} ${yOf(d.v).toFixed(1)}`;
-    pen = true;
-  });
-  svg += `<path class="ln temp" d="${path}"/>`;
-  data.forEach((d, i) => {
-    if (d.v != null) svg += `<circle class="pt temp" cx="${xOf(i)}" cy="${yOf(d.v)}" r="${data.length > 14 ? 2.5 : 3.5}"><title>${d.name}: ${fmtTemp(d.v, true)}</title></circle>`;
-    if (d.label) svg += `<text class="lbl" x="${xOf(i)}" y="${H - 4}" text-anchor="middle">${d.label}</text>`;
+    if (d.label) svg += `<text class="lbl" x="${x}" y="${H - 4}" text-anchor="middle">${d.label}</text>`;
   });
   $('temp-trend').innerHTML = svg + '</svg>';
+}
+
+// Temperatur per dag för vecka och månad, per månad för år och totalt
+function renderTempTrend() {
+  const tempOf = (k) => (entries[k] && entries[k].weather && entries[k].weather.temp != null ? entries[k].weather.temp : null);
+  if (statPeriod === 'week' || statPeriod === 'month') {
+    const days = statPeriod === 'week'
+      ? [...Array(7)].map((_, i) => shiftKey(weekStart(), i))
+      : [...Array(new Date(...calMonth.split('-').map(Number), 0).getDate())].map((_, i) => `${calMonth}-${pad(i + 1)}`);
+    const data = days.map((k, i) => ({ v: tempOf(k), label: statPeriod === 'week' ? weekdayFmt.format(parseKey(k)).slice(0, 3) : (i === 0 || (i + 1) % 5 === 0 ? String(i + 1) : ''), name: shortDate(k) }));
+    $('temp-title').textContent = 'Temperatur per dag';
+    renderTempDays(data);
+    return;
+  }
+  const data = trendMonths().map((ym) => {
+    const ts = Object.keys(entries).filter((k) => k.slice(0, 7) === ym).map(tempOf).filter((x) => x != null);
+    return {
+      v: ts.length ? ts.reduce((s, x) => s + x, 0) / ts.length : null,
+      lo: ts.length ? Math.min(...ts) : null,
+      hi: ts.length ? Math.max(...ts) : null,
+      label: monthShortFmt.format(parseKey(ym + '-01')).replace('.', '').slice(0, 3),
+      name: cap(monthFmt.format(parseKey(ym + '-01'))),
+    };
+  });
+  if (data.length > 12) data.forEach((d, i) => { if (i % Math.ceil(data.length / 12)) d.label = ''; });
+  $('temp-title').textContent = 'Temperatur per månad';
+  renderTempMonths(data);
 }
 
 // Månaderna i diagrammet: senaste tolv, årets tolv eller alla sedan första inlägget
