@@ -706,13 +706,12 @@ mark {
 .facts dd { margin: 0; font-variant-numeric: tabular-nums; }
 .distr { margin-top: 16px; }
 .distr[hidden] { display: none; }
-.distr-bar { display: flex; gap: 2px; height: 24px; }
+.distr-bar { display: flex; height: 24px; border-radius: 5px; overflow: hidden; }
 .distr-bar span {
   display: grid;
   place-items: center;
   min-width: 0;
   overflow: hidden;
-  border-radius: 4px;
   background: var(--m);
   color: var(--on-mood);
   font-size: 12px;

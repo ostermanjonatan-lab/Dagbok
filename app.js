@@ -2762,8 +2762,6 @@ try {
 
 // Senaste veckan är de sju dagarna fram till och med idag
 const weekStart = () => shiftKey(todayKey(), -6);
-const weekMoods = (start) => Object.keys(entries)
-  .filter((k) => k >= start && k <= shiftKey(start, 6) && entries[k].mood).map((k) => entries[k].mood);
 function weekRange(start) {
   const a = parseKey(start);
   const b = parseKey(shiftKey(start, 6));
@@ -2771,7 +2769,6 @@ function weekRange(start) {
     : `${dayPartFmt.format(a)}–${dayPartFmt.format(b)}`;
 }
 
-const daysBetween = (a, b) => Math.round((parseKey(b) - parseKey(a)) / 864e5) + 1;
 
 function periodKeys(period, ym) {
   const all = Object.keys(entries).sort();
@@ -2806,48 +2803,10 @@ function renderStats() {
     return;
   }
 
-  // Dagar som har passerat, så att en pågående period inte ser halvtom ut
-  const today = todayKey();
-  let passed;
-  if (statPeriod === 'all') {
-    passed = daysBetween(keys[0], today);
-  } else if (statPeriod === 'week') {
-    passed = 7;
-  } else if (statPeriod === 'year') {
-    passed = year === today.slice(0, 4) ? daysBetween(`${year}-01-01`, today)
-      : daysBetween(`${year}-01-01`, `${year}-12-31`);
-  } else {
-    const first = parseKey(ym + '-01');
-    const total = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
-    passed = ym === today.slice(0, 7) ? Number(today.slice(8)) : total;
-  }
-
-  const facts = [['Skrivna dagar', `${keys.length} av ${passed}`]];
+  const facts = [];
   const moods = moodsOf(keys);
 
   if (moods.length) {
-    const a = avg(moods);
-    let cmp = '';
-    let prev = [];
-    let prevName = '';
-    if (statPeriod === 'week') {
-      prev = weekMoods(shiftKey(weekStart(), -7));
-      prevName = 'veckan innan';
-    } else if (statPeriod === 'month') {
-      const prevYm = shiftYm(ym, -1);
-      prev = monthMoods(prevYm);
-      prevName = monthOnlyFmt.format(parseKey(prevYm + '-01'));
-    } else if (statPeriod === 'year') {
-      prevName = String(Number(year) - 1);
-      prev = moodsOf(periodKeys('year', `${prevName}-01`));
-    }
-    if (prev.length) {
-      const diff = Math.round((a - avg(prev)) * 10) / 10;
-      cmp = diff > 0 ? `, upp ${fmtDec(diff)} från ${prevName}`
-        : diff < 0 ? `, ner ${fmtDec(-diff)} från ${prevName}`
-          : `, samma som ${prevName}`;
-    }
-    facts.push(['Snitthumör', `${fmtDec(a)}${cmp}`]);
 
     // Bästa månad för år och totalt, bara månader med minst fem dagar med humör
     if (statPeriod === 'year' || statPeriod === 'all') {
@@ -2899,12 +2858,9 @@ function renderStats() {
     .map(([kind, n]) => `${n} ${KIND_COUNT[kind][n === 1 ? 0 : 1]}`);
   if (seenText.length) facts.push(['Underhållning', joinNames(seenText)]);
 
-  const s = streaks();
-  if (s.longest >= 2) {
-    facts.push(['Svit', s.current ? `${dagar(s.current)} i rad, längsta ${dagar(s.longest)}` : `Längsta ${dagar(s.longest)}`]);
-  }
 
   $('facts').innerHTML = facts.map(([k, v]) => `<dt>${k}</dt><dd>${escapeHtml(v)}</dd>`).join('');
+  $('facts').hidden = !facts.length;
 
   // Fördelning av humöret, en stapel med tio delar
   const counts = Array.from({ length: 10 }, (_, i) => moods.filter((x) => x === i + 1).length);
