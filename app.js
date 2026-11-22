@@ -924,21 +924,23 @@ document.addEventListener('keydown', (ev) => {
   $('date-btn').focus();
 });
 
-/* Sett och läst: filmer, serier och böcker med titel, betyg, recension och omslag */
+/* Underhållning: filmer, serier, böcker, spel och föreställningar med titel, betyg, recension och omslag */
 
 const canUploadCover = () => true;
 const uploadCover = (blob) => photoStore.upload(blob);
 
 const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.7 5.6 6.1.8-4.5 4.2 1.2 6.1L12 16.5l-5.5 3 1.2-6.1-4.5-4.2 6.1-.8z"/></svg>';
-// Det man har sett eller läst: en film, en serie eller en bok. En dag kan ha flera.
-const KINDS = { film: 'Film', serie: 'Serie', bok: 'Bok' };
-const ASK = { film: 'Vilken film?', serie: 'Vilken serie?', bok: 'Vilken bok?' };
-const THE = { film: 'filmen', serie: 'serien', bok: 'boken' };
+// Underhållning: film, serie, bok, spel eller föreställning. En dag kan ha flera.
+const KINDS = { film: 'Film', serie: 'Serie', bok: 'Bok', spel: 'Spel', forestallning: 'Föreställning' };
+const ASK = { film: 'Vilken film?', serie: 'Vilken serie?', bok: 'Vilken bok?', spel: 'Vilket spel?', forestallning: 'Vilken föreställning?' };
+const THE = { film: 'filmen', serie: 'serien', bok: 'boken', spel: 'spelet', forestallning: 'föreställningen' };
 // Små ikoner för typen, samma som i valet av typ
 const KIND_SVG = {
   film: '<path stroke-linejoin="round" d="M4 10h16v8.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5zM4 10L3.3 7.2 18.8 3.1l.8 2.9zM8.2 6l2.6 2.8M13.2 4.7l2.6 2.8"/>',
   serie: '<rect x="3" y="6.5" width="18" height="13" rx="2.2"/><path stroke-linejoin="round" d="M8.5 2.8 12 6.3l3.5-3.5"/>',
   bok: '<path stroke-linejoin="round" d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5zM12 6.5v13"/>',
+  spel: '<path stroke-linejoin="round" d="M7.5 7h9a4.5 4.5 0 0 1 4.4 3.6l.9 4.6a2.6 2.6 0 0 1-4.5 2.2L15.5 15.5h-7l-1.8 1.9a2.6 2.6 0 0 1-4.5-2.2l.9-4.6A4.5 4.5 0 0 1 7.5 7z"/><path d="M8 9.9v3.2M6.4 11.5h3.2"/><path d="M15.6 10.6h.01M17.3 12.4h.01" stroke-width="2.4"/>',
+  forestallning: '<path stroke-linejoin="round" d="M4 6.5h16a1 1 0 0 1 1 1V10a2 2 0 0 0 0 4v2.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V14a2 2 0 0 0 0-4V7.5a1 1 0 0 1 1-1z"/><path d="M15 8.6v.01M15 12v.01M15 15.4v.01" stroke-width="2.3"/>',
 };
 const kindIcon = (k) => `<svg class="ki-s" viewBox="0 0 24 24" aria-hidden="true">${KIND_SVG[k] || KIND_SVG.film}</svg>`;
 const EMPTY_FILM = { kind: 'film', title: '', rating: null, cover: null, review: '', scale: 10 };
@@ -979,7 +981,7 @@ function persistShelf() {
 function cleanFilm(f) {
   if (!f || typeof f !== 'object') return null;
   // Körs när datan läses in, innan KINDS finns, så typerna står här
-  const kind = ['film', 'serie', 'bok'].includes(f.kind) ? f.kind : 'film';
+  const kind = ['film', 'serie', 'bok', 'spel', 'forestallning'].includes(f.kind) ? f.kind : 'film';
   const title = typeof f.title === 'string' ? f.title.replace(/\s+/g, ' ').trim().slice(0, 120) : '';
   // Betyget är 1 till 10. Det som fick betyg på den tidigare skalan 1 till 5 räknas om.
   let rating = Number.isInteger(f.rating) && f.rating >= 1 && f.rating <= 10 ? f.rating : null;
@@ -1734,10 +1736,10 @@ const HOLIDAY_GROUPS = {
   Midsommar: ['Midsommarafton', 'Midsommardagen'],
   Nyår: ['Nyårsafton', 'Nyårsdagen'],
 };
-const AT_DEFAULTS = ['Idag', 'Igår', 'Film', 'Serie', 'Bok', 'Julafton', 'Midsommarafton', 'Helgdagar'];
-// @film, @serie och @bok söker bland det man har sett och läst
-const AT_MEDIA = { film: 'film', filmer: 'film', serie: 'serie', serier: 'serie', bok: 'bok', böcker: 'bok' };
-const AT_MEDIA_LABEL = { film: ['Filmer', 'film', 'filmer'], serie: ['Serier', 'serie', 'serier'], bok: ['Böcker', 'bok', 'böcker'] };
+const AT_DEFAULTS = ['Idag', 'Igår', 'Film', 'Serie', 'Bok', 'Spel', 'Föreställning', 'Julafton', 'Midsommarafton', 'Helgdagar'];
+// @film, @serie, @bok, @spel och @föreställning söker i underhållningen
+const AT_MEDIA = { film: 'film', filmer: 'film', serie: 'serie', serier: 'serie', bok: 'bok', böcker: 'bok', spel: 'spel', föreställning: 'forestallning', föreställningar: 'forestallning' };
+const AT_MEDIA_LABEL = { film: ['Filmer', 'film', 'filmer'], serie: ['Serier', 'serie', 'serier'], bok: ['Böcker', 'bok', 'böcker'], spel: ['Spel', 'spel', 'spel'], forestallning: ['Föreställningar', 'föreställning', 'föreställningar'] };
 const holidayCache = {};
 
 const pad2 = (n) => String(n).padStart(2, '0');
@@ -2888,14 +2890,14 @@ function renderStats() {
   const top = Object.entries(met).sort((a, b) => b[1] - a[1])[0];
   if (top && top[1] >= 2) facts.push(['Oftast med', `${top[0]}, ${dagar(top[1])}`]);
 
-  // Filmer, serier och böcker under perioden
-  const seen = { film: 0, serie: 0, bok: 0 };
+  // Underhållning under perioden
+  const seen = { film: 0, serie: 0, bok: 0, spel: 0, forestallning: 0 };
   for (const k of keys) {
     for (const f of entries[k].media || []) seen[f.kind]++;
   }
   const seenText = Object.entries(seen).filter(([, n]) => n)
     .map(([kind, n]) => `${n} ${KIND_COUNT[kind][n === 1 ? 0 : 1]}`);
-  if (seenText.length) facts.push(['Sett & läst', joinNames(seenText)]);
+  if (seenText.length) facts.push(['Underhållning', joinNames(seenText)]);
 
   const s = streaks();
   if (s.longest >= 2) {
@@ -3130,20 +3132,30 @@ function trendBuckets() {
       return { id: k, ms: e && e.mood ? [e.mood] : [], label, name: shortDate(k), day: true, future: k > todayKey() };
     });
   }
+  if (statPeriod === 'all') {
+    const first = Object.keys(entries).sort()[0];
+    const end = Number(todayKey().slice(0, 4));
+    const out = [];
+    for (let y = first ? Math.min(Number(first.slice(0, 4)), end) : end; y <= end; y++) {
+      const ms = Object.keys(entries).filter((k) => k.startsWith(`${y}-`) && entries[k].mood).map((k) => entries[k].mood);
+      out.push({ id: String(y), ms, label: String(y), name: String(y) });
+    }
+    return out;
+  }
   return trendMonths().map((ym) => ({ id: ym, ms: monthMoods(ym), name: cap(monthFmt.format(parseKey(ym + '-01'))), future: ym > todayKey().slice(0, 7) }));
 }
 
 function renderTrend() {
   $('trend-title').textContent = statPeriod === 'year' ? `Snitthumör per månad ${calMonth.slice(0, 4)}`
-    : statPeriod === 'all' ? 'Snitthumör per månad'
+    : statPeriod === 'all' ? 'Snitthumör per år'
       : statPeriod === 'week' ? 'Humör per dag, senaste veckan'
         : `Humör per dag, ${monthFmt.format(parseKey(calMonth + '-01'))}`;
   const data = trendBuckets().map((d) => ({ ...d, avg: d.ms.length ? avg(d.ms) : null }));
   trendItems = Object.fromEntries(data.map((d) => [d.id, d]));
-  trendCur = statPeriod === 'week' || statPeriod === 'month' ? todayKey() : calMonth;
+  trendCur = statPeriod === 'week' || statPeriod === 'month' ? todayKey() : statPeriod === 'all' ? todayKey().slice(0, 4) : calMonth;
   const n = data.length;
-  // Staplar för Vecka, Månad och År, en linje med punkter för Totalt
-  const bars = statPeriod !== 'all';
+  // Staplar för alla perioder, Totalt har ett år per stapel
+  const bars = true;
   const many = !bars && n > 12;
   const W = 340;
   const H = 128;
@@ -3174,7 +3186,7 @@ function renderTrend() {
   data.forEach((d, i) => {
     const cur = d.id === trendCur;
     if (bars) {
-      const w = step * (n > 12 ? 0.7 : 0.56);
+      const w = Math.min(statPeriod === 'all' ? 34 : 99, step * (n > 12 ? 0.7 : 0.56));
       const rx = Math.min(4, w / 2);
       // Snittets färg avrundas till närmaste humör
       if (d.avg != null) {
@@ -3188,11 +3200,12 @@ function renderTrend() {
     }
     // Dagar har veckodag eller datum. Med många månader står bara årtalet vid januari, annars månadens förkortning
     let label = '';
-    if (d.label !== undefined) label = d.label;
+    if (statPeriod === 'all') label = n > 8 && i % 2 && !cur ? '' : d.label;
+    else if (d.label !== undefined) label = d.label;
     else if (!many) label = monthShortFmt.format(parseKey(d.id + '-01')).replace('.', '').slice(0, 3);
     else if (d.id.endsWith('-01') || i === 0) label = d.id.slice(0, 4);
     if (label) {
-      svg += `<text class="lbl${cur && !many ? ' cur' : ''}" x="${xOf(i)}" y="${H - 4}" text-anchor="${many && i === 0 ? 'start' : 'middle'}">${label}</text>`;
+      svg += `<text class="lbl${cur && !many && !d.day ? ' cur' : ''}" x="${xOf(i)}" y="${H - 4}" text-anchor="${many && i === 0 ? 'start' : 'middle'}">${label}</text>`;
     }
     // Träffyta större än punkten: visar månadens siffror vid tryck och hovring
     svg += `<rect class="hit" x="${xOf(i) - step / 2}" y="0" width="${step}" height="${H - 14}" data-id="${d.id}" tabindex="0" aria-label="${d.name}${d.avg != null ? `, ${d.day ? 'humör' : 'snitthumör'} ${fmtDec(d.avg)}` : ', inget humör'}"/>`;
@@ -3243,7 +3256,7 @@ $('trend').addEventListener('focusin', (ev) => {
   if (r) trendRead(r.dataset.id);
 });
 
-/* Flöde, statistik eller sett och läst under kalendern */
+/* Flöde, statistik eller underhållning under kalendern */
 
 const PANEL_KEY = 'dagbok.kalenderpanel';
 const PANELS = [['feed', 'seg-feed', 'feed-panel'], ['stats', 'seg-stats', 'month-stats'], ['media', 'seg-media', 'media-panel']];
@@ -3279,7 +3292,7 @@ document.querySelector('.seg').addEventListener('keydown', (ev) => {
   $(tab).focus();
 });
 
-/* Sett och läst i hela dagboken, en typ i taget, det senaste först */
+/* Underhållning i hela dagboken, en typ i taget, det senaste först */
 
 let mediaKind = 'film';
 // Lista eller rutnät, och sortering på datum, betyg eller namn. Sparas till nästa gång.
@@ -3295,11 +3308,16 @@ const MEDIA_SORTS = {
   // Utan titel sist åt båda hållen
   name: (a, b, d) => (!a[1].title) - (!b[1].title) || a[1].title.localeCompare(b[1].title, 'sv') * d || byNewest(a, b),
 };
-const KIND_COUNT = { film: ['film', 'filmer'], serie: ['serie', 'serier'], bok: ['bok', 'böcker'] };
+const KIND_COUNT = { film: ['film', 'filmer'], serie: ['serie', 'serier'], bok: ['bok', 'böcker'], spel: ['spel', 'spel'], forestallning: ['föreställning', 'föreställningar'] };
 
 function renderMediaAll() {
   document.querySelectorAll('#media-kind [data-kind]').forEach((b) => {
     b.setAttribute('aria-checked', String(b.dataset.kind === mediaKind));
+    // Bara raden skrollar i sidled, sidan står still
+    const row = b.parentElement;
+    if (b.dataset.kind === mediaKind && (b.offsetLeft + b.offsetWidth > row.scrollLeft + row.clientWidth - 16 || b.offsetLeft < row.scrollLeft + 16)) {
+      row.scrollTo({ left: b.offsetLeft - 16, behavior: 'smooth' });
+    }
   });
   document.querySelectorAll('#media-sort [data-sort]').forEach((b) => {
     const on = b.dataset.sort === mediaOpts.sort;
