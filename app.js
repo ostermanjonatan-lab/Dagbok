@@ -3212,6 +3212,8 @@ function renderTrend() {
       // Snittets färg avrundas till närmaste humör
       if (d.avg != null) {
         svg += `<rect class="bar" x="${xOf(i) - w / 2}" y="${yOf(d.avg)}" width="${w}" height="${base - yOf(d.avg)}" rx="${rx}" style="fill: var(--m${Math.round(d.avg)}); animation-delay: ${Math.round(i * Math.min(40, 360 / n))}ms"/>`;
+        // Snittet står över stapeln för År och Totalt
+        if (!d.day) svg += `<text class="mval" x="${xOf(i)}" y="${yOf(d.avg) - 4}" text-anchor="middle">${fmtDec(d.avg)}</text>`;
       } else if (!d.future) {
         svg += `<line class="nobar" x1="${xOf(i) - w / 2}" x2="${xOf(i) + w / 2}" y1="${base}" y2="${base}"/>`;
       }
