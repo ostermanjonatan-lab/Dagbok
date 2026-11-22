@@ -3322,9 +3322,10 @@ function renderMediaAll() {
   const [one, many] = KIND_COUNT[mediaKind];
   $('media-add').textContent = all ? 'Lägg till underhållning' : `Lägg till ${one}`;
   $('media-count').textContent = rows.length ? `${rows.length} ${rows.length === 1 ? one : many}` : all ? 'Inget ännu.' : `Inga ${many} ännu.`;
-  $('media-all').innerHTML = grid ? rows.map(([k, f, i, id]) => `<button type="button" class="media-row media-tile" data-key="${k}" data-i="${i}"${id ? ` data-shelf="${id}"` : ''}
-    aria-label="${escapeHtml(f.title || 'Utan titel')}${id ? '' : `, ${shortDate(k)}`}${f.rating ? `, betyg ${f.rating} av 10` : ''}">
-    ${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : `<span class="mt-blank">${escapeHtml(f.title || 'Utan titel')}</span>`}
+  // Under Alla har omslaget en rund bricka med typens ikon i typens färg
+  $('media-all').innerHTML = grid ? rows.map(([k, f, i, id]) => `<button type="button" class="media-row media-tile${all ? ` kind-${f.kind}` : ''}" data-key="${k}" data-i="${i}"${id ? ` data-shelf="${id}"` : ''}
+    aria-label="${all ? `${KINDS[f.kind]}: ` : ''}${escapeHtml(f.title || 'Utan titel')}${id ? '' : `, ${shortDate(k)}`}${f.rating ? `, betyg ${f.rating} av 10` : ''}">
+    <span class="mt-cov">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : `<span class="mt-blank">${escapeHtml(f.title || 'Utan titel')}</span>`}${all ? `<span class="mt-badge">${kindIcon(f.kind)}</span>` : ''}</span>
     <span class="mt-title">${escapeHtml(f.title || 'Utan titel')}</span>${f.rating ? starsHtml(f.rating) : ''}</button>`).join('')
     : rows.map(([k, f, i, id]) => `<button type="button" class="media-row${all ? ` kind-${f.kind}` : ''}" data-key="${k}" data-i="${i}"${id ? ` data-shelf="${id}"` : ''}>
     ${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : '<span class="mr-blank" aria-hidden="true"></span>'}

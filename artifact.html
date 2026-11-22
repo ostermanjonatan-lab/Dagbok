@@ -1601,7 +1601,10 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
 .kind-bok { --kc: #4f8a5b; }
 .kind-spel { --kc: #c0712a; }
 .kind-forestallning { --kc: #8a5a9e; }
-.media-row[class*="kind-"] { border-left: 4px solid var(--kc); padding-left: 5px; }
+.media-row[class*="kind-"]:not(.media-tile) { border-left: 4px solid var(--kc); padding-left: 5px; }
+.mt-cov { position: relative; display: block; width: 100%; }
+.mt-badge { position: absolute; right: 5px; bottom: 5px; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--kc); color: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .3); }
+.mt-badge .ki-s { width: 14px; height: 14px; }
 .seg svg path[stroke-linejoin] { stroke-width: 1.7; }
 /* Läsrutan för en film, serie eller bok */
 .fv-top { display: flex; gap: 14px; align-items: flex-start; }
@@ -6302,9 +6305,10 @@ function renderMediaAll() {
   const [one, many] = KIND_COUNT[mediaKind];
   $('media-add').textContent = all ? 'Lägg till underhållning' : `Lägg till ${one}`;
   $('media-count').textContent = rows.length ? `${rows.length} ${rows.length === 1 ? one : many}` : all ? 'Inget ännu.' : `Inga ${many} ännu.`;
-  $('media-all').innerHTML = grid ? rows.map(([k, f, i, id]) => `<button type="button" class="media-row media-tile" data-key="${k}" data-i="${i}"${id ? ` data-shelf="${id}"` : ''}
-    aria-label="${escapeHtml(f.title || 'Utan titel')}${id ? '' : `, ${shortDate(k)}`}${f.rating ? `, betyg ${f.rating} av 10` : ''}">
-    ${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : `<span class="mt-blank">${escapeHtml(f.title || 'Utan titel')}</span>`}
+  // Under Alla har omslaget en rund bricka med typens ikon i typens färg
+  $('media-all').innerHTML = grid ? rows.map(([k, f, i, id]) => `<button type="button" class="media-row media-tile${all ? ` kind-${f.kind}` : ''}" data-key="${k}" data-i="${i}"${id ? ` data-shelf="${id}"` : ''}
+    aria-label="${all ? `${KINDS[f.kind]}: ` : ''}${escapeHtml(f.title || 'Utan titel')}${id ? '' : `, ${shortDate(k)}`}${f.rating ? `, betyg ${f.rating} av 10` : ''}">
+    <span class="mt-cov">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : `<span class="mt-blank">${escapeHtml(f.title || 'Utan titel')}</span>`}${all ? `<span class="mt-badge">${kindIcon(f.kind)}</span>` : ''}</span>
     <span class="mt-title">${escapeHtml(f.title || 'Utan titel')}</span>${f.rating ? starsHtml(f.rating) : ''}</button>`).join('')
     : rows.map(([k, f, i, id]) => `<button type="button" class="media-row${all ? ` kind-${f.kind}` : ''}" data-key="${k}" data-i="${i}"${id ? ` data-shelf="${id}"` : ''}>
     ${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : '<span class="mr-blank" aria-hidden="true"></span>'}
