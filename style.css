@@ -681,9 +681,15 @@ mark {
 /* Periodval: segmentreglage där markeringen glider till valet */
 .stats .period { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin: 2px 0 18px; padding: 3px; border-radius: 11px; background: color-mix(in srgb, var(--line) 65%, transparent); }
 .stats .period::before { content: ''; position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc((100% - 6px) / 4); border-radius: 8px; background: var(--surface); box-shadow: 0 1px 3px rgba(42, 20, 24, .14), 0 0 0 .5px rgba(42, 20, 24, .06); transform: translateX(calc(var(--i, 1) * 100%)); transition: transform .28s cubic-bezier(.3, .7, .2, 1); }
-.stats .period .pill, .stats .period .pill:hover { position: relative; padding: 7px 0; border: 0; border-radius: 8px; background: none; color: var(--muted); font-size: 15px; text-align: center; transition: color .2s; }
+.stats .period .pill, .stats .period .pill:hover { position: relative; border: 0; border-radius: 8px; background: none; color: var(--muted); text-align: center; transition: color .2s; }
 .stats .period .pill[aria-checked="true"] { background: none; color: var(--text); font-weight: 600; }
 .stats .period .pill:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.stats .period .pill { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 7px 0 6px; font-size: 13px; }
+.per-ico { flex: none; width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: color .2s, transform .28s cubic-bezier(.3, .7, .2, 1); }
+.per-ico .dots { fill: currentColor; stroke: none; }
+.per-ico .hl { transition: fill .2s; }
+.stats .period .pill[aria-checked="true"] .per-ico { color: var(--accent); transform: translateY(-1px) scale(1.06); }
+.stats .period .pill[aria-checked="true"] .per-ico .hl { fill: currentColor; }
 .stats h2 {
   margin: 0 0 10px;
   font-size: 14px;
