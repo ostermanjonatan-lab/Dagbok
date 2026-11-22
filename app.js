@@ -2985,7 +2985,8 @@ function renderTempMonths(data) {
   const step = (x1 - x0) / data.length;
   const xOf = (i) => x0 + (i + 0.5) * step;
   const w = Math.min(16, step * 0.5);
-  const fmt = (v) => `${String(Math.round(v)).replace('-', '−')}°`;
+  const tight = data.length > 6;
+  const fmt = (v) => `${fmtDec(v).replace('-', '−')}${tight ? '' : '°'}`;
   // En gradient över hela höjden, så att varje stapel får färgen för sin temperatur
   const stops = TEMP_COLORS.map(([t, c]) => `<stop offset="${Math.max(0, Math.min(1, (hi - t) / (hi - lo))).toFixed(3)}" stop-color="${c}"/>`).reverse().join('');
   let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Temperatur per månad"><defs><linearGradient id="temp-grad" gradientUnits="userSpaceOnUse" x1="0" y1="${yOf(hi)}" x2="0" y2="${yOf(lo)}">${stops}</linearGradient></defs>`;
@@ -3001,9 +3002,9 @@ function renderTempMonths(data) {
       const yTop = yOf(d.hi);
       const h = Math.max(w, yOf(d.lo) - yTop);
       const y = Math.min(yTop, yOf(d.v) - w / 2);
-      svg += `<rect class="tbar" x="${(x - w / 2).toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="${(w / 2).toFixed(1)}" fill="url(#temp-grad)" style="animation-delay: ${Math.round(i * Math.min(40, 360 / data.length))}ms"><title>${d.name}: snitt ${fmtTemp(d.v, true)}, ${fmtTemp(d.lo)} till ${fmtTemp(d.hi)}</title></rect>`;
+      svg += `<rect class="tbar" x="${(x - w / 2).toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="${(w / 2).toFixed(1)}" fill="url(#temp-grad)" style="animation-delay: ${Math.round(i * Math.min(40, 360 / data.length))}ms"><title>${d.name}: snitt ${fmtTemp(d.v, true)}, ${fmtTemp(d.lo, true)} till ${fmtTemp(d.hi, true)}</title></rect>`;
       svg += `<circle class="tavg" cx="${x}" cy="${yOf(d.v)}" r="${Math.max(2.5, w / 2 - 3)}"/>`;
-      svg += `<text class="tval" x="${x}" y="${y - 5}" text-anchor="middle">${fmt(d.v)}</text>`;
+      svg += `<text class="tval${tight ? ' sm' : ''}" x="${x}" y="${y - 5}" text-anchor="middle">${fmt(d.v)}</text>`;
     }
     if (d.label) svg += `<text class="lbl" x="${x}" y="${H - 4}" text-anchor="middle">${d.label}</text>`;
   });
@@ -3044,8 +3045,8 @@ function renderTempDays(data) {
     const x = xOf(i);
     if (d.v != null) {
       // Stapeln går från nollan och är minst lika hög som den är bred.
-      // Den avrundade siffran styr riktningen, 0° blir en prick på nollstrecket.
-      const r = Math.round(d.v) || 0;
+      // Den avrundade siffran styr riktningen, 0,0° blir en prick på nollstrecket.
+      const r = Math.round(d.v * 10) / 10 || 0;
       let y1 = Math.min(yOf(0), yOf(r));
       let y2 = Math.max(yOf(0), yOf(r));
       if (y2 - y1 < w) {
@@ -3053,8 +3054,8 @@ function renderTempDays(data) {
         else if (r < 0) y2 = y1 + w;
         else { y1 = yOf(0) - w / 2; y2 = yOf(0) + w / 2; }
       }
-      svg += `<rect class="tbar${r < 0 ? ' neg' : ''}" x="${(x - w / 2).toFixed(1)}" y="${y1.toFixed(1)}" width="${w.toFixed(1)}" height="${(y2 - y1).toFixed(1)}" rx="${(w / 2).toFixed(1)}" fill="url(#temp-grad-d)" style="animation-delay: ${Math.round(i * Math.min(40, 360 / data.length))}ms"><title>${d.name}: ${fmtTemp(d.v)}</title></rect>`;
-      if (few) svg += `<text class="tval" x="${x}" y="${(r >= 0 ? y1 - 5 : y2 + 12).toFixed(1)}" text-anchor="middle">${String(r).replace('-', '−')}°</text>`;
+      svg += `<rect class="tbar${r < 0 ? ' neg' : ''}" x="${(x - w / 2).toFixed(1)}" y="${y1.toFixed(1)}" width="${w.toFixed(1)}" height="${(y2 - y1).toFixed(1)}" rx="${(w / 2).toFixed(1)}" fill="url(#temp-grad-d)" style="animation-delay: ${Math.round(i * Math.min(40, 360 / data.length))}ms"><title>${d.name}: ${fmtTemp(d.v, true)}</title></rect>`;
+      if (few) svg += `<text class="tval" x="${x}" y="${(r >= 0 ? y1 - 5 : y2 + 12).toFixed(1)}" text-anchor="middle">${fmtDec(r).replace('-', '−')}°</text>`;
     }
     if (d.label) svg += `<text class="lbl" x="${x}" y="${H - 4}" text-anchor="middle">${d.label}</text>`;
   });

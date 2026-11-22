@@ -2148,6 +2148,7 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 #temp-trend .tbar { transform-box: fill-box; transform-origin: bottom; animation: bar-grow .45s cubic-bezier(.2, .8, .2, 1) backwards; }
 #temp-trend .tavg { fill: #fff; stroke: rgb(42 20 24 / .35); stroke-width: 1; }
 #temp-trend .tval { fill: var(--text); font-size: 11px; font-weight: 600; font-family: var(--sans); }
+#temp-trend .tval.sm { font-size: 9px; letter-spacing: -.2px; }
 #temp-trend .gl.zero { stroke-dasharray: 3 3; }
 @media (prefers-reduced-motion: reduce) { #temp-trend .tbar { animation: none; } }
 #temp-trend .tbar.neg { transform-origin: top; }
