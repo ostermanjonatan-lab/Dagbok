@@ -2050,16 +2050,10 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
 /* Väven gör färgen mörkare, så grunden under är lite ljusare för att helheten ska bli samma vinröda */
 .nav, #splash, .sheet-grab::before { background-color: var(--cloth-base); background-image: var(--cloth); }
 
-/* Den ljusa bakgrunden har papperets struktur: fint korn, inga linjer. Strukturen ritas en gång
-   och rullar med. Att låta den ligga fast mot skärmen tvingade telefonen att måla om allt vid
-   varje rörelse när man rullade. Kornet är så fint att skarvar mellan rubriker och ark inte syns. */
-:root {
-  --paper-tex: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .34 0 0 0 0 .24 0 0 0 0 .13 .95 0 0 0 -.33'/%3E%3C/filter%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.04 .28' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .4 0 0 0 0 .3 0 0 0 0 .18 .8 0 0 0 -.36'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23g)' opacity='.75'/%3E%3Crect width='240' height='240' filter='url(%23f)' opacity='.3'/%3E%3C/svg%3E");
-}
-/* Bara på dagen och i läsläget. Kalendern, flödet och resten har den släta bakgrunden. */
+/* Dagen och läsläget har samma släta bakgrund som resten av appen */
+:root { --paper-tex: none; }
 .sheet-panel, .sheet-grab, .reader, .reader-head {
-  /* Strukturen gör ytan mörkare, så grunden under är lite ljusare för att helheten ska bli samma ton */
-  background-color: #fef3e4;
+  background-color: var(--bg);
   background-image: var(--paper-tex);
 }
 
@@ -2099,7 +2093,7 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
   justify-content: space-between;
   gap: 8px;
   margin: 0 0 6px;
-  background-color: #fef3e4;
+  background-color: var(--bg);
   background-image: var(--paper-tex);
 }
 .sheet-panel .text-head { top: 44px; }
