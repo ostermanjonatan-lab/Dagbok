@@ -2343,6 +2343,23 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
 .post .post-film { gap: 10px; margin-top: 10px; padding: 8px 12px 8px 8px; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--bg) 50%, transparent); }
 .post .post-film + .post-film { margin-top: 6px; padding-top: 8px; }
 .post .post-film img { width: 34px; border-radius: 4px; }
+/* Underhållning i flödet ser ut som en biljett: halvrunda hack i sidorna, en perforering
+   före betyget som på en biljettstub och en tunn kontur som följer formen */
+.post .post-film {
+  --notch: 7px;
+  position: relative;
+  min-height: 56px;
+  padding: 8px 14px 8px 16px;
+  border: 0;
+  border-radius: 4px;
+  background: #f6ecda;
+  -webkit-mask: radial-gradient(circle at 0 50%, #0000 var(--notch), #000 calc(var(--notch) + .5px)) left / 51% 100% no-repeat, radial-gradient(circle at 100% 50%, #0000 var(--notch), #000 calc(var(--notch) + .5px)) right / 51% 100% no-repeat;
+  mask: radial-gradient(circle at 0 50%, #0000 var(--notch), #000 calc(var(--notch) + .5px)) left / 51% 100% no-repeat, radial-gradient(circle at 100% 50%, #0000 var(--notch), #000 calc(var(--notch) + .5px)) right / 51% 100% no-repeat;
+}
+.post .post-film-wrap { filter: drop-shadow(0 0 .6px rgb(42 20 24 / .45)) drop-shadow(0 1.5px 1.5px rgb(42 20 24 / .12)); }
+.post .post-film + .post-film, .post .post-film-wrap + .post-film-wrap { margin-top: 8px; }
+.post .post-film .stars { align-self: stretch; display: flex; align-items: center; padding-left: 14px; border-left: 1.5px dashed color-mix(in srgb, var(--muted) 45%, transparent); }
+.post .post-film img { border-radius: 2px; }
 .post .pf-text { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
 .post .pf-title { font-weight: 600; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .post .media, .post .media:last-child { margin: 10px 0 0; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
@@ -5567,8 +5584,8 @@ function postHtml(k, e, today, searching, showMonth) {
     <div class="post-body">
       <header class="post-head${special ? '' : ' empty'}">${special ? `<span class="special">${escapeHtml(special)}</span>` : ''}${starBtn(k)}</header>
       ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
-      ${(e.media || []).map((f) => `<div class="post-film">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
-        <span class="pf-text"><span class="pf-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</span><span class="pf-title">${escapeHtml(f.title || 'Utan titel')}</span></span>${f.rating ? starsHtml(f.rating) : ''}</div>`).join('')}
+      ${(e.media || []).map((f) => `<div class="post-film-wrap"><div class="post-film">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
+        <span class="pf-text"><span class="pf-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</span><span class="pf-title">${escapeHtml(f.title || 'Utan titel')}</span></span>${f.rating ? starsHtml(f.rating) : ''}</div></div>`).join('')}
       ${postMedia(e.photos)}
       ${foot.length ? `<div class="post-stats">${foot.join('')}</div>` : ''}
     </div>

@@ -2047,8 +2047,8 @@ function postHtml(k, e, today, searching, showMonth) {
     <div class="post-body">
       <header class="post-head${special ? '' : ' empty'}">${special ? `<span class="special">${escapeHtml(special)}</span>` : ''}${starBtn(k)}</header>
       ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
-      ${(e.media || []).map((f) => `<div class="post-film">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
-        <span class="pf-text"><span class="pf-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</span><span class="pf-title">${escapeHtml(f.title || 'Utan titel')}</span></span>${f.rating ? starsHtml(f.rating) : ''}</div>`).join('')}
+      ${(e.media || []).map((f) => `<div class="post-film-wrap"><div class="post-film">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
+        <span class="pf-text"><span class="pf-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</span><span class="pf-title">${escapeHtml(f.title || 'Utan titel')}</span></span>${f.rating ? starsHtml(f.rating) : ''}</div></div>`).join('')}
       ${postMedia(e.photos)}
       ${foot.length ? `<div class="post-stats">${foot.join('')}</div>` : ''}
     </div>
