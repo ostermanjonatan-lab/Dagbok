@@ -2616,6 +2616,8 @@ function calGridHtml(ym, year) {
     html += `<button type="button" class="${cls.join(' ')}" data-key="${key}"${style}
       aria-label="${escapeHtml(label)}"${key > today ? ' disabled' : ''}><span>${d}</span>${wx}${e && MARK_OF[e.mark] ? `<span class="mk">${miniIcon(e.mark)}</span>` : big ? `<span class="mk auto">${miniIcon(big)}</span>` : ''}</button>`;
   }
+  // Alltid sex veckor, så att det under kalendern inte flyttar sig mellan månader
+  if (!year) html += '<div class="day-pad" aria-hidden="true"></div>'.repeat(42 - offset - days);
   return html;
 }
 
