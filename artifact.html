@@ -2382,6 +2382,13 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 46'%3E%3Cpath d='M30 4C16 1 4 10 4 24s11 19 23 18 20-9 19-21S36 3 22 6' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
 }
 .post .avatar.none::before { background: var(--line); }
+/* Korten i flödet ligger lite olika snett, som inklistrade i en bok */
+#list .post { transform: rotate(var(--tilt, 0deg)); }
+#list .post:nth-of-type(5n + 1) { --tilt: -.7deg; }
+#list .post:nth-of-type(5n + 2) { --tilt: .5deg; }
+#list .post:nth-of-type(5n + 3) { --tilt: -.3deg; }
+#list .post:nth-of-type(5n + 4) { --tilt: .8deg; }
+#list .post:nth-of-type(5n + 5) { --tilt: -.5deg; }
 :is(.post, .reader-head) .star-btn.on::before {
   content: '';
   position: absolute;
