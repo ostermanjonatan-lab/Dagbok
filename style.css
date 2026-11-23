@@ -2528,7 +2528,10 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
 .post .pf-s .avatar { width: 32px; height: 32px; margin: 0 0 0 4px; }
 .post .pf-s .avatar + .pf-l { align-self: flex-start; }
 button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
-.pf-names { color: var(--text); white-space: normal; max-width: 200px; }
+/* Rutan med personerna: datumet och ett namn per rad */
+.pv-date { margin: -6px 0 10px; font-size: 14px; color: var(--muted); }
+.pv-list { margin: 0; padding: 0; list-style: none; }
+.pv-list li { padding: 10px 0; border-top: 1px solid var(--line); font-size: 17px; }
 
 
 .reader-head #reader-star { display: flex; }
