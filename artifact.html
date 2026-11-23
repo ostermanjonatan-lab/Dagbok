@@ -636,8 +636,8 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
 .stats { margin-top: 18px; }
 /* Perioderna är vanlig text, den valda är mörk och fet */
 /* Periodval: samma flikar som typvalet i Underhållning */
-.stats .period { display: flex; gap: 22px; margin: 0 0 14px; border-bottom: 1px solid var(--line); }
-.stats .period .pill, .stats .period .pill:hover { display: inline-flex; align-items: center; gap: 7px; margin-bottom: -1px; padding: 6px 0 8px; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: none; color: var(--muted); font-size: 16px; }
+.stats .period { display: flex; gap: 0; margin: 0 0 14px; border-bottom: 1px solid var(--line); }
+.stats .period .pill, .stats .period .pill:hover { flex: 1 1 auto; justify-content: center; white-space: nowrap; display: inline-flex; align-items: center; gap: 7px; margin-bottom: -1px; padding: 6px 0 8px; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: none; color: var(--muted); font-size: 16px; }
 .stats .period .pill[aria-checked="true"] { background: none; color: var(--text); font-weight: 600; border-bottom-color: var(--accent); }
 .stats h2 {
   margin: 0 0 10px;
