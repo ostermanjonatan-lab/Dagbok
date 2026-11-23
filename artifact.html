@@ -2140,6 +2140,58 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
 .reader .prose strong { color: rgb(52 54 60 / .92); }
 .reader .prose h2, .reader .prose h3 { line-height: 30.4px; }
 
+/* Skrivblocket: ett ljust blad med tygband överst i huvudfärgen och en marginallinje.
+   Linjerna och radhöjden är desamma som förut, de går nu över hela bladet. */
+.writer, .reader .prose {
+  position: relative;
+  border: 0;
+  border-radius: 4px 4px 10px 10px;
+  background-color: #fffdf8;
+  box-shadow: 0 1px 2px rgb(42 20 24 / .12), 0 6px 16px rgb(42 20 24 / .08);
+}
+.writer { padding-top: 16px; background-image: var(--page-grain); }
+.writer::before, .reader .prose::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 16px;
+  border-radius: 4px 4px 0 0;
+  background-color: var(--cloth-base);
+  background-image: var(--cloth);
+  pointer-events: none;
+}
+.writer::after, .reader .prose::after {
+  content: '';
+  position: absolute;
+  top: 16px;
+  bottom: 0;
+  left: 32px;
+  width: 1.5px;
+  background: color-mix(in srgb, var(--accent) 40%, transparent);
+  pointer-events: none;
+}
+.writer:focus-within { box-shadow: 0 1px 2px rgb(42 20 24 / .12), 0 6px 16px rgb(42 20 24 / .08), 0 0 0 1.5px color-mix(in srgb, var(--accent) 35%, transparent); }
+.writer .paper {
+  padding: 14px 16px 16px 44px;
+  border-radius: 0 0 10px 10px;
+  /* Första linjen under första raden, ingen linje i remsan ovanför */
+  background:
+    linear-gradient(#fffdf8, #fffdf8) 0 0 / 100% 14px no-repeat padding-box,
+    linear-gradient(to bottom, transparent calc(1lh - 1px), var(--rule) 0) 0 14px / 100% 1lh repeat-y padding-box;
+}
+.reader .prose {
+  padding: 30px 16px 16px 44px;
+  background-image:
+    linear-gradient(#fffdf8, #fffdf8),
+    linear-gradient(to bottom, transparent 29.4px, var(--rule, color-mix(in srgb, var(--line) 80%, transparent)) 0),
+    var(--page-grain);
+  background-size: 100% 30px, 100% 30.4px, auto;
+  background-repeat: no-repeat, repeat-y, repeat;
+  background-origin: padding-box, padding-box, padding-box;
+  background-clip: padding-box, padding-box, padding-box;
+  background-position: 0 0, 0 30px, 0 0;
+}
+
 /* Under sidan i läsläget: humöret som en liten färgskala, sedan väder och personer bredvid varandra */
 .reader-info { margin: 20px 2px 0; }
 .ri-mood { position: relative; height: 28px; margin: 0 13px; }
