@@ -2556,24 +2556,24 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .rd-v { font-family: var(--hand); font-weight: 600; font-size: 16px; line-height: 28px; min-width: 0; }
 .rd-note { font-size: 13px; line-height: 28px; color: var(--muted); }
 
-/* Rutan är bara papperet: inga ramar runt, stäng och bokmärke ligger på bladet.
-   Man byter dag genom att svepa eller med piltangenterna. */
+/* Läsläget är bara papperslappar. Rutan runt syns inte, och man sveper mellan lapparna
+   som mellan korten i flödet. Stäng och bokmärket ligger på varje lapp. */
 .reader, .reader .reader-head { background: none; }
-.reader { border-radius: 0; overflow: hidden; background-color: #fffdf8; box-shadow: 0 1px 1px rgb(42 20 24 / .08), 0 16px 34px -6px rgb(0 0 0 / .35); }
-.reader .reader-head { position: absolute; top: 0; left: 0; right: 0; z-index: 3; justify-content: flex-end; padding: 0 6px 0 0; border: 0; pointer-events: none; }
-.reader .reader-head > * { pointer-events: auto; }
-.reader .reader-head h2 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-.reader #reader-prev, .reader #reader-next { display: none; }
-.reader .reader-head #reader-star { align-self: flex-start; height: 44px; }
-.reader .reader-head .star-btn.on::before { top: -6px; height: 36px; }
-.reader .reader-head .star-btn::after { transform: translateY(-6px); }
-.reader .reader-head .close-x { margin: 2px 0 0; }
-.reader-pane { padding: 0; }
-.reader-card { min-height: 100%; padding-top: 54px; box-shadow: none; }
+.reader { width: 100%; max-width: 600px; height: auto; max-height: none; border-radius: 0; overflow: visible; box-shadow: none; }
+.reader[open] { animation: none; }
+.reader .reader-head { display: none; }
+.reader-track { align-items: center; }
+.reader-pane { max-height: 86vh; max-height: 86dvh; padding: 18px 16px 22px; overflow-y: auto; }
+.reader-card { margin: 0; padding-top: 54px; box-shadow: 0 1px 1px rgb(42 20 24 / .08), 0 16px 30px -8px rgb(0 0 0 / .4); }
+.reader-card[open], .reader[open] .reader-card { animation: pop .15s ease-out; }
+@media (prefers-reduced-motion: reduce) { .reader[open] .reader-card { animation: none; } }
+.reader .reader-card .reader-tools { position: absolute; top: 0; right: 6px; display: flex; align-items: flex-start; gap: 2px; min-height: 0; z-index: 2; }
+.reader .reader-card .reader-tools .star-btn { position: relative; top: auto; right: auto; width: 34px; height: 44px; margin: 0; }
+.reader .reader-card .reader-tools .star-btn::after { transform: translateY(-6px); }
+.reader .reader-card .reader-tools .star-btn.on::before { top: 0; height: 30px; }
+.reader .reader-card .reader-tools .close-x { margin: 2px 0 0; }
 .reader-card .reader-foot { margin: 0; line-height: 28px; padding-top: 0; }
-/* Höjden sätts efter dagen, se fitReader */
-.reader { height: auto; transition: height .18s ease-out; }
-@media (prefers-reduced-motion: reduce) { .reader { transition: none; } }
+.reader-card .empty { margin: 0; line-height: 28px; }
 /* Datumet och humöret står i marginalen, som i en kalenderdagbok. Texten börjar överst. */
 .post { grid-template-columns: 34px minmax(0, 1fr); column-gap: 18px; padding-left: 12px; }
 .post::after { left: 55px; }

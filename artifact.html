@@ -2505,24 +2505,24 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .rd-v { font-family: var(--hand); font-weight: 600; font-size: 16px; line-height: 28px; min-width: 0; }
 .rd-note { font-size: 13px; line-height: 28px; color: var(--muted); }
 
-/* Rutan är bara papperet: inga ramar runt, stäng och bokmärke ligger på bladet.
-   Man byter dag genom att svepa eller med piltangenterna. */
+/* Läsläget är bara papperslappar. Rutan runt syns inte, och man sveper mellan lapparna
+   som mellan korten i flödet. Stäng och bokmärket ligger på varje lapp. */
 .reader, .reader .reader-head { background: none; }
-.reader { border-radius: 0; overflow: hidden; background-color: #fffdf8; box-shadow: 0 1px 1px rgb(42 20 24 / .08), 0 16px 34px -6px rgb(0 0 0 / .35); }
-.reader .reader-head { position: absolute; top: 0; left: 0; right: 0; z-index: 3; justify-content: flex-end; padding: 0 6px 0 0; border: 0; pointer-events: none; }
-.reader .reader-head > * { pointer-events: auto; }
-.reader .reader-head h2 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-.reader #reader-prev, .reader #reader-next { display: none; }
-.reader .reader-head #reader-star { align-self: flex-start; height: 44px; }
-.reader .reader-head .star-btn.on::before { top: -6px; height: 36px; }
-.reader .reader-head .star-btn::after { transform: translateY(-6px); }
-.reader .reader-head .close-x { margin: 2px 0 0; }
-.reader-pane { padding: 0; }
-.reader-card { min-height: 100%; padding-top: 54px; box-shadow: none; }
+.reader { width: 100%; max-width: 600px; height: auto; max-height: none; border-radius: 0; overflow: visible; box-shadow: none; }
+.reader[open] { animation: none; }
+.reader .reader-head { display: none; }
+.reader-track { align-items: center; }
+.reader-pane { max-height: 86vh; max-height: 86dvh; padding: 18px 16px 22px; overflow-y: auto; }
+.reader-card { margin: 0; padding-top: 54px; box-shadow: 0 1px 1px rgb(42 20 24 / .08), 0 16px 30px -8px rgb(0 0 0 / .4); }
+.reader-card[open], .reader[open] .reader-card { animation: pop .15s ease-out; }
+@media (prefers-reduced-motion: reduce) { .reader[open] .reader-card { animation: none; } }
+.reader .reader-card .reader-tools { position: absolute; top: 0; right: 6px; display: flex; align-items: flex-start; gap: 2px; min-height: 0; z-index: 2; }
+.reader .reader-card .reader-tools .star-btn { position: relative; top: auto; right: auto; width: 34px; height: 44px; margin: 0; }
+.reader .reader-card .reader-tools .star-btn::after { transform: translateY(-6px); }
+.reader .reader-card .reader-tools .star-btn.on::before { top: 0; height: 30px; }
+.reader .reader-card .reader-tools .close-x { margin: 2px 0 0; }
 .reader-card .reader-foot { margin: 0; line-height: 28px; padding-top: 0; }
-/* Höjden sätts efter dagen, se fitReader */
-.reader { height: auto; transition: height .18s ease-out; }
-@media (prefers-reduced-motion: reduce) { .reader { transition: none; } }
+.reader-card .empty { margin: 0; line-height: 28px; }
 /* Datumet och humöret står i marginalen, som i en kalenderdagbok. Texten börjar överst. */
 .post { grid-template-columns: 34px minmax(0, 1fr); column-gap: 18px; padding-left: 12px; }
 .post::after { left: 55px; }
@@ -6237,29 +6237,32 @@ function readerInfo(e) {
   return html ? `<div class="reader-info">${html}</div>` : '';
 }
 
+// Varje dag är en egen papperslapp som man sveper mellan, som korten i flödet.
+// Stäng och bokmärket ligger på lappen så att de följer med när man sveper.
+const READER_TILTS = [-0.7, 0.5, -0.3, 0.8, -0.5];
 function readerPane(key) {
   const e = entries[key];
-  if (!e) {
-    return `<div class="reader-pane" data-key="${key}">${readerTop(key)}
-      <p class="empty">Inget skrivet den här dagen.</p>
-      <div class="reader-foot"><button type="button" class="link reader-edit" data-key="${key}">Skriv för den här dagen</button></div>
-    </div>`;
-  }
-  // Dagen visas som kortet i flödet: datumet i marginalen och texten på linjerna,
-  // men med mer om humöret, vädret och vilka man var med
   const d = parseKey(key);
-  return `<div class="reader-pane" data-key="${key}">
-    <article class="post reader-card${key === todayKey() ? ' today' : ''}">
-      <div class="post-margin"><span class="when"><b>${d.getDate()}</b><span>${WEEKDAY_CAP[d.getDay()].slice(0, 3).toLowerCase()}</span></span></div>
-      <div class="post-body">
-        ${readerTop(key)}
+  const tilt = READER_TILTS[d.getDate() % READER_TILTS.length];
+  const tools = `<header class="post-head reader-tools">${e ? starBtn(key) : ''}<button type="button" class="icon close-x reader-x" aria-label="Stäng"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>`;
+  const margin = `<div class="post-margin"><span class="when"><b>${d.getDate()}</b><span>${WEEKDAY_CAP[d.getDay()].slice(0, 3).toLowerCase()}</span></span></div>`;
+  const body = e ? `${readerTop(key)}
         ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
         ${(e.media || []).map((f, i) => `<button type="button" class="reader-film" data-key="${key}" data-i="${i}">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
           <div><div class="fs-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</div><div class="rf-title">${escapeHtml(f.title || 'Utan titel')}</div>${f.rating ? starsHtml(f.rating) : ''}</div></button>
 `).join('')}
         ${bigPhotos(e.photos)}
         ${readerDetails(e)}
-        <div class="reader-foot"><button type="button" class="link reader-edit" data-key="${key}">Redigera dagen</button></div>
+        <div class="reader-foot"><button type="button" class="link reader-edit" data-key="${key}">Redigera dagen</button></div>`
+    : `${readerTop(key)}
+        <p class="empty">Inget skrivet den här dagen.</p>
+        <div class="reader-foot"><button type="button" class="link reader-edit" data-key="${key}">Skriv för den här dagen</button></div>`;
+  return `<div class="reader-pane" data-key="${key}">
+    <article class="post reader-card${key === todayKey() ? ' today' : ''}" style="rotate: ${tilt}deg">
+      ${tools}
+      ${margin}
+      <div class="post-body">
+        ${body}
       </div>
     </article>
   </div>`;
@@ -6279,24 +6282,10 @@ function showReaderDay(key) {
   $('reader-star').innerHTML = entries[key] ? starBtn(key) : '';
   $('reader-prev').disabled = !prev;
   $('reader-next').disabled = !next;
-  fitReader(key);
 
   calSel = key;
   if (key.slice(0, 7) !== calMonth) calMonth = key.slice(0, 7);
   renderCal();
-}
-
-// Rutan är så hög som dagen behöver, högst 82 % av skärmen, och lutar lite som korten i flödet
-const READER_TILTS = [-0.7, 0.5, -0.3, 0.8, -0.5];
-function fitReader(key) {
-  const reader = $('reader');
-  const card = $('reader-track').querySelector(`[data-key="${key}"] .reader-card`);
-  if (!card) return;
-  card.style.minHeight = '0';
-  const h = card.offsetHeight;
-  card.style.minHeight = '';
-  reader.style.height = `${Math.min(h, Math.round(window.innerHeight * 0.82))}px`;
-  reader.style.rotate = `${READER_TILTS[parseKey(key).getDate() % READER_TILTS.length]}deg`;
 }
 
 function openReader(key) {
@@ -7165,6 +7154,7 @@ $('cal-grid').addEventListener('click', (ev) => {
   openReader(btn.dataset.key);
 });
 $('reader-close').addEventListener('click', closeReader);
+$('reader-track').addEventListener('click', (ev) => { if (ev.target.closest('.reader-x')) closeReader(); });
 $('reader-prev').addEventListener('click', () => stepReader(-1));
 $('reader-next').addEventListener('click', () => stepReader(1));
 $('reader-track').addEventListener('scroll', onReaderScroll);

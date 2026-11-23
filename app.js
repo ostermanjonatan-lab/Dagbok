@@ -2796,29 +2796,32 @@ function readerInfo(e) {
   return html ? `<div class="reader-info">${html}</div>` : '';
 }
 
+// Varje dag är en egen papperslapp som man sveper mellan, som korten i flödet.
+// Stäng och bokmärket ligger på lappen så att de följer med när man sveper.
+const READER_TILTS = [-0.7, 0.5, -0.3, 0.8, -0.5];
 function readerPane(key) {
   const e = entries[key];
-  if (!e) {
-    return `<div class="reader-pane" data-key="${key}">${readerTop(key)}
-      <p class="empty">Inget skrivet den här dagen.</p>
-      <div class="reader-foot"><button type="button" class="link reader-edit" data-key="${key}">Skriv för den här dagen</button></div>
-    </div>`;
-  }
-  // Dagen visas som kortet i flödet: datumet i marginalen och texten på linjerna,
-  // men med mer om humöret, vädret och vilka man var med
   const d = parseKey(key);
-  return `<div class="reader-pane" data-key="${key}">
-    <article class="post reader-card${key === todayKey() ? ' today' : ''}">
-      <div class="post-margin"><span class="when"><b>${d.getDate()}</b><span>${WEEKDAY_CAP[d.getDay()].slice(0, 3).toLowerCase()}</span></span></div>
-      <div class="post-body">
-        ${readerTop(key)}
+  const tilt = READER_TILTS[d.getDate() % READER_TILTS.length];
+  const tools = `<header class="post-head reader-tools">${e ? starBtn(key) : ''}<button type="button" class="icon close-x reader-x" aria-label="Stäng"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>`;
+  const margin = `<div class="post-margin"><span class="when"><b>${d.getDate()}</b><span>${WEEKDAY_CAP[d.getDay()].slice(0, 3).toLowerCase()}</span></span></div>`;
+  const body = e ? `${readerTop(key)}
         ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
         ${(e.media || []).map((f, i) => `<button type="button" class="reader-film" data-key="${key}" data-i="${i}">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
           <div><div class="fs-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</div><div class="rf-title">${escapeHtml(f.title || 'Utan titel')}</div>${f.rating ? starsHtml(f.rating) : ''}</div></button>
 `).join('')}
         ${bigPhotos(e.photos)}
         ${readerDetails(e)}
-        <div class="reader-foot"><button type="button" class="link reader-edit" data-key="${key}">Redigera dagen</button></div>
+        <div class="reader-foot"><button type="button" class="link reader-edit" data-key="${key}">Redigera dagen</button></div>`
+    : `${readerTop(key)}
+        <p class="empty">Inget skrivet den här dagen.</p>
+        <div class="reader-foot"><button type="button" class="link reader-edit" data-key="${key}">Skriv för den här dagen</button></div>`;
+  return `<div class="reader-pane" data-key="${key}">
+    <article class="post reader-card${key === todayKey() ? ' today' : ''}" style="rotate: ${tilt}deg">
+      ${tools}
+      ${margin}
+      <div class="post-body">
+        ${body}
       </div>
     </article>
   </div>`;
@@ -2838,24 +2841,10 @@ function showReaderDay(key) {
   $('reader-star').innerHTML = entries[key] ? starBtn(key) : '';
   $('reader-prev').disabled = !prev;
   $('reader-next').disabled = !next;
-  fitReader(key);
 
   calSel = key;
   if (key.slice(0, 7) !== calMonth) calMonth = key.slice(0, 7);
   renderCal();
-}
-
-// Rutan är så hög som dagen behöver, högst 82 % av skärmen, och lutar lite som korten i flödet
-const READER_TILTS = [-0.7, 0.5, -0.3, 0.8, -0.5];
-function fitReader(key) {
-  const reader = $('reader');
-  const card = $('reader-track').querySelector(`[data-key="${key}"] .reader-card`);
-  if (!card) return;
-  card.style.minHeight = '0';
-  const h = card.offsetHeight;
-  card.style.minHeight = '';
-  reader.style.height = `${Math.min(h, Math.round(window.innerHeight * 0.82))}px`;
-  reader.style.rotate = `${READER_TILTS[parseKey(key).getDate() % READER_TILTS.length]}deg`;
 }
 
 function openReader(key) {
@@ -3724,6 +3713,7 @@ $('cal-grid').addEventListener('click', (ev) => {
   openReader(btn.dataset.key);
 });
 $('reader-close').addEventListener('click', closeReader);
+$('reader-track').addEventListener('click', (ev) => { if (ev.target.closest('.reader-x')) closeReader(); });
 $('reader-prev').addEventListener('click', () => stepReader(-1));
 $('reader-next').addEventListener('click', () => stepReader(1));
 $('reader-track').addEventListener('scroll', onReaderScroll);
