@@ -2388,6 +2388,12 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
 /* Favoriter får ett tygbokmärke som hänger från kanten, i stället för en stjärna */
 .post .star-btn { position: relative; }
 .post { column-gap: 24px; }
+/* Veckodagen står förkortad under humöret, rubriken är bara datumet */
+.post .when { font-size: 16.5px; font-weight: 700; }
+.post .avatar { overflow: visible; }
+.post .av-wd { position: absolute; top: 48px; left: -12px; right: -12px; font-size: 12.5px; font-weight: 600; line-height: 1; text-align: center; color: var(--muted); letter-spacing: .02em; }
+.post.today .av-wd { color: var(--accent); }
+.post .post-foot, .post .sub { font-size: 12.5px; }
 /* Marginallinjen mellan humöret och texten, som i skrivblocket */
 .post::after {
   content: '';
@@ -2395,8 +2401,8 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
   top: 12px;
   bottom: 0;
   left: 61px;
-  width: 1.5px;
-  background: color-mix(in srgb, var(--accent) 40%, transparent);
+  width: 1px;
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
   pointer-events: none;
 }
 .post .star-btn svg { display: none; }

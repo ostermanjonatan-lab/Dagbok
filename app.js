@@ -1839,10 +1839,10 @@ function postHtml(k, e, today, searching) {
     foot.push(`<span class="pf-i" title="${escapeHtml(joinNames(e.people))}"><svg viewBox="0 0 24 24" aria-hidden="true">${PEOPLE_ICON}</svg>${e.people.length === 1 ? escapeHtml(e.people[0]) : `${e.people.length} personer`}</span>`);
   }
   return `<article class="post${k === today ? ' today' : ''}" data-key="${k}">
-    <span class="avatar${e.mood ? '' : ' none'}" data-m="${e.mood || ''}" style="--m: var(--m${e.mood || 6})" aria-hidden="true">${e.mood || ''}${MARK_OF[e.mark] ? `<span class="av-mk">${miniIcon(e.mark)}</span>` : ''}</span>
+    <span class="avatar${e.mood ? '' : ' none'}" data-m="${e.mood || ''}" style="--m: var(--m${e.mood || 6})" aria-hidden="true">${e.mood || ''}${MARK_OF[e.mark] ? `<span class="av-mk">${miniIcon(e.mark)}</span>` : ''}<span class="av-wd">${WEEKDAY_CAP[d.getDay()].slice(0, 3).toLowerCase()}</span></span>
     <div class="post-body">
       <header class="post-head">
-        <button type="button" class="when"${MARK_OF[e.mark] ? ` aria-label="${WEEKDAY_CAP[d.getDay()]} ${shortDate(k)}, ${MARK_OF[e.mark].label.toLowerCase()}"` : ''}>${WEEKDAY_CAP[d.getDay()]} ${shortDate(k)}</button>${rel ? `<span class="rel">· ${rel}</span>` : ''}${starBtn(k)}${special ? `<span class="special">${escapeHtml(special)}</span>` : ''}
+        <button type="button" class="when" aria-label="${WEEKDAY_CAP[d.getDay()]} ${shortDate(k)}${MARK_OF[e.mark] ? `, ${MARK_OF[e.mark].label.toLowerCase()}` : ''}">${shortDate(k)}</button>${rel ? `<span class="rel">· ${rel}</span>` : ''}${starBtn(k)}${special ? `<span class="special">${escapeHtml(special)}</span>` : ''}
       </header>
       ${e.text ? `<div class="prose${searching ? '' : ' clamp'}">${Paper.mdToHtml(e.text)}</div>
       <button type="button" class="link more" hidden>Visa mer</button>` : ''}

@@ -2337,6 +2337,12 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
 /* Favoriter får ett tygbokmärke som hänger från kanten, i stället för en stjärna */
 .post .star-btn { position: relative; }
 .post { column-gap: 24px; }
+/* Veckodagen står förkortad under humöret, rubriken är bara datumet */
+.post .when { font-size: 16.5px; font-weight: 700; }
+.post .avatar { overflow: visible; }
+.post .av-wd { position: absolute; top: 48px; left: -12px; right: -12px; font-size: 12.5px; font-weight: 600; line-height: 1; text-align: center; color: var(--muted); letter-spacing: .02em; }
+.post.today .av-wd { color: var(--accent); }
+.post .post-foot, .post .sub { font-size: 12.5px; }
 /* Marginallinjen mellan humöret och texten, som i skrivblocket */
 .post::after {
   content: '';
@@ -2344,8 +2350,8 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
   top: 12px;
   bottom: 0;
   left: 61px;
-  width: 1.5px;
-  background: color-mix(in srgb, var(--accent) 40%, transparent);
+  width: 1px;
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
   pointer-events: none;
 }
 .post .star-btn svg { display: none; }
@@ -5107,10 +5113,10 @@ function postHtml(k, e, today, searching) {
     foot.push(`<span class="pf-i" title="${escapeHtml(joinNames(e.people))}"><svg viewBox="0 0 24 24" aria-hidden="true">${PEOPLE_ICON}</svg>${e.people.length === 1 ? escapeHtml(e.people[0]) : `${e.people.length} personer`}</span>`);
   }
   return `<article class="post${k === today ? ' today' : ''}" data-key="${k}">
-    <span class="avatar${e.mood ? '' : ' none'}" data-m="${e.mood || ''}" style="--m: var(--m${e.mood || 6})" aria-hidden="true">${e.mood || ''}${MARK_OF[e.mark] ? `<span class="av-mk">${miniIcon(e.mark)}</span>` : ''}</span>
+    <span class="avatar${e.mood ? '' : ' none'}" data-m="${e.mood || ''}" style="--m: var(--m${e.mood || 6})" aria-hidden="true">${e.mood || ''}${MARK_OF[e.mark] ? `<span class="av-mk">${miniIcon(e.mark)}</span>` : ''}<span class="av-wd">${WEEKDAY_CAP[d.getDay()].slice(0, 3).toLowerCase()}</span></span>
     <div class="post-body">
       <header class="post-head">
-        <button type="button" class="when"${MARK_OF[e.mark] ? ` aria-label="${WEEKDAY_CAP[d.getDay()]} ${shortDate(k)}, ${MARK_OF[e.mark].label.toLowerCase()}"` : ''}>${WEEKDAY_CAP[d.getDay()]} ${shortDate(k)}</button>${rel ? `<span class="rel">· ${rel}</span>` : ''}${starBtn(k)}${special ? `<span class="special">${escapeHtml(special)}</span>` : ''}
+        <button type="button" class="when" aria-label="${WEEKDAY_CAP[d.getDay()]} ${shortDate(k)}${MARK_OF[e.mark] ? `, ${MARK_OF[e.mark].label.toLowerCase()}` : ''}">${shortDate(k)}</button>${rel ? `<span class="rel">· ${rel}</span>` : ''}${starBtn(k)}${special ? `<span class="special">${escapeHtml(special)}</span>` : ''}
       </header>
       ${e.text ? `<div class="prose${searching ? '' : ' clamp'}">${Paper.mdToHtml(e.text)}</div>
       <button type="button" class="link more" hidden>Visa mer</button>` : ''}
