@@ -2506,6 +2506,22 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .rd-scale { display: inline-flex; align-self: center; gap: 3px; margin-left: 4px; }
 .rd-scale i { width: 6px; height: 6px; border-radius: 50%; border: 1px solid var(--pencil); opacity: .5; }
 .rd-scale i.on { background: var(--pencil); opacity: .8; }
+
+/* Rutan är bara papperet: inga ramar runt, stäng och bokmärke ligger på bladet.
+   Man byter dag genom att svepa eller med piltangenterna. */
+.reader, .reader .reader-head { background: none; }
+.reader { border-radius: 0; overflow: hidden; background-color: #fffdf8; box-shadow: 0 1px 1px rgb(42 20 24 / .08), 0 16px 34px -6px rgb(0 0 0 / .35); }
+.reader .reader-head { position: absolute; top: 0; left: 0; right: 0; z-index: 3; justify-content: flex-end; padding: 0 6px 0 0; border: 0; pointer-events: none; }
+.reader .reader-head > * { pointer-events: auto; }
+.reader .reader-head h2 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.reader #reader-prev, .reader #reader-next { display: none; }
+.reader .reader-head #reader-star { align-self: flex-start; height: 44px; }
+.reader .reader-head .star-btn.on::before { top: -6px; height: 36px; }
+.reader .reader-head .star-btn::after { transform: translateY(-6px); }
+.reader .reader-head .close-x { margin: 2px 0 0; }
+.reader-pane { padding: 0; }
+.reader-card { min-height: 100%; padding-top: 54px; box-shadow: none; }
+.reader-card .reader-foot { margin: 0; line-height: 28px; padding-top: 28px; }
 /* Datumet och humöret står i marginalen, som i en kalenderdagbok. Texten börjar överst. */
 .post { grid-template-columns: 34px minmax(0, 1fr); column-gap: 18px; padding-left: 12px; }
 .post::after { left: 55px; }
@@ -6243,9 +6259,9 @@ function readerPane(key) {
 `).join('')}
         ${bigPhotos(e.photos)}
         ${readerDetails(e)}
+        <div class="reader-foot"><button type="button" class="link reader-edit" data-key="${key}">Redigera dagen</button></div>
       </div>
     </article>
-    <div class="reader-foot"><button type="button" class="link reader-edit" data-key="${key}">Redigera dagen</button></div>
   </div>`;
 }
 

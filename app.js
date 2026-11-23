@@ -2819,9 +2819,9 @@ function readerPane(key) {
 `).join('')}
         ${bigPhotos(e.photos)}
         ${readerDetails(e)}
+        <div class="reader-foot"><button type="button" class="link reader-edit" data-key="${key}">Redigera dagen</button></div>
       </div>
     </article>
-    <div class="reader-foot"><button type="button" class="link reader-edit" data-key="${key}">Redigera dagen</button></div>
   </div>`;
 }
 
