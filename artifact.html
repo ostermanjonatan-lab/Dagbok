@@ -1414,7 +1414,6 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
   border-radius: 6px;
   cursor: text;
 }
-#people-list { display: contents; }
 .person {
   display: inline-flex;
   align-items: center;
@@ -1664,6 +1663,22 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 #f-mark .pill[aria-checked="true"] { background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent); font-weight: 600; }
 #f-mark .mk-ico { width: 18px; height: 18px; flex: none; }
 .mk-none { width: 18px; height: 18px; flex: none; border: 1.6px dashed currentColor; border-radius: 50%; opacity: .5; }
+
+/* Taggade personer: samma fält och meny som Märk dagen, flera kan väljas */
+.people-pick { position: relative; margin-top: 6px; }
+.people-pick .mark-cur span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.people-pick .mark-cur .mk-ico { flex: none; }
+.people-menu { width: 100%; padding-top: 8px; }
+#people-input { width: 100%; margin: 0 0 6px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); font-size: 16px; outline: none; }
+#people-input:focus { border-color: var(--muted); }
+#people-suggest .pill, #people-suggest .pill:hover { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 0; border-radius: 8px; background: none; color: var(--text); font-size: 16px; text-align: left; }
+#people-suggest .pill:hover, #people-suggest .pill:focus-visible { background: color-mix(in srgb, var(--line) 55%, transparent); outline: none; }
+#people-suggest .pill[aria-checked="true"] { color: var(--accent); font-weight: 600; }
+.pp-check { width: 18px; height: 18px; margin-left: auto; flex: none; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; visibility: hidden; }
+[aria-checked="true"] > .pp-check { visibility: visible; }
+#people-suggest .pp-add { color: var(--accent); }
+#people-suggest .pp-add .mk-ico { width: 18px; height: 18px; }
+.pp-empty { margin: 4px 12px 8px; font-size: 14px; color: var(--muted); }
 .media-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 10px; }
 .media-panel .media-tools .period, .media-views { display: flex; gap: 2px; margin: 0; padding: 2px; border-radius: 9px; background: color-mix(in srgb, var(--line) 60%, transparent); }
 .media-panel .media-tools .period .pill, .media-panel .media-tools .period .pill:hover { padding: 5px 12px; border-radius: 7px; font-size: 14px; }
@@ -2577,12 +2592,13 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
           </div>
           <div class="field">
             <span id="people-label">Taggade personer</span>
-            <div class="people" id="people">
-              <span id="people-list"></span>
-              <input type="text" id="people-input" placeholder="Lägg till person" autocomplete="off"
-                autocapitalize="words" enterkeyhint="done" aria-labelledby="people-label">
-            </div>
-            <div class="people-suggest" id="people-suggest" hidden></div>
+            <div class="people-pick" id="people-pick">
+  <button type="button" class="mark-btn" id="people-btn" aria-haspopup="true" aria-expanded="false" aria-controls="people-menu" aria-labelledby="people-label people-list"><span class="mark-cur" id="people-list"></span><svg class="kind-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+  <div class="kind-menu mark-menu people-menu" id="people-menu" hidden>
+    <input type="text" id="people-input" placeholder="Sök eller lägg till person" autocomplete="off" autocapitalize="words" enterkeyhint="done" aria-label="Sök eller lägg till person">
+    <div id="people-suggest" role="group" aria-labelledby="people-label"></div>
+  </div>
+</div>
           </div>
           <div class="field">
             <span id="film-label">Underhållning</span>
@@ -4190,7 +4206,7 @@ function attachSwipe({ area, moving, skip, canNext, step }) {
 attachSwipe({
   area: $('view-day'),
   moving: $('view-day'),
-  skip: '.photos, .fmt, .date-pop, .people, .people-suggest, .film-list, .mood-slider',
+  skip: '.photos, .fmt, .date-pop, .people-pick, .mark-pick, .film-list, .mood-slider',
   canNext: () => current < todayKey(),
   step: (dir) => stepDay(dir),
 });
@@ -4590,21 +4606,29 @@ function knownPeople() {
   return Object.keys(count).sort((a, b) => count[b] - count[a] || a.localeCompare(b, 'sv'));
 }
 
+const PERSON_SVG = '<svg class="mk-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.5" cy="9" r="2.6"/><path d="M15.5 14.2c2.3.1 4.1 1.6 4.8 4.3"/></svg>';
+const CHECK_SVG = '<svg class="pp-check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+// Fältet visar vilka som är taggade. Menyn under listar alla namn i dagboken.
 function renderPeople() {
-  $('people-list').innerHTML = people.map((n, i) =>
-    `<span class="person">${escapeHtml(n)}<button type="button" data-i="${i}" aria-label="Ta bort ${escapeHtml(n)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg></button></span>`).join('');
+  $('people-list').innerHTML = people.length
+    ? `${PERSON_SVG}<span>${escapeHtml(joinNames(people))}</span>`
+    : '<span class="mark-empty">Ingen taggad</span>';
+  if (!$('people-menu').hidden) renderPeopleSuggest();
 }
 
+// Taggade först, sedan de vanligaste. Det man skriver filtrerar listan.
 function renderPeopleSuggest() {
-  const input = $('people-input');
-  const q = input.value.trim().toLowerCase();
-  const list = document.activeElement === input
-    ? knownPeople().filter((n) => n.toLowerCase().startsWith(q)
-      && !people.some((p) => p.toLowerCase() === n.toLowerCase())).slice(0, 6)
-    : [];
-  $('people-suggest').hidden = !list.length;
-  $('people-suggest').innerHTML = list.map((n) =>
-    `<button type="button" class="pill" data-name="${escapeHtml(n)}">${escapeHtml(n)}</button>`).join('');
+  const q = $('people-input').value.trim();
+  const ql = q.toLowerCase();
+  const has = (n) => people.some((p) => p.toLowerCase() === n.toLowerCase());
+  const names = [...people, ...knownPeople().filter((n) => !has(n))]
+    .filter((n) => !ql || n.toLowerCase().split(/\s+/).some((w) => w.startsWith(ql)) || n.toLowerCase().startsWith(ql));
+  const exact = names.some((n) => n.toLowerCase() === ql);
+  let html = names.map((n) => `<button type="button" class="pill" role="checkbox" aria-checked="${has(n)}" data-name="${escapeHtml(n)}">${escapeHtml(n)}${CHECK_SVG}</button>`).join('');
+  if (q && !exact) html += `<button type="button" class="pill pp-add" data-add="${escapeHtml(q)}"><svg class="mk-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5.5v13M5.5 12h13"/></svg>Lägg till ${escapeHtml(cleanName(q) || q)}</button>`;
+  if (!html) html = '<p class="pp-empty">Skriv ett namn för att lägga till.</p>';
+  $('people-suggest').innerHTML = html;
 }
 
 function addPerson(raw) {
@@ -4619,17 +4643,51 @@ function addPerson(raw) {
   renderPeopleSuggest();
 }
 
-$('people-input').addEventListener('keydown', (ev) => {
-  const input = ev.target;
-  if (ev.key === 'Enter') {
-    ev.preventDefault();
-    addPerson(input.value);
-  } else if (ev.key === 'Backspace' && !input.value && people.length) {
-    people.pop();
-    renderPeople();
-    renderPeopleSuggest();
-    scheduleSave();
+function togglePerson(name) {
+  const i = people.findIndex((p) => p.toLowerCase() === name.toLowerCase());
+  if (i < 0) {
+    addPerson(name);
+    return;
   }
+  people.splice(i, 1);
+  renderPeople();
+  scheduleSave();
+  renderPeopleSuggest();
+}
+
+function peopleMenu(open) {
+  $('people-menu').hidden = !open;
+  $('people-btn').setAttribute('aria-expanded', String(open));
+  if (open) {
+    $('people-input').value = '';
+    renderPeopleSuggest();
+    $('people-menu').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  } else if ($('people-input').value.trim()) {
+    addPerson($('people-input').value);
+  }
+}
+$('people-btn').addEventListener('click', () => peopleMenu($('people-menu').hidden));
+document.addEventListener('click', (ev) => {
+  // Listan ritas om vid varje val, så det tryckta kan redan vara borta ur sidan
+  if (!$('people-menu').hidden && !ev.composedPath().includes($('people-pick'))) peopleMenu(false);
+});
+$('people-pick').addEventListener('keydown', (ev) => {
+  if ($('people-menu').hidden) return;
+  if (ev.key === 'Escape') {
+    ev.stopPropagation();
+    $('people-input').value = '';
+    peopleMenu(false);
+    $('people-btn').focus();
+  }
+});
+$('people-input').addEventListener('keydown', (ev) => {
+  if (ev.key !== 'Enter') return;
+  ev.preventDefault();
+  // Enter väljer det enda namnet som passar, annars läggs det skrivna till
+  const q = ev.target.value.trim();
+  const rows = [...$('people-suggest').querySelectorAll('[data-name]')];
+  if (q && rows.length === 1 && !$('people-suggest').querySelector('[data-add]')) togglePerson(rows[0].dataset.name);
+  else if (q) addPerson(q);
 });
 $('people-input').addEventListener('input', (ev) => {
   // Komma lägger till namnet, som Enter
@@ -4640,29 +4698,14 @@ $('people-input').addEventListener('input', (ev) => {
   }
   renderPeopleSuggest();
 });
-$('people-input').addEventListener('focus', renderPeopleSuggest);
-$('people-input').addEventListener('blur', () => {
-  setTimeout(() => {
-    if ($('people-input').value.trim()) addPerson($('people-input').value);
-    renderPeopleSuggest();
-  }, 0);
-});
-// Ett tryck på ett förslag ska inte ta fokus från fältet
-$('people-suggest').addEventListener('pointerdown', (ev) => ev.preventDefault());
 $('people-suggest').addEventListener('click', (ev) => {
-  const b = ev.target.closest('[data-name]');
-  if (b) addPerson(b.dataset.name);
-});
-$('people-list').addEventListener('click', (ev) => {
-  const b = ev.target.closest('[data-i]');
+  const b = ev.target.closest('[data-name], [data-add]');
   if (!b) return;
-  people.splice(Number(b.dataset.i), 1);
-  renderPeople();
-  scheduleSave();
+  if (b.dataset.add) addPerson(b.dataset.add);
+  else togglePerson(b.dataset.name);
+  buzz(6);
 });
-$('people').addEventListener('click', (ev) => {
-  if (ev.target === $('people') || ev.target === $('people-list')) $('people-input').focus();
-});
+renderPeople();
 
 /* Kort meddelande längst ner, med en knapp för att ångra */
 let toastTimer = 0;

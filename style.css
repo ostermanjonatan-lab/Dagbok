@@ -1458,7 +1458,6 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
   border-radius: 6px;
   cursor: text;
 }
-#people-list { display: contents; }
 .person {
   display: inline-flex;
   align-items: center;
@@ -1715,6 +1714,22 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 #f-mark .pill[aria-checked="true"] { background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent); font-weight: 600; }
 #f-mark .mk-ico { width: 18px; height: 18px; flex: none; }
 .mk-none { width: 18px; height: 18px; flex: none; border: 1.6px dashed currentColor; border-radius: 50%; opacity: .5; }
+
+/* Taggade personer: samma fält och meny som Märk dagen, flera kan väljas */
+.people-pick { position: relative; margin-top: 6px; }
+.people-pick .mark-cur span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.people-pick .mark-cur .mk-ico { flex: none; }
+.people-menu { width: 100%; padding-top: 8px; }
+#people-input { width: 100%; margin: 0 0 6px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); font-size: 16px; outline: none; }
+#people-input:focus { border-color: var(--muted); }
+#people-suggest .pill, #people-suggest .pill:hover { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 0; border-radius: 8px; background: none; color: var(--text); font-size: 16px; text-align: left; }
+#people-suggest .pill:hover, #people-suggest .pill:focus-visible { background: color-mix(in srgb, var(--line) 55%, transparent); outline: none; }
+#people-suggest .pill[aria-checked="true"] { color: var(--accent); font-weight: 600; }
+.pp-check { width: 18px; height: 18px; margin-left: auto; flex: none; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; visibility: hidden; }
+[aria-checked="true"] > .pp-check { visibility: visible; }
+#people-suggest .pp-add { color: var(--accent); }
+#people-suggest .pp-add .mk-ico { width: 18px; height: 18px; }
+.pp-empty { margin: 4px 12px 8px; font-size: 14px; color: var(--muted); }
 .media-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 10px; }
 .media-panel .media-tools .period, .media-views { display: flex; gap: 2px; margin: 0; padding: 2px; border-radius: 9px; background: color-mix(in srgb, var(--line) 60%, transparent); }
 .media-panel .media-tools .period .pill, .media-panel .media-tools .period .pill:hover { padding: 5px 12px; border-radius: 7px; font-size: 14px; }

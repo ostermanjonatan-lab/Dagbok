@@ -349,12 +349,13 @@
             </div>
             <div class="field">
               <span id="people-label">Taggade personer</span>
-              <div class="people" id="people">
-                <span id="people-list"></span>
-                <input type="text" id="people-input" placeholder="Lägg till person" autocomplete="off"
-                  autocapitalize="words" enterkeyhint="done" aria-labelledby="people-label">
-              </div>
-              <div class="people-suggest" id="people-suggest" hidden></div>
+              <div class="people-pick" id="people-pick">
+  <button type="button" class="mark-btn" id="people-btn" aria-haspopup="true" aria-expanded="false" aria-controls="people-menu" aria-labelledby="people-label people-list"><span class="mark-cur" id="people-list"></span><svg class="kind-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+  <div class="kind-menu mark-menu people-menu" id="people-menu" hidden>
+    <input type="text" id="people-input" placeholder="Sök eller lägg till person" autocomplete="off" autocapitalize="words" enterkeyhint="done" aria-label="Sök eller lägg till person">
+    <div id="people-suggest" role="group" aria-labelledby="people-label"></div>
+  </div>
+</div>
             </div>
             <div class="field">
               <span id="film-label">Underhållning</span>
