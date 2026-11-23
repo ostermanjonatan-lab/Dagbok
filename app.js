@@ -2829,12 +2829,19 @@ function readerPane(key) {
 
 let readerKey = null;
 
-function showReaderDay(key) {
+function showReaderDay(key, fresh) {
   readerKey = key;
   const { prev, next } = writtenNeighbors(key);
   const keys = [prev, key, next].filter(Boolean);
   const track = $('reader-track');
-  track.innerHTML = keys.map(readerPane).join('');
+  // Lapparna som redan finns återanvänds, annars blinkar de till efter varje svepning
+  const have = fresh ? new Map() : new Map([...track.children].map((p) => [p.dataset.key, p]));
+  track.replaceChildren(...keys.map((k) => {
+    if (have.has(k)) return have.get(k);
+    const t = document.createElement('template');
+    t.innerHTML = readerPane(k).trim();
+    return t.content.firstElementChild;
+  }));
   // Panelen för dagen läggs i mitten så att man kan svepa åt båda hållen
   track.scrollLeft = keys.indexOf(key) * track.clientWidth;
   $('reader-title').textContent = shortDate(key);
@@ -2851,7 +2858,10 @@ function openReader(key) {
   const reader = $('reader');
   if (reader.showModal) { if (!reader.open) reader.showModal(); }
   else reader.setAttribute('open', '');
-  showReaderDay(key);
+  showReaderDay(key, true);
+  // Lappen hoppar fram bara när rutan öppnas, inte när man sveper
+  reader.classList.add('opening');
+  setTimeout(() => reader.classList.remove('opening'), 200);
 }
 
 function stepReader(dir) {

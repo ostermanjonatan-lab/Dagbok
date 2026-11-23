@@ -2565,8 +2565,8 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .reader-track { align-items: center; }
 .reader-pane { max-height: 86vh; max-height: 86dvh; padding: 18px 16px 22px; overflow-y: auto; }
 .reader-card { margin: 0; padding-top: 26px; box-shadow: 0 1px 1px rgb(42 20 24 / .08), 0 16px 30px -8px rgb(0 0 0 / .4); }
-.reader-card[open], .reader[open] .reader-card { animation: pop .15s ease-out; }
-@media (prefers-reduced-motion: reduce) { .reader[open] .reader-card { animation: none; } }
+.reader.opening .reader-card { animation: pop .15s ease-out; }
+@media (prefers-reduced-motion: reduce) { .reader.opening .reader-card { animation: none; } }
 .reader .reader-card .reader-tools { position: absolute; top: 0; right: 6px; display: flex; align-items: flex-start; gap: 2px; min-height: 0; z-index: 2; }
 .reader .reader-card .reader-tools .star-btn { position: relative; top: auto; right: auto; width: 34px; height: 44px; margin: 0; }
 .reader .reader-card .reader-tools .star-btn::after { transform: translateY(-6px); }

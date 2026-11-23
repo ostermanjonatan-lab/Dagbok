@@ -2514,8 +2514,8 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .reader-track { align-items: center; }
 .reader-pane { max-height: 86vh; max-height: 86dvh; padding: 18px 16px 22px; overflow-y: auto; }
 .reader-card { margin: 0; padding-top: 26px; box-shadow: 0 1px 1px rgb(42 20 24 / .08), 0 16px 30px -8px rgb(0 0 0 / .4); }
-.reader-card[open], .reader[open] .reader-card { animation: pop .15s ease-out; }
-@media (prefers-reduced-motion: reduce) { .reader[open] .reader-card { animation: none; } }
+.reader.opening .reader-card { animation: pop .15s ease-out; }
+@media (prefers-reduced-motion: reduce) { .reader.opening .reader-card { animation: none; } }
 .reader .reader-card .reader-tools { position: absolute; top: 0; right: 6px; display: flex; align-items: flex-start; gap: 2px; min-height: 0; z-index: 2; }
 .reader .reader-card .reader-tools .star-btn { position: relative; top: auto; right: auto; width: 34px; height: 44px; margin: 0; }
 .reader .reader-card .reader-tools .star-btn::after { transform: translateY(-6px); }
@@ -6272,12 +6272,19 @@ function readerPane(key) {
 
 let readerKey = null;
 
-function showReaderDay(key) {
+function showReaderDay(key, fresh) {
   readerKey = key;
   const { prev, next } = writtenNeighbors(key);
   const keys = [prev, key, next].filter(Boolean);
   const track = $('reader-track');
-  track.innerHTML = keys.map(readerPane).join('');
+  // Lapparna som redan finns återanvänds, annars blinkar de till efter varje svepning
+  const have = fresh ? new Map() : new Map([...track.children].map((p) => [p.dataset.key, p]));
+  track.replaceChildren(...keys.map((k) => {
+    if (have.has(k)) return have.get(k);
+    const t = document.createElement('template');
+    t.innerHTML = readerPane(k).trim();
+    return t.content.firstElementChild;
+  }));
   // Panelen för dagen läggs i mitten så att man kan svepa åt båda hållen
   track.scrollLeft = keys.indexOf(key) * track.clientWidth;
   $('reader-title').textContent = shortDate(key);
@@ -6294,7 +6301,10 @@ function openReader(key) {
   const reader = $('reader');
   if (reader.showModal) { if (!reader.open) reader.showModal(); }
   else reader.setAttribute('open', '');
-  showReaderDay(key);
+  showReaderDay(key, true);
+  // Lappen hoppar fram bara när rutan öppnas, inte när man sveper
+  reader.classList.add('opening');
+  setTimeout(() => reader.classList.remove('opening'), 200);
 }
 
 function stepReader(dir) {
