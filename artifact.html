@@ -740,13 +740,15 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   -webkit-appearance: none;
   flex: none;
   position: relative;
-  width: 46px;
+  width: 48px;
   height: 28px;
   margin: 0;
   border-radius: 14px;
-  background: var(--line);
+  /* Avslaget: ett svagt nedsänkt spår */
+  background: color-mix(in srgb, var(--line) 90%, #000 4%);
+  box-shadow: inset 0 1px 3px rgb(42 20 24 / .22);
   cursor: pointer;
-  transition: background .15s;
+  transition: background-color .15s, box-shadow .15s;
 }
 .switch-row input::before {
   content: "";
@@ -757,11 +759,12 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
   height: 22px;
   border-radius: 50%;
   background: var(--paper);
-  box-shadow: 0 1px 3px rgb(0 0 0 / .25);
-  transition: transform .15s;
+  box-shadow: 0 1px 2px rgb(0 0 0 / .3), inset 0 -1px 0 rgb(0 0 0 / .06);
+  transition: transform .18s cubic-bezier(.3, .7, .2, 1);
 }
-.switch-row input:checked { background: var(--accent); }
-.switch-row input:checked::before { transform: translateX(18px); }
+/* Påslaget: samma tyg som menyn och bandet */
+.switch-row input:checked { background-color: var(--cloth-base); background-image: var(--cloth); box-shadow: inset 0 1px 3px rgb(0 0 0 / .35); }
+.switch-row input:checked::before { transform: translateX(20px); }
 .switch-row input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .switch-row input, .switch-row input::before { transition: none; } }
 .wipe-confirm p { margin: 10px 0; }
