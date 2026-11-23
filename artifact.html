@@ -1868,11 +1868,12 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .cal-band #cal-title::after { border-color: color-mix(in srgb, var(--brand-text) 80%, transparent); }
 .cal-band .icon { color: var(--brand-text); }
 .cal-band .icon:active { background: rgb(255 255 255 / .14); }
-.cal-band .cal-mode { background: rgb(0 0 0 / .2); }
-.cal-band .cal-mode button { color: color-mix(in srgb, var(--brand-text) 80%, transparent); }
-.cal-band .cal-mode [aria-checked="true"] { background: var(--brand-text); color: var(--brand-dark); box-shadow: 0 1px 3px rgb(0 0 0 / .25); }
-.cal-band .hd-btn { border-color: rgb(255 255 255 / .28); background: rgb(0 0 0 / .14); color: var(--brand-text); }
-.cal-band .hd-btn.on { border-color: var(--brand-text); background: var(--brand-text); color: var(--brand-dark); }
+/* Knapparna i bandet är genomskinliga, så att tyget syns igenom och inget lyser upp */
+.cal-band .cal-mode { gap: 0; padding: 3px; border-radius: 10px; background: rgb(0 0 0 / .16); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .08); }
+.cal-band .cal-mode button { height: 32px; padding: 0 16px; border-radius: 7px; color: color-mix(in srgb, var(--brand-text) 72%, transparent); font-weight: 500; }
+.cal-band .cal-mode [aria-checked="true"] { background: rgb(255 255 255 / .17); color: var(--brand-text); font-weight: 600; box-shadow: inset 0 0 0 1px rgb(255 255 255 / .14); }
+.cal-band .hd-btn { width: 38px; height: 38px; border-radius: 10px; border: 0; background: rgb(0 0 0 / .16); color: color-mix(in srgb, var(--brand-text) 80%, transparent); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .08); }
+.cal-band .hd-btn.on { background: rgb(255 255 255 / .17); color: var(--brand-text); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .14); }
 .cal-band .layers-pop { color: var(--text); }
 /* Kalendern klipps vid skärmkanten, så att zoomen och svepet inte ger sidled-scroll */
 .cal-clip { margin: 0 calc(50% - 50vw); padding: 0 max(16px, calc(50vw - 304px)); overflow-x: clip; }
