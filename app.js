@@ -3067,7 +3067,7 @@ function renderWeatherStats(keys) {
     if (g != null) (groups[g] = groups[g] || []).push(k);
   }
   const order = Object.keys(groups).sort((a, b) => groups[b].length - groups[a].length);
-  $('wx-chips').innerHTML = order.map((g) => `<span class="wx-chip"><svg viewBox="0 0 24 24" aria-hidden="true">${WEATHER_ICONS[g]}</svg>${WX_NAME[g]}<b>${groups[g].length}</b></span>`).join('');
+  $('wx-chips').innerHTML = order.map((g) => `<span class="wx-chip" role="img" aria-label="${WX_NAME[g]}, ${dagar(groups[g].length)}" title="${WX_NAME[g]}"><svg viewBox="0 0 24 24" aria-hidden="true">${WEATHER_ICONS[g]}</svg><b>${groups[g].length} d</b></span>`).join('');
 
   const facts = [];
   const temps = withWx.filter((k) => entries[k].weather.temp != null);
