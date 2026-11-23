@@ -2364,6 +2364,16 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
 .post .star-btn.pop::before { animation: ribbon-drop .35s cubic-bezier(.3, 1.4, .5, 1); transform-origin: top; }
 @keyframes ribbon-drop { from { transform: scaleY(.3); } }
 @media (prefers-reduced-motion: reduce) { .post .star-btn.pop::before { animation: none; } }
+/* Texten i flödet står på linjer som i skrivblocket. Alla rader är lika höga, även
+   rubriker, listor och nya stycken, så att texten alltid ligger på linjerna. */
+.post .prose {
+  line-height: 28px;
+  background: linear-gradient(to bottom, transparent 27px, color-mix(in srgb, var(--line) 75%, transparent) 0) 0 0 / 100% 28px repeat-y;
+}
+.post .prose :is(p, h2, h3, ul, ol, li) { margin: 0; line-height: 28px; }
+.post .prose :is(h2, h3) { font-size: 1em; }
+.post .prose.clamp { max-height: calc(28px * 7); }
+
 
 .reader-head #reader-star { display: flex; }
 
