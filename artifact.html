@@ -2704,7 +2704,7 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
             <button type="button" role="menuitemradio" data-sort="worst" aria-checked="false">Sämsta dagarna<svg class="check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17l9-10"/></svg></button>
             <button type="button" role="menuitemradio" data-sort="words" aria-checked="false">Mest skrivet<svg class="check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17l9-10"/></svg></button>
             <button type="button" role="menuitemradio" data-sort="photos" aria-checked="false">Flest bilder<svg class="check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17l9-10"/></svg></button>
-            <button type="button" role="menuitemradio" data-sort="starred" aria-checked="false">Stjärnmärkta<svg class="check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17l9-10"/></svg></button>
+            <button type="button" role="menuitemradio" data-sort="starred" aria-checked="false">Bokmärkta<svg class="check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17l9-10"/></svg></button>
           </div>
         </div>
       </div>
@@ -2938,7 +2938,7 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
   <div class="sheet-panel" id="sheet-panel" role="dialog" aria-modal="true" aria-label="Dagen">
     <div class="sheet-grab" id="sheet-grab">
       <span class="grab-bar" aria-hidden="true"></span>
-        <button type="button" class="star-btn day-star" id="day-star" data-star="" aria-pressed="false" aria-label="Stjärnmärk dagen"></button>
+        <button type="button" class="star-btn day-star" id="day-star" data-star="" aria-pressed="false" aria-label="Bokmärk dagen"></button>
       <button type="button" class="icon close-x" id="sheet-close" aria-label="Stäng"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     </div>
     <div class="wrap sheet-body">
@@ -3766,17 +3766,17 @@ function saveEntry(key) {
   writeCache();
   remoteSet(key, entries[key]);
 }
-/* Stjärnmärkta dagar. Stjärnan finns på korten i flödet och i läsläget, och sorteringen
-   Stjärnmärkta visar bara dem. */
+/* Bokmärkta dagar. Bokmärket finns på korten i flödet, i läsläget och i dagsvyn, och sorteringen
+   Bokmärkta visar bara dem. */
 const STAR_SVG = '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>';
 function starBtn(key) {
   const on = !!(entries[key] && entries[key].star);
-  return `<button type="button" class="star-btn${on ? ' on' : ''}" data-star="${key}" aria-pressed="${on}" aria-label="${on ? 'Ta bort stjärnan' : 'Stjärnmärk dagen'}"><svg viewBox="0 0 24 24" aria-hidden="true">${STAR_SVG}</svg></button>`;
+  return `<button type="button" class="star-btn${on ? ' on' : ''}" data-star="${key}" aria-pressed="${on}" aria-label="${on ? 'Ta bort bokmärket' : 'Bokmärk dagen'}"><svg viewBox="0 0 24 24" aria-hidden="true">${STAR_SVG}</svg></button>`;
 }
 function setStarBtn(b, on, pop) {
   b.classList.toggle('on', on);
   b.setAttribute('aria-pressed', String(on));
-  b.setAttribute('aria-label', on ? 'Ta bort stjärnan' : 'Stjärnmärk dagen');
+  b.setAttribute('aria-label', on ? 'Ta bort bokmärket' : 'Bokmärk dagen');
   b.classList.remove('pop');
   if (on && pop) {
     void b.offsetWidth;
@@ -3786,8 +3786,8 @@ function setStarBtn(b, on, pop) {
 function toggleStar(key) {
   const on = !(entries[key] && entries[key].star);
   if (key === current) {
-    // I dagsvyn går det att stjärnmärka en tom dag. Dagen sparas då med bara stjärnan,
-    // och tas bort igen om stjärnan tas bort och inget annat är ifyllt.
+    // I dagsvyn går det att bokmärka en tom dag. Dagen sparas då med bara bokmärket,
+    // och tas bort igen om bokmärket tas bort och inget annat är ifyllt.
     clearTimeout(saveTimer);
     if (entries[key]) entries[key].star = on;
     else entries[key] = { star: on, weather: null };
@@ -5962,7 +5962,7 @@ const SORTS = {
   worst: { note: 'Sämsta dagarna i hela dagboken', keep: (e) => e.mood != null, order: (a, b) => entries[a].mood - entries[b].mood || (a < b ? 1 : -1) },
   words: { note: 'Mest skrivet i hela dagboken', keep: (e) => wordCount(e) > 0, order: (a, b) => wordCount(entries[b]) - wordCount(entries[a]) || (a < b ? 1 : -1) },
   photos: { note: 'Flest bilder i hela dagboken', keep: (e) => (e.photos || []).length > 0, order: (a, b) => entries[b].photos.length - entries[a].photos.length || (a < b ? 1 : -1) },
-  starred: { note: 'Stjärnmärkta dagar', keep: (e) => e.star, order: (a, b) => (a < b ? 1 : -1) },
+  starred: { note: 'Bokmärkta dagar', keep: (e) => e.star, order: (a, b) => (a < b ? 1 : -1) },
 };
 const PAGE = 30;
 let sortBy = 'newest';
@@ -6027,7 +6027,7 @@ function renderList() {
       isAt && !at ? 'Känner inte igen det. Prova @julafton, @24 dec, @maj 2025, @lördagar eller @film.'
         : at && text ? 'Inga dagar matchar.'
         : at ? 'Inget skrivet då.'
-        : sortBy === 'starred' && !lt ? 'Inga stjärnmärkta dagar ännu.'
+        : sortBy === 'starred' && !lt ? 'Inga bokmärkta dagar ännu.'
         : whole ? 'Inga dagar matchar.' : `Inget skrivet i ${monthFmt.format(parseKey(calMonth + '-01'))}.`
     }</p>${whole ? '' : moreMonthHtml()}`;
     return;

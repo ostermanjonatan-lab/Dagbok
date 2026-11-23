@@ -275,17 +275,17 @@ $('set-accent').addEventListener('click', (ev) => {
 
 // Sparar en dag som ändrats utanför skrivytan
 function saveEntry() { persist(); }
-/* Stjärnmärkta dagar. Stjärnan finns på korten i flödet och i läsläget, och sorteringen
-   Stjärnmärkta visar bara dem. */
+/* Bokmärkta dagar. Bokmärket finns på korten i flödet, i läsläget och i dagsvyn, och sorteringen
+   Bokmärkta visar bara dem. */
 const STAR_SVG = '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>';
 function starBtn(key) {
   const on = !!(entries[key] && entries[key].star);
-  return `<button type="button" class="star-btn${on ? ' on' : ''}" data-star="${key}" aria-pressed="${on}" aria-label="${on ? 'Ta bort stjärnan' : 'Stjärnmärk dagen'}"><svg viewBox="0 0 24 24" aria-hidden="true">${STAR_SVG}</svg></button>`;
+  return `<button type="button" class="star-btn${on ? ' on' : ''}" data-star="${key}" aria-pressed="${on}" aria-label="${on ? 'Ta bort bokmärket' : 'Bokmärk dagen'}"><svg viewBox="0 0 24 24" aria-hidden="true">${STAR_SVG}</svg></button>`;
 }
 function setStarBtn(b, on, pop) {
   b.classList.toggle('on', on);
   b.setAttribute('aria-pressed', String(on));
-  b.setAttribute('aria-label', on ? 'Ta bort stjärnan' : 'Stjärnmärk dagen');
+  b.setAttribute('aria-label', on ? 'Ta bort bokmärket' : 'Bokmärk dagen');
   b.classList.remove('pop');
   if (on && pop) {
     void b.offsetWidth;
@@ -295,8 +295,8 @@ function setStarBtn(b, on, pop) {
 function toggleStar(key) {
   const on = !(entries[key] && entries[key].star);
   if (key === current) {
-    // I dagsvyn går det att stjärnmärka en tom dag. Dagen sparas då med bara stjärnan,
-    // och tas bort igen om stjärnan tas bort och inget annat är ifyllt.
+    // I dagsvyn går det att bokmärka en tom dag. Dagen sparas då med bara bokmärket,
+    // och tas bort igen om bokmärket tas bort och inget annat är ifyllt.
     clearTimeout(saveTimer);
     if (entries[key]) entries[key].star = on;
     else entries[key] = { star: on, weather: null };
@@ -2425,7 +2425,7 @@ const SORTS = {
   worst: { note: 'Sämsta dagarna i hela dagboken', keep: (e) => e.mood != null, order: (a, b) => entries[a].mood - entries[b].mood || (a < b ? 1 : -1) },
   words: { note: 'Mest skrivet i hela dagboken', keep: (e) => wordCount(e) > 0, order: (a, b) => wordCount(entries[b]) - wordCount(entries[a]) || (a < b ? 1 : -1) },
   photos: { note: 'Flest bilder i hela dagboken', keep: (e) => (e.photos || []).length > 0, order: (a, b) => entries[b].photos.length - entries[a].photos.length || (a < b ? 1 : -1) },
-  starred: { note: 'Stjärnmärkta dagar', keep: (e) => e.star, order: (a, b) => (a < b ? 1 : -1) },
+  starred: { note: 'Bokmärkta dagar', keep: (e) => e.star, order: (a, b) => (a < b ? 1 : -1) },
 };
 const PAGE = 30;
 let sortBy = 'newest';
@@ -2490,7 +2490,7 @@ function renderList() {
       isAt && !at ? 'Känner inte igen det. Prova @julafton, @24 dec, @maj 2025, @lördagar eller @film.'
         : at && text ? 'Inga dagar matchar.'
         : at ? 'Inget skrivet då.'
-        : sortBy === 'starred' && !lt ? 'Inga stjärnmärkta dagar ännu.'
+        : sortBy === 'starred' && !lt ? 'Inga bokmärkta dagar ännu.'
         : whole ? 'Inga dagar matchar.' : `Inget skrivet i ${monthFmt.format(parseKey(calMonth + '-01'))}.`
     }</p>${whole ? '' : moreMonthHtml()}`;
     return;
