@@ -2495,7 +2495,8 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .reader .reader-card .prose { position: static; padding: 0 6px 0 0; border: 0; border-radius: 0; background: none; box-shadow: none; font-size: 16px; line-height: 28px; color: rgb(30 30 40 / .88); }
 .reader .reader-card .prose::before, .reader .reader-card .prose::after { content: none; }
 .reader .reader-card .prose :is(p, h2, h3, ul, ol, li) { line-height: 28px; }
-.reader-card .reader-names { margin: 0; line-height: 28px; font-size: 14px; color: var(--muted); }
+/* Namnsdagen står liten och ljus, som en tryckt rad i almanackan */
+.reader-card .reader-names { margin: 0; line-height: 28px; font-size: 12.5px; color: color-mix(in srgb, var(--muted) 65%, transparent); }
 .reader-card .reader-film { margin: 0 0 6px; }
 /* Detaljerna står en per rad på linjerna, i blyerts */
 .rd-details { margin-top: 0; }
@@ -2503,9 +2504,6 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .rd-row svg { width: 21px; height: 21px; margin-top: 3.5px; flex: none; fill: none; stroke: var(--pencil); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .rd-v { font-family: var(--hand); font-weight: 600; font-size: 16px; line-height: 28px; min-width: 0; }
 .rd-note { font-size: 13px; line-height: 28px; color: var(--muted); }
-.rd-scale { display: inline-flex; align-self: center; gap: 3px; margin-left: 4px; }
-.rd-scale i { width: 6px; height: 6px; border-radius: 50%; border: 1px solid var(--pencil); opacity: .5; }
-.rd-scale i.on { background: var(--pencil); opacity: .8; }
 
 /* Rutan är bara papperet: inga ramar runt, stäng och bokmärke ligger på bladet.
    Man byter dag genom att svepa eller med piltangenterna. */
@@ -6187,8 +6185,7 @@ const PEOPLE_TINTS = ['#c9826b', '#8aa37a', '#7f97b5', '#c2a35a', '#a58bb4', '#6
 function readerDetails(e) {
   const rows = [];
   if (e.mood) {
-    const ticks = Array.from({ length: 10 }, (_, i) => `<i${i < e.mood ? ' class="on"' : ''}></i>`).join('');
-    rows.push(`<div class="rd-row" role="img" aria-label="Humör ${e.mood} av 10">${moodFace(e.mood)}<span class="rd-v">${e.mood} av 10</span><span class="rd-scale" aria-hidden="true">${ticks}</span></div>`);
+    rows.push(`<div class="rd-row" role="img" aria-label="Humör ${e.mood} av 10">${moodFace(e.mood)}<span class="rd-v">${e.mood} av 10</span></div>`);
   }
   if (e.weather) {
     const w = e.weather;

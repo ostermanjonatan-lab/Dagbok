@@ -2747,8 +2747,7 @@ const PEOPLE_TINTS = ['#c9826b', '#8aa37a', '#7f97b5', '#c2a35a', '#a58bb4', '#6
 function readerDetails(e) {
   const rows = [];
   if (e.mood) {
-    const ticks = Array.from({ length: 10 }, (_, i) => `<i${i < e.mood ? ' class="on"' : ''}></i>`).join('');
-    rows.push(`<div class="rd-row" role="img" aria-label="Humör ${e.mood} av 10">${moodFace(e.mood)}<span class="rd-v">${e.mood} av 10</span><span class="rd-scale" aria-hidden="true">${ticks}</span></div>`);
+    rows.push(`<div class="rd-row" role="img" aria-label="Humör ${e.mood} av 10">${moodFace(e.mood)}<span class="rd-v">${e.mood} av 10</span></div>`);
   }
   if (e.weather) {
     const w = e.weather;
