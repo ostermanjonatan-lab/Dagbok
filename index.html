@@ -232,6 +232,19 @@
 
   </main>
 
+  <dialog class="gallery" id="gallery" aria-label="Bilder">
+    <div class="g-top">
+      <span class="g-count" id="g-count" aria-live="polite"></span>
+      <span class="g-date" id="g-date"></span>
+      <button type="button" class="g-btn g-close" id="g-close" aria-label="Stäng"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="g-stage">
+      <div class="g-track" id="g-track"></div>
+      <button type="button" class="g-btn g-nav g-prev" id="g-prev" aria-label="Föregående bild"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button type="button" class="g-btn g-nav g-next" id="g-next" aria-label="Nästa bild"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+    </div>
+    <div class="g-strip" id="g-strip"></div>
+  </dialog>
   <dialog class="viewer" id="photo-viewer" aria-label="Bild">
     <img id="viewer-img" alt="">
     <div class="viewer-foot">

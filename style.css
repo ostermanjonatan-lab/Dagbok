@@ -473,6 +473,42 @@ mark {
 .viewer .link.danger { color: #ff9c8c; }
 .confirm { display: flex; gap: 14px; align-items: baseline; }
 
+/* Bildspelet: mörk helskärm med suddig bakgrund, bilden i mitten och miniatyrer nertill */
+.gallery { position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: rgb(16 12 12 / .9); color: #fff; overflow: hidden; }
+.gallery[open] { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; grid-template-columns: minmax(0, 1fr); animation: g-in .22s ease-out; }
+.gallery::backdrop { background: rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+@keyframes g-in { from { opacity: 0; } }
+.gallery.closing { animation: g-out .18s ease-in forwards; }
+@keyframes g-out { to { opacity: 0; } }
+.g-top { display: flex; align-items: center; gap: 12px; padding: calc(10px + env(safe-area-inset-top, 0px)) 10px 6px 18px; }
+.g-count { min-width: 4.5em; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.g-date { flex: 1; min-width: 0; overflow: hidden; font-size: 14px; color: rgb(255 255 255 / .6); text-align: center; white-space: nowrap; text-overflow: ellipsis; }
+.g-btn { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: rgb(255 255 255 / .1); color: #fff; cursor: pointer; transition: background .15s, opacity .15s; }
+.g-btn:hover { background: rgb(255 255 255 / .18); }
+.g-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.g-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.g-stage { position: relative; min-height: 0; }
+.g-track { display: flex; height: 100%; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior: contain; scrollbar-width: none; touch-action: pan-x; }
+.g-track::-webkit-scrollbar { display: none; }
+.g-slide { flex: 0 0 100%; display: grid; place-items: center; min-width: 0; margin: 0; padding: 8px 16px; scroll-snap-align: center; scroll-snap-stop: always; }
+.g-slide img { display: block; max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 2px; box-shadow: 0 10px 40px rgb(0 0 0 / .45); user-select: none; -webkit-user-select: none; transform: translateY(var(--drag, 0px)) scale(calc(1 - min(var(--drag, 0px) / 1200px, .15))); transition: transform .2s ease-out; }
+.gallery.dragging .g-slide img { transition: none; }
+.gallery.dragging { background: rgb(16 12 12 / .7); }
+.g-nav { position: absolute; top: 50%; margin-top: -22px; background: rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.g-prev { left: 12px; }
+.g-next { right: 12px; }
+.g-nav:disabled { opacity: 0; pointer-events: none; }
+/* Pilarna behövs inte på pekskärm, där sveper man */
+@media (hover: none) { .g-nav { display: none; } }
+.g-strip { display: flex; gap: 6px; justify-content: safe center; overflow-x: auto; padding: 10px 16px calc(14px + env(safe-area-inset-bottom, 0px)); scrollbar-width: none; }
+.g-strip::-webkit-scrollbar { display: none; }
+.g-thumb { flex: none; width: 52px; height: 52px; padding: 0; border: 0; border-radius: 4px; overflow: hidden; background: rgb(255 255 255 / .08); opacity: .45; cursor: pointer; transition: opacity .15s, transform .15s; }
+.g-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.g-thumb:hover { opacity: .75; }
+.g-thumb.on { opacity: 1; box-shadow: 0 0 0 2px #fff; transform: scale(1.06); }
+.gallery.single .g-nav, .gallery.single .g-strip { display: none; }
+@media (prefers-reduced-motion: reduce) { .gallery[open], .gallery.closing { animation: none; } .g-slide img, .g-thumb { transition: none; } }
+
 /* Kalender */
 .cal-head {
   display: flex;

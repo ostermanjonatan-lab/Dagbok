@@ -338,6 +338,42 @@ textarea {
 }
 .confirm { display: flex; gap: 14px; align-items: baseline; }
 
+/* Bildspelet: mörk helskärm med suddig bakgrund, bilden i mitten och miniatyrer nertill */
+.gallery { position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: rgb(16 12 12 / .9); color: #fff; overflow: hidden; }
+.gallery[open] { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; grid-template-columns: minmax(0, 1fr); animation: g-in .22s ease-out; }
+.gallery::backdrop { background: rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+@keyframes g-in { from { opacity: 0; } }
+.gallery.closing { animation: g-out .18s ease-in forwards; }
+@keyframes g-out { to { opacity: 0; } }
+.g-top { display: flex; align-items: center; gap: 12px; padding: calc(10px + env(safe-area-inset-top, 0px)) 10px 6px 18px; }
+.g-count { min-width: 4.5em; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.g-date { flex: 1; min-width: 0; overflow: hidden; font-size: 14px; color: rgb(255 255 255 / .6); text-align: center; white-space: nowrap; text-overflow: ellipsis; }
+.g-btn { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: rgb(255 255 255 / .1); color: #fff; cursor: pointer; transition: background .15s, opacity .15s; }
+.g-btn:hover { background: rgb(255 255 255 / .18); }
+.g-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.g-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.g-stage { position: relative; min-height: 0; }
+.g-track { display: flex; height: 100%; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior: contain; scrollbar-width: none; touch-action: pan-x; }
+.g-track::-webkit-scrollbar { display: none; }
+.g-slide { flex: 0 0 100%; display: grid; place-items: center; min-width: 0; margin: 0; padding: 8px 16px; scroll-snap-align: center; scroll-snap-stop: always; }
+.g-slide img { display: block; max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 2px; box-shadow: 0 10px 40px rgb(0 0 0 / .45); user-select: none; -webkit-user-select: none; transform: translateY(var(--drag, 0px)) scale(calc(1 - min(var(--drag, 0px) / 1200px, .15))); transition: transform .2s ease-out; }
+.gallery.dragging .g-slide img { transition: none; }
+.gallery.dragging { background: rgb(16 12 12 / .7); }
+.g-nav { position: absolute; top: 50%; margin-top: -22px; background: rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.g-prev { left: 12px; }
+.g-next { right: 12px; }
+.g-nav:disabled { opacity: 0; pointer-events: none; }
+/* Pilarna behövs inte på pekskärm, där sveper man */
+@media (hover: none) { .g-nav { display: none; } }
+.g-strip { display: flex; gap: 6px; justify-content: safe center; overflow-x: auto; padding: 10px 16px calc(14px + env(safe-area-inset-bottom, 0px)); scrollbar-width: none; }
+.g-strip::-webkit-scrollbar { display: none; }
+.g-thumb { flex: none; width: 52px; height: 52px; padding: 0; border: 0; border-radius: 4px; overflow: hidden; background: rgb(255 255 255 / .08); opacity: .45; cursor: pointer; transition: opacity .15s, transform .15s; }
+.g-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.g-thumb:hover { opacity: .75; }
+.g-thumb.on { opacity: 1; box-shadow: 0 0 0 2px #fff; transform: scale(1.06); }
+.gallery.single .g-nav, .gallery.single .g-strip { display: none; }
+@media (prefers-reduced-motion: reduce) { .gallery[open], .gallery.closing { animation: none; } .g-slide img, .g-thumb { transition: none; } }
+
 .search-row { display: flex; gap: 8px; align-items: center; margin: 16px 0 4px; }
 .search-field { position: relative; flex: 1; min-width: 0; }
 #search { margin: 0; padding-right: 40px; }
@@ -2801,6 +2837,19 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
   <div class="reader-track" id="reader-track"></div>
 </dialog>
 
+  <dialog class="gallery" id="gallery" aria-label="Bilder">
+    <div class="g-top">
+      <span class="g-count" id="g-count" aria-live="polite"></span>
+      <span class="g-date" id="g-date"></span>
+      <button type="button" class="g-btn g-close" id="g-close" aria-label="Stäng"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="g-stage">
+      <div class="g-track" id="g-track"></div>
+      <button type="button" class="g-btn g-nav g-prev" id="g-prev" aria-label="Föregående bild"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button type="button" class="g-btn g-nav g-next" id="g-next" aria-label="Nästa bild"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+    </div>
+    <div class="g-strip" id="g-strip"></div>
+  </dialog>
 <dialog class="viewer" id="photo-viewer" aria-label="Bild">
   <img id="viewer-img" alt="">
   <div class="viewer-foot">
@@ -4434,7 +4483,13 @@ function closePhoto() {
 
 document.addEventListener('click', (ev) => {
   const btn = ev.target.closest('[data-photo]');
-  if (btn) openPhoto(btn.dataset.photo, !!btn.closest('#photos'));
+  if (!btn) return;
+  // I flödet och läsläget öppnas dagens alla bilder som ett bildspel. +N börjar på den första dolda.
+  const day = !btn.closest('#photos') && btn.closest('.post[data-key], .reader-pane[data-key]');
+  const e = day && entries[day.dataset.key];
+  const at = e && e.photos && e.photos.length ? [...btn.parentNode.querySelectorAll('[data-photo]')].indexOf(btn) : -1;
+  if (at >= 0) openGallery(day.dataset.key, btn.querySelector('.extra') ? at + 1 : at);
+  else openPhoto(btn.dataset.photo, !!btn.closest('#photos'));
 });
 $('viewer-close').addEventListener('click', closePhoto);
 viewer.addEventListener('click', (ev) => { if (ev.target === viewer) closePhoto(); });
@@ -5255,6 +5310,141 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') flushSave();
 });
 window.addEventListener('pagehide', flushSave);
+
+/* Bildspelet: alla bilder från en dag i helskärm. Man sveper eller använder pilarna,
+   trycker på en miniatyr för att hoppa dit och drar nedåt för att stänga. */
+const gallery = $('gallery');
+let gList = [];
+let gIndex = 0;
+
+function openGallery(key, start) {
+  const e = entries[key];
+  if (!e || !e.photos || !e.photos.length) return;
+  gList = e.photos.slice();
+  gIndex = Math.max(0, Math.min(start, gList.length - 1));
+  const many = gList.length > 1;
+  $('g-date').textContent = `${WEEKDAY_CAP[parseKey(key).getDay()]} ${shortDate(key)}`;
+  $('g-track').innerHTML = gList.map((id, i) =>
+    `<figure class="g-slide"><img src="${escapeHtml(photoUrl(id))}" data-id="${escapeHtml(id)}" alt="Bild ${i + 1} av ${gList.length}" draggable="false"${Math.abs(i - gIndex) > 1 ? ' loading="lazy"' : ''}></figure>`).join('');
+  $('g-strip').innerHTML = many ? gList.map((id, i) =>
+    `<button type="button" class="g-thumb" data-i="${i}" aria-label="Bild ${i + 1}"><img src="${escapeHtml(photoUrl(id))}" data-id="${escapeHtml(id)}" alt="" loading="lazy" draggable="false"></button>`).join('') : '';
+  gallery.classList.toggle('single', !many);
+  if (gallery.showModal) gallery.showModal();
+  else gallery.setAttribute('open', '');
+  gallery.classList.remove('closing');
+  gallery.style.removeProperty('--drag');
+  const track = $('g-track');
+  track.scrollLeft = gIndex * track.clientWidth;
+  syncGallery(true);
+}
+
+function closeGallery() {
+  if (!gallery.open) return;
+  const done = () => {
+    gallery.classList.remove('closing');
+    gallery.style.removeProperty('--drag');
+    if (gallery.close) gallery.close();
+    else gallery.removeAttribute('open');
+  };
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return done();
+  gallery.classList.add('closing');
+  setTimeout(done, 180);
+}
+
+function syncGallery(instant) {
+  $('g-count').textContent = gList.length > 1 ? `${gIndex + 1} av ${gList.length}` : '';
+  $('g-prev').disabled = gIndex === 0;
+  $('g-next').disabled = gIndex === gList.length - 1;
+  $('g-strip').querySelectorAll('.g-thumb').forEach((t, i) => {
+    const on = i === gIndex;
+    t.classList.toggle('on', on);
+    if (on) t.setAttribute('aria-current', 'true');
+    else t.removeAttribute('aria-current');
+  });
+  const cur = $('g-strip').children[gIndex];
+  if (cur) cur.scrollIntoView({ inline: 'center', block: 'nearest', behavior: instant ? 'auto' : 'smooth' });
+}
+
+function goGallery(i) {
+  if (i < 0 || i >= gList.length) return;
+  const track = $('g-track');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  track.scrollTo({ left: i * track.clientWidth, behavior: reduce ? 'auto' : 'smooth' });
+  gIndex = i;
+  syncGallery();
+}
+
+let gFrame = 0;
+$('g-track').addEventListener('scroll', () => {
+  cancelAnimationFrame(gFrame);
+  gFrame = requestAnimationFrame(() => {
+    const track = $('g-track');
+    const i = Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
+    if (i !== gIndex && i >= 0 && i < gList.length) {
+      gIndex = i;
+      syncGallery();
+    }
+  });
+});
+$('g-prev').addEventListener('click', () => goGallery(gIndex - 1));
+$('g-next').addEventListener('click', () => goGallery(gIndex + 1));
+$('g-close').addEventListener('click', closeGallery);
+$('g-strip').addEventListener('click', (ev) => {
+  const t = ev.target.closest('.g-thumb');
+  if (t) goGallery(Number(t.dataset.i));
+});
+gallery.addEventListener('cancel', (ev) => { ev.preventDefault(); closeGallery(); });
+gallery.addEventListener('keydown', (ev) => {
+  if (ev.key === 'ArrowLeft') { ev.preventDefault(); goGallery(gIndex - 1); }
+  if (ev.key === 'ArrowRight') { ev.preventDefault(); goGallery(gIndex + 1); }
+});
+// Ett tryck bredvid bilden stänger
+$('g-track').addEventListener('click', (ev) => { if (ev.target.classList.contains('g-slide')) closeGallery(); });
+window.addEventListener('resize', () => {
+  if (!gallery.open) return;
+  const track = $('g-track');
+  track.scrollLeft = gIndex * track.clientWidth;
+});
+
+// Dra bilden nedåt för att stänga
+(() => {
+  const track = $('g-track');
+  let sx = 0;
+  let sy = 0;
+  let mode = null;
+  let dy = 0;
+  track.addEventListener('touchstart', (ev) => {
+    if (ev.touches.length !== 1) { mode = null; return; }
+    sx = ev.touches[0].clientX;
+    sy = ev.touches[0].clientY;
+    dy = 0;
+    mode = 'start';
+  }, { passive: true });
+  track.addEventListener('touchmove', (ev) => {
+    if (!mode || mode === 'none') return;
+    const mx = ev.touches[0].clientX - sx;
+    const my = ev.touches[0].clientY - sy;
+    if (mode === 'start') {
+      if (Math.abs(mx) < 8 && Math.abs(my) < 8) return;
+      mode = my > 0 && my > Math.abs(mx) * 1.3 ? 'drag' : 'none';
+      if (mode !== 'drag') return;
+      gallery.classList.add('dragging');
+    }
+    ev.preventDefault();
+    dy = Math.max(0, my);
+    gallery.style.setProperty('--drag', `${dy}px`);
+  }, { passive: false });
+  const end = () => {
+    if (mode === 'drag') {
+      gallery.classList.remove('dragging');
+      if (dy > 110) closeGallery();
+      else gallery.style.removeProperty('--drag');
+    }
+    mode = null;
+  };
+  track.addEventListener('touchend', end);
+  track.addEventListener('touchcancel', end);
+})();
 
 /* Den här dagen tidigare år */
 

@@ -1766,7 +1766,13 @@ function closePhoto() {
 
 document.addEventListener('click', (ev) => {
   const btn = ev.target.closest('[data-photo]');
-  if (btn) openPhoto(btn.dataset.photo, !!btn.closest('#photos'));
+  if (!btn) return;
+  // I flödet och läsläget öppnas dagens alla bilder som ett bildspel. +N börjar på den första dolda.
+  const day = !btn.closest('#photos') && btn.closest('.post[data-key], .reader-pane[data-key]');
+  const e = day && entries[day.dataset.key];
+  const at = e && e.photos && e.photos.length ? [...btn.parentNode.querySelectorAll('[data-photo]')].indexOf(btn) : -1;
+  if (at >= 0) openGallery(day.dataset.key, btn.querySelector('.extra') ? at + 1 : at);
+  else openPhoto(btn.dataset.photo, !!btn.closest('#photos'));
 });
 $('viewer-close').addEventListener('click', closePhoto);
 viewer.addEventListener('click', (ev) => { if (ev.target === viewer) closePhoto(); });
@@ -1785,6 +1791,141 @@ $('photo-delete-yes').addEventListener('click', () => {
   scheduleSave();
   closePhoto();
 });
+
+/* Bildspelet: alla bilder från en dag i helskärm. Man sveper eller använder pilarna,
+   trycker på en miniatyr för att hoppa dit och drar nedåt för att stänga. */
+const gallery = $('gallery');
+let gList = [];
+let gIndex = 0;
+
+function openGallery(key, start) {
+  const e = entries[key];
+  if (!e || !e.photos || !e.photos.length) return;
+  gList = e.photos.slice();
+  gIndex = Math.max(0, Math.min(start, gList.length - 1));
+  const many = gList.length > 1;
+  $('g-date').textContent = `${WEEKDAY_CAP[parseKey(key).getDay()]} ${shortDate(key)}`;
+  $('g-track').innerHTML = gList.map((id, i) =>
+    `<figure class="g-slide"><img src="${escapeHtml(photoUrl(id))}" data-id="${escapeHtml(id)}" alt="Bild ${i + 1} av ${gList.length}" draggable="false"${Math.abs(i - gIndex) > 1 ? ' loading="lazy"' : ''}></figure>`).join('');
+  $('g-strip').innerHTML = many ? gList.map((id, i) =>
+    `<button type="button" class="g-thumb" data-i="${i}" aria-label="Bild ${i + 1}"><img src="${escapeHtml(photoUrl(id))}" data-id="${escapeHtml(id)}" alt="" loading="lazy" draggable="false"></button>`).join('') : '';
+  gallery.classList.toggle('single', !many);
+  if (gallery.showModal) gallery.showModal();
+  else gallery.setAttribute('open', '');
+  gallery.classList.remove('closing');
+  gallery.style.removeProperty('--drag');
+  const track = $('g-track');
+  track.scrollLeft = gIndex * track.clientWidth;
+  syncGallery(true);
+}
+
+function closeGallery() {
+  if (!gallery.open) return;
+  const done = () => {
+    gallery.classList.remove('closing');
+    gallery.style.removeProperty('--drag');
+    if (gallery.close) gallery.close();
+    else gallery.removeAttribute('open');
+  };
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return done();
+  gallery.classList.add('closing');
+  setTimeout(done, 180);
+}
+
+function syncGallery(instant) {
+  $('g-count').textContent = gList.length > 1 ? `${gIndex + 1} av ${gList.length}` : '';
+  $('g-prev').disabled = gIndex === 0;
+  $('g-next').disabled = gIndex === gList.length - 1;
+  $('g-strip').querySelectorAll('.g-thumb').forEach((t, i) => {
+    const on = i === gIndex;
+    t.classList.toggle('on', on);
+    if (on) t.setAttribute('aria-current', 'true');
+    else t.removeAttribute('aria-current');
+  });
+  const cur = $('g-strip').children[gIndex];
+  if (cur) cur.scrollIntoView({ inline: 'center', block: 'nearest', behavior: instant ? 'auto' : 'smooth' });
+}
+
+function goGallery(i) {
+  if (i < 0 || i >= gList.length) return;
+  const track = $('g-track');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  track.scrollTo({ left: i * track.clientWidth, behavior: reduce ? 'auto' : 'smooth' });
+  gIndex = i;
+  syncGallery();
+}
+
+let gFrame = 0;
+$('g-track').addEventListener('scroll', () => {
+  cancelAnimationFrame(gFrame);
+  gFrame = requestAnimationFrame(() => {
+    const track = $('g-track');
+    const i = Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
+    if (i !== gIndex && i >= 0 && i < gList.length) {
+      gIndex = i;
+      syncGallery();
+    }
+  });
+});
+$('g-prev').addEventListener('click', () => goGallery(gIndex - 1));
+$('g-next').addEventListener('click', () => goGallery(gIndex + 1));
+$('g-close').addEventListener('click', closeGallery);
+$('g-strip').addEventListener('click', (ev) => {
+  const t = ev.target.closest('.g-thumb');
+  if (t) goGallery(Number(t.dataset.i));
+});
+gallery.addEventListener('cancel', (ev) => { ev.preventDefault(); closeGallery(); });
+gallery.addEventListener('keydown', (ev) => {
+  if (ev.key === 'ArrowLeft') { ev.preventDefault(); goGallery(gIndex - 1); }
+  if (ev.key === 'ArrowRight') { ev.preventDefault(); goGallery(gIndex + 1); }
+});
+// Ett tryck bredvid bilden stänger
+$('g-track').addEventListener('click', (ev) => { if (ev.target.classList.contains('g-slide')) closeGallery(); });
+window.addEventListener('resize', () => {
+  if (!gallery.open) return;
+  const track = $('g-track');
+  track.scrollLeft = gIndex * track.clientWidth;
+});
+
+// Dra bilden nedåt för att stänga
+(() => {
+  const track = $('g-track');
+  let sx = 0;
+  let sy = 0;
+  let mode = null;
+  let dy = 0;
+  track.addEventListener('touchstart', (ev) => {
+    if (ev.touches.length !== 1) { mode = null; return; }
+    sx = ev.touches[0].clientX;
+    sy = ev.touches[0].clientY;
+    dy = 0;
+    mode = 'start';
+  }, { passive: true });
+  track.addEventListener('touchmove', (ev) => {
+    if (!mode || mode === 'none') return;
+    const mx = ev.touches[0].clientX - sx;
+    const my = ev.touches[0].clientY - sy;
+    if (mode === 'start') {
+      if (Math.abs(mx) < 8 && Math.abs(my) < 8) return;
+      mode = my > 0 && my > Math.abs(mx) * 1.3 ? 'drag' : 'none';
+      if (mode !== 'drag') return;
+      gallery.classList.add('dragging');
+    }
+    ev.preventDefault();
+    dy = Math.max(0, my);
+    gallery.style.setProperty('--drag', `${dy}px`);
+  }, { passive: false });
+  const end = () => {
+    if (mode === 'drag') {
+      gallery.classList.remove('dragging');
+      if (dy > 110) closeGallery();
+      else gallery.style.removeProperty('--drag');
+    }
+    mode = null;
+  };
+  track.addEventListener('touchend', end);
+  track.addEventListener('touchcancel', end);
+})();
 
 /* Den här dagen tidigare år */
 
