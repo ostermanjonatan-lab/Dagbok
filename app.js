@@ -268,6 +268,7 @@ $('set-accent').addEventListener('click', (ev) => {
   accent = b.dataset.accent;
   try { localStorage.setItem(ACCENT_KEY, accent); } catch {}
   applyAccent(accent);
+  syncTop();
 });
 
 // Sparar en dag som ändrats utanför skrivytan
@@ -3600,9 +3601,9 @@ function refreshBase() {
 
 function closeSheet() { go(baseView === 'set' ? '#/installningar' : '#/kalender'); }
 
-// Kalendern har ett färgat band överst, så statusraden får samma färg där
+// Kalendern och inställningarna har ett färgat band överst, så statusraden får samma färg
 function syncTop() {
-  const band = baseView === 'cal';
+  const band = baseView === 'cal' || baseView === 'set';
   document.body.classList.toggle('band-top', band);
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.content = band ? getComputedStyle(document.documentElement).getPropertyValue('--cloth-base').trim() || '#b4062f' : '#f3e6d5';

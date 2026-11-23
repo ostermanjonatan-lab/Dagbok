@@ -1880,6 +1880,8 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .cal-band .hd-btn { border-color: rgb(255 255 255 / .28); background: rgb(0 0 0 / .14); color: var(--brand-text); }
 .cal-band .hd-btn.on { border-color: var(--brand-text); background: var(--brand-text); color: var(--brand-dark); }
 .cal-band .layers-pop { color: var(--text); }
+.set-band { padding-top: 14px; padding-bottom: 14px; margin-bottom: 4px; }
+.set-band .page-title { margin: 0; color: var(--brand-text); font-size: 24px; }
 /* Statusraden får samma färg när kalendern visas */
 body.band-top::before { background-color: var(--cloth-base); background-image: var(--cloth); }
 .cal-top { margin: 0; padding: 6px 0 14px; }
