@@ -2365,12 +2365,12 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
 @media (prefers-reduced-motion: reduce) { .star-btn.pop svg { animation: none; } }
 .post .post-head .star-btn { margin: -7px -9px -7px auto; }
 .post .post-head .special { order: 5; }
-/* Korten i flödet är blad med en tygkant överst, som skrivblocket. Ingen ram, mjuk skugga. */
+/* Korten i flödet är linjerade blad utan ram, med mjuk skugga */
 .post {
   position: relative;
   padding-top: 26px;
   border: 0;
-  border-radius: 4px 4px 12px 12px;
+  border-radius: 12px;
   background-color: #fffdf8;
   box-shadow: 0 1px 2px rgb(42 20 24 / .12), 0 6px 16px rgb(42 20 24 / .07);
 }
@@ -2381,6 +2381,7 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
   right: 0;
   top: 0;
   height: 12px;
+  display: none;
   background-color: var(--cloth-base);
   background-image: var(--cloth);
   pointer-events: none;
@@ -2398,7 +2399,7 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
 .post::after {
   content: '';
   position: absolute;
-  top: 12px;
+  top: 0;
   bottom: 0;
   left: 61px;
   width: 1px;
