@@ -1894,8 +1894,7 @@ function postHtml(k, e, today, searching, showMonth) {
     </div>
     <div class="post-body">
       <header class="post-head${special ? '' : ' empty'}">${special ? `<span class="special">${escapeHtml(special)}</span>` : ''}${starBtn(k)}</header>
-      ${e.text ? `<div class="prose${searching ? '' : ' clamp'}">${Paper.mdToHtml(e.text)}</div>
-      <button type="button" class="link more" hidden>Visa mer</button>` : ''}
+      ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
       ${(e.media || []).map((f) => `<div class="post-film">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
         <span class="pf-text"><span class="pf-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</span><span class="pf-title">${escapeHtml(f.title || 'Utan titel')}</span></span>${f.rating ? starsHtml(f.rating) : ''}</div>`).join('')}
       ${postMedia(e.photos)}
@@ -1907,16 +1906,8 @@ const WEEKDAY_CAP = ['Söndag', 'Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Freda
 const MONTH_SHORT = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
 const PEOPLE_ICON = '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.5" cy="9" r="2.6"/><path d="M15.5 14.2c2.3.1 4.1 1.6 4.8 4.3"/>';
 
-// Långa inlägg visas förkortade tills man trycker på Visa mer
-function markLongPosts(list) {
-  list.querySelectorAll('.prose.clamp').forEach((p) => {
-    if (p.scrollHeight > p.clientHeight + 2) p.nextElementSibling.hidden = false;
-    else p.classList.remove('clamp');
-  });
-}
-
 $('list').addEventListener('click', (ev) => {
-  // Ett tryck var som helst på inlägget öppnar det för läsning, utom på bilder och Visa mer
+  // Ett tryck var som helst på inlägget öppnar det för läsning, utom på bilder och knappar
   const row = ev.target.closest('.media-row');
   if (row) openMediaRow(row);
   const post = ev.target.closest('.post');
@@ -1928,10 +1919,6 @@ $('list').addEventListener('click', (ev) => {
     openPeopleView(ppl.closest('.post').dataset.key);
     return;
   }
-  const more = ev.target.closest('.more');
-  if (!more) return;
-  more.previousElementSibling.classList.remove('clamp');
-  more.hidden = true;
 });
 
 /* @-sökning: datum, månader, år, veckodagar och helgdagar */
@@ -2377,7 +2364,6 @@ function renderList() {
   if (!whole) html += moreMonthHtml();
   list.innerHTML = html;
   if (text) list.querySelectorAll('.when, .prose, .post-stats').forEach((el) => Paper.highlight(el, text));
-  else markLongPosts(list);
 }
 
 // Knappen längst ner i flödet går till den närmaste tidigare månaden man har skrivit i
