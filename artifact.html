@@ -2474,6 +2474,10 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
 .pf-v { display: inline-flex; align-items: center; gap: 6px; height: 28px; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .pf-v svg { width: 19px; height: 19px; flex: none; fill: none; stroke: var(--muted); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .post .pf-s .avatar { width: 24px; height: 24px; margin: 0 0 0 3px; font-size: 14px; }
+/* Humöret är en fylld cirkel i humörets färg */
+.post .pf-s .avatar { width: 26px; height: 26px; margin: 0; border-radius: 50%; background: var(--m); color: var(--on-mood); font-size: 14px; }
+.post .pf-s .avatar::before { display: none; }
+.post .pf-s .avatar:is([data-m="1"], [data-m="2"], [data-m="9"], [data-m="10"]) { color: #fff; }
 button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
 /* Rutan med personerna: datumet och ett namn per rad */
 .pv-date { margin: -6px 0 10px; font-size: 14px; color: var(--muted); }
