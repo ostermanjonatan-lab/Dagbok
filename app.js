@@ -695,14 +695,14 @@ function rollMood(knob, v, prev) {
   }
   if (!v || !prev || v === prev || matchMedia('(prefers-reduced-motion: reduce)').matches) {
     cur.className = 'num';
-    cur.textContent = v || '';
+    cur.innerHTML = v ? moodFace(v) : '';
     return;
   }
   const up = v > prev;
   cur.className = `num out ${up ? 'out-up' : 'out-down'}`;
   const next = document.createElement('span');
   next.className = `num ${up ? 'in-up' : 'in-down'}`;
-  next.textContent = v;
+  next.innerHTML = moodFace(v);
   knob.appendChild(next);
   setTimeout(() => cur.remove(), 220);
 }
@@ -716,8 +716,8 @@ function setMood(v) {
   rollMood(thumb.firstElementChild, moodValue, prev);
   thumb.dataset.m = moodValue || '';
   if (moodValue) thumb.style.setProperty('--m', `var(--m${moodValue})`);
-  // Ansiktet vid rubriken visar humöret medan man drar
-  $('mood-face-now').innerHTML = moodValue ? moodFace(moodValue) : '';
+  // Knoppen visar ansiktet, siffran står vid rubriken
+  $('mood-face-now').textContent = moodValue || '';
   drawMood();
 }
 // Utan humör står en knopp i mitten. Den vickar kort när dagen öppnas, så att det syns att skalan går att dra.
