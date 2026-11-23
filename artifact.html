@@ -2465,6 +2465,18 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
 .post .prose :is(h2, h3) { font-size: 1em; }
 .post .prose.clamp { max-height: calc(28px * 7); }
 
+/* Humöret ligger under texten tillsammans med vädret och personerna. Marginalen till
+   vänster är nu tom och smalare, men linjen finns kvar som i skrivblocket. */
+.post { grid-template-columns: minmax(0, 1fr); padding-left: 52px; }
+.post::after { left: 36px; }
+.post-stats { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0 26px; min-height: 56px; padding-top: 8px; color: var(--text); }
+.pf-s { display: inline-flex; flex-direction: column; align-items: flex-start; min-width: 0; max-width: 100%; }
+.pf-v { display: inline-flex; align-items: center; gap: 7px; height: 32px; font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.pf-v svg { width: 26px; height: 26px; flex: none; fill: none; stroke: var(--muted); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.pf-l { margin-top: 2px; font-size: 12.5px; font-weight: 600; line-height: 16px; color: var(--muted); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.post .pf-s .avatar { width: 32px; height: 32px; margin: 0 0 0 4px; }
+.post .pf-s .avatar + .pf-l { align-self: flex-start; }
+
 
 .reader-head #reader-star { display: flex; }
 /* Bokmärket i läsläget hänger från dialogens överkant */
@@ -5192,17 +5204,22 @@ function postHtml(k, e, today, searching) {
   const rel = k === today ? 'Idag' : k === yesterday ? 'Igår' : '';
   // Vilken särskild dag det är: ens eget märke och helgdagen, om det finns
   const special = [MARK_OF[e.mark] && MARK_OF[e.mark].label, holidays(d.getFullYear())[k]].filter(Boolean).join(', ');
-  // Raden längst ner, som under en tweet: väder och vem man var med
+  // Raden längst ner: humöret, vädret och vem man var med, var och en med en kort text under
   const foot = [];
+  if (e.mood) {
+    foot.push(`<span class="pf-s"><span class="avatar" data-m="${e.mood}" style="--m: var(--m${e.mood})">${e.mood}${MARK_OF[e.mark] ? `<span class="av-mk">${miniIcon(e.mark)}</span>` : ''}</span><span class="pf-l">Humör</span></span>`);
+  }
   if (e.weather) {
-    const g = weatherGroup(e.weather.code);
-    foot.push(`<span class="pf-i">${g != null ? `<svg viewBox="0 0 24 24" aria-hidden="true">${WEATHER_ICONS[g]}</svg>` : ''}${escapeHtml(fmtWeather(e.weather))}</span>`);
+    const w = e.weather;
+    const g = weatherGroup(w.code);
+    const desc = w.code == null ? '' : w.code === 0 ? 'Sol' : WEATHER_TEXT[w.code] || 'Okänt väder';
+    const temp = w.temp != null ? `${String(Math.round(w.temp)).replace('-', '\u2212')}\u00a0°C` : '';
+    foot.push(`<span class="pf-s"><span class="pf-v">${g != null ? `<svg viewBox="0 0 24 24" aria-hidden="true">${WEATHER_ICONS[g]}</svg>` : ''}${temp}</span><span class="pf-l">${escapeHtml(desc || 'Väder')}</span></span>`);
   }
   if (e.people && e.people.length) {
-    foot.push(`<span class="pf-i" title="${escapeHtml(joinNames(e.people))}"><svg viewBox="0 0 24 24" aria-hidden="true">${PEOPLE_ICON}</svg>${e.people.length === 1 ? escapeHtml(e.people[0]) : `${e.people.length} personer`}</span>`);
+    foot.push(`<span class="pf-s pf-people" title="${escapeHtml(joinNames(e.people))}"><span class="pf-v"><svg viewBox="0 0 24 24" aria-hidden="true">${PEOPLE_ICON}</svg>${e.people.length}</span><span class="pf-l">${escapeHtml(joinNames(e.people))}</span></span>`);
   }
   return `<article class="post${k === today ? ' today' : ''}" data-key="${k}">
-    <span class="avatar${e.mood ? '' : ' none'}" data-m="${e.mood || ''}" style="--m: var(--m${e.mood || 6})" aria-hidden="true">${e.mood || ''}${MARK_OF[e.mark] ? `<span class="av-mk">${miniIcon(e.mark)}</span>` : ''}<span class="av-wd">Humör</span></span>
     <div class="post-body">
       <header class="post-head">
         <button type="button" class="when" aria-label="${WEEKDAY_CAP[d.getDay()]} ${shortDate(k)}${MARK_OF[e.mark] ? `, ${MARK_OF[e.mark].label.toLowerCase()}` : ''}"><span class="wd">${WEEKDAY_CAP[d.getDay()]}</span> ${shortDate(k)}</button>${rel ? `<span class="rel">· ${rel}</span>` : ''}${starBtn(k)}${special ? `<span class="special">${escapeHtml(special)}</span>` : ''}
@@ -5212,7 +5229,7 @@ function postHtml(k, e, today, searching) {
       ${(e.media || []).map((f) => `<div class="post-film">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
         <span class="pf-text"><span class="pf-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</span><span class="pf-title">${escapeHtml(f.title || 'Utan titel')}</span></span>${f.rating ? starsHtml(f.rating) : ''}</div>`).join('')}
       ${postMedia(e.photos)}
-      ${foot.length ? `<div class="post-foot">${foot.join('')}</div>` : ''}
+      ${foot.length ? `<div class="post-stats">${foot.join('')}</div>` : ''}
     </div>
   </article>`;
 }
@@ -5683,7 +5700,7 @@ function renderList() {
   }
   if (!whole) html += moreMonthHtml();
   list.innerHTML = html;
-  if (text) list.querySelectorAll('.when, .prose, .post-foot').forEach((el) => Paper.highlight(el, text));
+  if (text) list.querySelectorAll('.when, .prose, .post-stats').forEach((el) => Paper.highlight(el, text));
   else markLongPosts(list);
 }
 

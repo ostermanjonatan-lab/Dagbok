@@ -2516,6 +2516,18 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
 .post .prose :is(h2, h3) { font-size: 1em; }
 .post .prose.clamp { max-height: calc(28px * 7); }
 
+/* Humöret ligger under texten tillsammans med vädret och personerna. Marginalen till
+   vänster är nu tom och smalare, men linjen finns kvar som i skrivblocket. */
+.post { grid-template-columns: minmax(0, 1fr); padding-left: 52px; }
+.post::after { left: 36px; }
+.post-stats { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0 26px; min-height: 56px; padding-top: 8px; color: var(--text); }
+.pf-s { display: inline-flex; flex-direction: column; align-items: flex-start; min-width: 0; max-width: 100%; }
+.pf-v { display: inline-flex; align-items: center; gap: 7px; height: 32px; font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.pf-v svg { width: 26px; height: 26px; flex: none; fill: none; stroke: var(--muted); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.pf-l { margin-top: 2px; font-size: 12.5px; font-weight: 600; line-height: 16px; color: var(--muted); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.post .pf-s .avatar { width: 32px; height: 32px; margin: 0 0 0 4px; }
+.post .pf-s .avatar + .pf-l { align-self: flex-start; }
+
 
 .reader-head #reader-star { display: flex; }
 /* Bokmärket i läsläget hänger från dialogens överkant */
