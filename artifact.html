@@ -2317,7 +2317,7 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
 /* Korten i flödet är blad med en tygkant överst, som skrivblocket. Ingen ram, mjuk skugga. */
 .post {
   position: relative;
-  padding-top: 20px;
+  padding-top: 26px;
   border: 0;
   border-radius: 4px 4px 12px 12px;
   background-color: #fffdf8;
@@ -2329,13 +2329,25 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
   left: 0;
   right: 0;
   top: 0;
-  height: 6px;
+  height: 12px;
   background-color: var(--cloth-base);
   background-image: var(--cloth);
   pointer-events: none;
 }
 /* Favoriter får ett tygbokmärke som hänger från kanten, i stället för en stjärna */
 .post .star-btn { position: relative; }
+.post { column-gap: 24px; }
+/* Marginallinjen mellan humöret och texten, som i skrivblocket */
+.post::after {
+  content: '';
+  position: absolute;
+  top: 12px;
+  bottom: 0;
+  left: 61px;
+  width: 1.5px;
+  background: color-mix(in srgb, var(--accent) 40%, transparent);
+  pointer-events: none;
+}
 .post .star-btn svg { display: none; }
 .post .star-btn::after {
   content: '';
@@ -2352,10 +2364,10 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
   content: '';
   position: absolute;
   /* Börjar vid kortets överkant, under tygkanten, så att inget glapp syns */
-  top: -13px;
+  top: -19px;
   left: 50%;
   width: 16px;
-  height: 36px;
+  height: 42px;
   margin-left: -8px;
   background-color: var(--cloth-base);
   background-image: var(--cloth);
