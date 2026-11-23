@@ -996,7 +996,7 @@ body.sheet-open { overflow: hidden; }
   color: var(--text);
   box-shadow: 0 12px 40px rgb(0 0 0 / .25);
 }
-.reader::backdrop { background: rgb(0 0 0 / .4); }
+.reader::backdrop { background: rgb(0 0 0 / .3); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 .reader[open] { animation: pop .15s ease-out; }
 @keyframes pop { from { transform: scale(.96); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .reader[open] { animation: none; } }
