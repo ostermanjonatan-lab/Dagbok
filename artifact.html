@@ -2483,6 +2483,16 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .pv-list li { padding: 10px 0; border-top: 1px solid var(--line); font-size: 17px; }
 /* Texten i flödet har bläckets mjukare svarta, som släpper igenom lite av papperet */
 .post .prose { color: rgb(30 30 40 / .88); }
+/* Bilderna i flödet ser ut som gamla papperskopior: raka hörn, vit kant runt om
+   och en liten skugga, lite snett lagda som inklistrade */
+.post .media, .post .media:last-child { gap: 10px; margin: 10px 0 8px; border: 0; border-radius: 0; overflow: visible; }
+.post .media button { padding: 5px; border-radius: 0; background: #fff; box-shadow: 0 1px 1.5px rgb(42 20 24 / .22), 0 4px 8px -2px rgb(42 20 24 / .14); overflow: hidden; }
+.post .media button:nth-child(4n + 1) { rotate: -.8deg; }
+.post .media button:nth-child(4n + 2) { rotate: .7deg; }
+.post .media button:nth-child(4n + 3) { rotate: .4deg; }
+.post .media button:nth-child(4n + 4) { rotate: -.5deg; }
+.post .media img { border-radius: 0; background: var(--line); }
+.post .media .extra { inset: 5px; }
 /* Raden under texten har samma typsnitt som texten, i blyertsgrått */
 .pf-v, .post .pf-s .avatar { font-family: var(--sans); font-weight: 500; color: var(--pencil); }
 .pf-v { font-size: 17px; }
