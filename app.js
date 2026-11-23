@@ -776,19 +776,58 @@ const MARK_OF = Object.fromEntries(MARKS.map((m) => [m.key, m]));
 const markIcon = (k) => (MARK_OF[k] ? `<svg class="mk-ico" viewBox="0 0 24 24" aria-hidden="true">${MARK_OF[k].svg}</svg>` : '');
 const markHtml = (k, cls) => (MARK_OF[k] ? `<span class="${cls}">${markIcon(k)}${MARK_OF[k].label}</span>` : '');
 let markValue = null;
-$('f-mark').innerHTML = MARKS.map((m) => `<button type="button" class="pill" role="radio" aria-checked="false" data-mark="${m.key}">${markIcon(m.key)}${m.label}</button>`).join('');
+// Märkningen väljs i en meny som fälls ut, första raden tar bort märket
+$('f-mark').innerHTML = `<button type="button" class="pill" role="radio" aria-checked="false" data-mark=""><span class="mk-none" aria-hidden="true"></span>Ingen märkning</button>`
+  + MARKS.map((m) => `<button type="button" class="pill" role="radio" aria-checked="false" data-mark="${m.key}">${markIcon(m.key)}${m.label}</button>`).join('');
 function setMark(k) {
   markValue = MARK_OF[k] ? k : null;
-  $('f-mark').querySelectorAll('[data-mark]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.mark === markValue)));
+  $('f-mark').querySelectorAll('[data-mark]').forEach((b) => {
+    const on = b.dataset.mark === (markValue || '');
+    b.setAttribute('aria-checked', String(on));
+    b.tabIndex = on ? 0 : -1;
+  });
+  $('mark-cur').innerHTML = markValue ? `${markIcon(markValue)}<span>${MARK_OF[markValue].label}</span>` : '<span class="mark-empty">Ingen märkning</span>';
 }
-// Ett tryck väljer märket, ett tryck på det valda tar bort det
+function markMenu(open) {
+  $('f-mark').hidden = !open;
+  $('mark-btn').setAttribute('aria-expanded', String(open));
+  if (open) {
+    $('f-mark').querySelector('[aria-checked="true"]')?.focus({ preventScroll: true });
+    // Hela menyn ska synas ovanför menyraden längst ner
+    $('f-mark').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+}
+$('mark-btn').addEventListener('click', () => markMenu($('f-mark').hidden));
+document.addEventListener('click', (ev) => {
+  if (!$('f-mark').hidden && !ev.target.closest('#mark-pick')) markMenu(false);
+});
+$('mark-pick').addEventListener('keydown', (ev) => {
+  if ($('f-mark').hidden) return;
+  if (ev.key === 'Escape') {
+    ev.stopPropagation();
+    markMenu(false);
+    $('mark-btn').focus();
+  }
+  if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+    ev.preventDefault();
+    const items = [...$('f-mark').querySelectorAll('[data-mark]')];
+    const i = items.indexOf(document.activeElement);
+    items[(i + (ev.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus();
+  }
+});
 $('f-mark').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-mark]');
   if (!b) return;
-  setMark(b.dataset.mark === markValue ? null : b.dataset.mark);
-  buzz(8);
-  scheduleSave();
+  const changed = (b.dataset.mark || null) !== markValue;
+  setMark(b.dataset.mark || null);
+  markMenu(false);
+  $('mark-btn').focus();
+  if (changed) {
+    buzz(8);
+    scheduleSave();
+  }
 });
+setMark(null);
 
 function stepDay(dir) { go(`#/dag/${shiftKey(current, dir)}`); }
 

@@ -1650,6 +1650,20 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 #media-kind .pill:hover, #media-kind .pill:focus-visible { background: color-mix(in srgb, var(--line) 55%, transparent); outline: none; }
 #media-kind .pill[aria-checked="true"] { background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent); font-weight: 600; }
 #media-kind .kind-n { margin-left: auto; padding-left: 16px; color: var(--muted); font-size: 14px; font-weight: 400; font-variant-numeric: tabular-nums; }
+
+/* Märk dagen: ett fält som fäller ut en meny med märkningarna */
+.mark-pick { position: relative; margin-top: 6px; }
+.mark-btn { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--text); font: inherit; font-size: 16px; text-align: left; cursor: pointer; }
+.mark-cur { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.mark-cur .mk-ico { width: 18px; height: 18px; color: var(--accent); }
+.mark-empty { color: var(--muted); }
+.mark-btn[aria-expanded="true"] .kind-chev { transform: rotate(180deg); }
+.mark-menu { right: 0; max-height: 340px; overflow-y: auto; scroll-margin-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 16px); }
+#f-mark .pill, #f-mark .pill:hover { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 0; border-radius: 8px; background: none; color: var(--text); font-size: 16px; text-align: left; }
+#f-mark .pill:hover, #f-mark .pill:focus-visible { background: color-mix(in srgb, var(--line) 55%, transparent); outline: none; }
+#f-mark .pill[aria-checked="true"] { background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent); font-weight: 600; }
+#f-mark .mk-ico { width: 18px; height: 18px; flex: none; }
+.mk-none { width: 18px; height: 18px; flex: none; border: 1.6px dashed currentColor; border-radius: 50%; opacity: .5; }
 .media-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 10px; }
 .media-panel .media-tools .period, .media-views { display: flex; gap: 2px; margin: 0; padding: 2px; border-radius: 9px; background: color-mix(in srgb, var(--line) 60%, transparent); }
 .media-panel .media-tools .period .pill, .media-panel .media-tools .period .pill:hover { padding: 5px 12px; border-radius: 7px; font-size: 14px; }
@@ -2559,7 +2573,7 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
           </div>
           <div class="field">
             <span id="mark-label">Märk dagen</span>
-            <div class="marks" id="f-mark" role="radiogroup" aria-labelledby="mark-label"></div>
+            <div class="mark-pick" id="mark-pick"><button type="button" class="mark-btn" id="mark-btn" aria-haspopup="true" aria-expanded="false" aria-controls="f-mark"><span class="mark-cur" id="mark-cur"></span><svg class="kind-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><div class="kind-menu mark-menu" id="f-mark" role="radiogroup" aria-labelledby="mark-label" hidden></div></div>
           </div>
           <div class="field">
             <span id="people-label">Taggade personer</span>
@@ -3864,19 +3878,58 @@ const MARK_OF = Object.fromEntries(MARKS.map((m) => [m.key, m]));
 const markIcon = (k) => (MARK_OF[k] ? `<svg class="mk-ico" viewBox="0 0 24 24" aria-hidden="true">${MARK_OF[k].svg}</svg>` : '');
 const markHtml = (k, cls) => (MARK_OF[k] ? `<span class="${cls}">${markIcon(k)}${MARK_OF[k].label}</span>` : '');
 let markValue = null;
-$('f-mark').innerHTML = MARKS.map((m) => `<button type="button" class="pill" role="radio" aria-checked="false" data-mark="${m.key}">${markIcon(m.key)}${m.label}</button>`).join('');
+// Märkningen väljs i en meny som fälls ut, första raden tar bort märket
+$('f-mark').innerHTML = `<button type="button" class="pill" role="radio" aria-checked="false" data-mark=""><span class="mk-none" aria-hidden="true"></span>Ingen märkning</button>`
+  + MARKS.map((m) => `<button type="button" class="pill" role="radio" aria-checked="false" data-mark="${m.key}">${markIcon(m.key)}${m.label}</button>`).join('');
 function setMark(k) {
   markValue = MARK_OF[k] ? k : null;
-  $('f-mark').querySelectorAll('[data-mark]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.mark === markValue)));
+  $('f-mark').querySelectorAll('[data-mark]').forEach((b) => {
+    const on = b.dataset.mark === (markValue || '');
+    b.setAttribute('aria-checked', String(on));
+    b.tabIndex = on ? 0 : -1;
+  });
+  $('mark-cur').innerHTML = markValue ? `${markIcon(markValue)}<span>${MARK_OF[markValue].label}</span>` : '<span class="mark-empty">Ingen märkning</span>';
 }
-// Ett tryck väljer märket, ett tryck på det valda tar bort det
+function markMenu(open) {
+  $('f-mark').hidden = !open;
+  $('mark-btn').setAttribute('aria-expanded', String(open));
+  if (open) {
+    $('f-mark').querySelector('[aria-checked="true"]')?.focus({ preventScroll: true });
+    // Hela menyn ska synas ovanför menyraden längst ner
+    $('f-mark').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+}
+$('mark-btn').addEventListener('click', () => markMenu($('f-mark').hidden));
+document.addEventListener('click', (ev) => {
+  if (!$('f-mark').hidden && !ev.target.closest('#mark-pick')) markMenu(false);
+});
+$('mark-pick').addEventListener('keydown', (ev) => {
+  if ($('f-mark').hidden) return;
+  if (ev.key === 'Escape') {
+    ev.stopPropagation();
+    markMenu(false);
+    $('mark-btn').focus();
+  }
+  if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+    ev.preventDefault();
+    const items = [...$('f-mark').querySelectorAll('[data-mark]')];
+    const i = items.indexOf(document.activeElement);
+    items[(i + (ev.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus();
+  }
+});
 $('f-mark').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-mark]');
   if (!b) return;
-  setMark(b.dataset.mark === markValue ? null : b.dataset.mark);
-  buzz(8);
-  scheduleSave();
+  const changed = (b.dataset.mark || null) !== markValue;
+  setMark(b.dataset.mark || null);
+  markMenu(false);
+  $('mark-btn').focus();
+  if (changed) {
+    buzz(8);
+    scheduleSave();
+  }
 });
+setMark(null);
 
 /* Bilder */
 

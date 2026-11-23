@@ -1701,6 +1701,20 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 #media-kind .pill:hover, #media-kind .pill:focus-visible { background: color-mix(in srgb, var(--line) 55%, transparent); outline: none; }
 #media-kind .pill[aria-checked="true"] { background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent); font-weight: 600; }
 #media-kind .kind-n { margin-left: auto; padding-left: 16px; color: var(--muted); font-size: 14px; font-weight: 400; font-variant-numeric: tabular-nums; }
+
+/* Märk dagen: ett fält som fäller ut en meny med märkningarna */
+.mark-pick { position: relative; margin-top: 6px; }
+.mark-btn { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--text); font: inherit; font-size: 16px; text-align: left; cursor: pointer; }
+.mark-cur { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.mark-cur .mk-ico { width: 18px; height: 18px; color: var(--accent); }
+.mark-empty { color: var(--muted); }
+.mark-btn[aria-expanded="true"] .kind-chev { transform: rotate(180deg); }
+.mark-menu { right: 0; max-height: 340px; overflow-y: auto; scroll-margin-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 16px); }
+#f-mark .pill, #f-mark .pill:hover { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 0; border-radius: 8px; background: none; color: var(--text); font-size: 16px; text-align: left; }
+#f-mark .pill:hover, #f-mark .pill:focus-visible { background: color-mix(in srgb, var(--line) 55%, transparent); outline: none; }
+#f-mark .pill[aria-checked="true"] { background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent); font-weight: 600; }
+#f-mark .mk-ico { width: 18px; height: 18px; flex: none; }
+.mk-none { width: 18px; height: 18px; flex: none; border: 1.6px dashed currentColor; border-radius: 50%; opacity: .5; }
 .media-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 10px; }
 .media-panel .media-tools .period, .media-views { display: flex; gap: 2px; margin: 0; padding: 2px; border-radius: 9px; background: color-mix(in srgb, var(--line) 60%, transparent); }
 .media-panel .media-tools .period .pill, .media-panel .media-tools .period .pill:hover { padding: 5px 12px; border-radius: 7px; font-size: 14px; }
