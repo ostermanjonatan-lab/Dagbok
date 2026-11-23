@@ -2373,7 +2373,10 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
 .post .when { font-size: 23px; font-weight: 700; letter-spacing: -.015em; }
 .post .avatar { overflow: visible; margin-top: -9px; }
 .post .av-wd { position: absolute; top: 48px; left: -12px; right: -12px; font-size: 12.5px; font-weight: 600; line-height: 1; text-align: center; color: var(--muted); letter-spacing: .02em; }
-.post.today .av-wd { color: var(--accent); }
+/* Veckodagen står liten ovanför datumet, i kortets övre marginal så att raderna inte flyttas */
+.post .when { position: relative; }
+.post .when .wd { position: absolute; left: 0; bottom: calc(100% - 6px); font-size: 13px; font-weight: 600; line-height: 1; letter-spacing: 0; color: var(--muted); white-space: nowrap; }
+.post.today .when .wd { color: var(--accent); }
 .post .post-foot, .post .sub { font-size: 12.5px; }
 /* Marginallinjen mellan humöret och texten, som i skrivblocket */
 .post::after {
@@ -5199,10 +5202,10 @@ function postHtml(k, e, today, searching) {
     foot.push(`<span class="pf-i" title="${escapeHtml(joinNames(e.people))}"><svg viewBox="0 0 24 24" aria-hidden="true">${PEOPLE_ICON}</svg>${e.people.length === 1 ? escapeHtml(e.people[0]) : `${e.people.length} personer`}</span>`);
   }
   return `<article class="post${k === today ? ' today' : ''}" data-key="${k}">
-    <span class="avatar${e.mood ? '' : ' none'}" data-m="${e.mood || ''}" style="--m: var(--m${e.mood || 6})" aria-hidden="true">${e.mood || ''}${MARK_OF[e.mark] ? `<span class="av-mk">${miniIcon(e.mark)}</span>` : ''}<span class="av-wd">${WEEKDAY_CAP[d.getDay()].slice(0, 3).toLowerCase()}</span></span>
+    <span class="avatar${e.mood ? '' : ' none'}" data-m="${e.mood || ''}" style="--m: var(--m${e.mood || 6})" aria-hidden="true">${e.mood || ''}${MARK_OF[e.mark] ? `<span class="av-mk">${miniIcon(e.mark)}</span>` : ''}<span class="av-wd">Humör</span></span>
     <div class="post-body">
       <header class="post-head">
-        <button type="button" class="when" aria-label="${WEEKDAY_CAP[d.getDay()]} ${shortDate(k)}${MARK_OF[e.mark] ? `, ${MARK_OF[e.mark].label.toLowerCase()}` : ''}">${shortDate(k)}</button>${rel ? `<span class="rel">· ${rel}</span>` : ''}${starBtn(k)}${special ? `<span class="special">${escapeHtml(special)}</span>` : ''}
+        <button type="button" class="when" aria-label="${WEEKDAY_CAP[d.getDay()]} ${shortDate(k)}${MARK_OF[e.mark] ? `, ${MARK_OF[e.mark].label.toLowerCase()}` : ''}"><span class="wd">${WEEKDAY_CAP[d.getDay()]}</span> ${shortDate(k)}</button>${rel ? `<span class="rel">· ${rel}</span>` : ''}${starBtn(k)}${special ? `<span class="special">${escapeHtml(special)}</span>` : ''}
       </header>
       ${e.text ? `<div class="prose${searching ? '' : ' clamp'}">${Paper.mdToHtml(e.text)}</div>
       <button type="button" class="link more" hidden>Visa mer</button>` : ''}
