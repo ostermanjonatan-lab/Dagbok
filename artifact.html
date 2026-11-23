@@ -413,10 +413,21 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
 .muted { color: var(--muted); font-size: 14px; margin: 0 0 12px; }
 .buttons { display: flex; gap: 8px; flex-wrap: wrap; }
 .buttons button {
-  border: 1px solid var(--line); background: var(--surface);
-  border-radius: 6px; padding: 9px 14px; cursor: pointer;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 18px;
+  background-color: var(--cloth-base);
+  background-image: var(--cloth);
+  color: var(--brand-text);
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .12), 0 1px 3px rgb(42 20 24 / .28);
+  cursor: pointer;
+  transition: transform .12s, filter .12s;
 }
-.buttons button:active { background: var(--line); }
+.buttons button:active { transform: scale(.97); filter: brightness(.92); }
+/* Sekundära knappar, som Avbryt, är ljusa */
+.buttons button.ghost { border: 1px solid var(--line); background: var(--surface); color: var(--text); font-weight: 400; box-shadow: none; }
+.buttons button.ghost:active { background: var(--line); }
 #backup-msg { margin: 10px 0 0; }
 /* Kalender */
 .cal-head {
@@ -770,12 +781,14 @@ mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: in
 .wipe-confirm p { margin: 10px 0; }
 .danger-btn {
   border: 0;
-  border-radius: 6px;
-  padding: 9px 14px;
-  background: var(--danger);
+  border-radius: 10px;
+  padding: 10px 18px;
+  background-color: var(--danger);
+  background-image: var(--cloth);
   color: var(--paper);
   cursor: pointer;
 }
+.buttons button.danger-btn { background-color: var(--danger); }
 #wipe-msg:empty { display: none; }
 #wipe-msg { margin-top: 10px; }
 
@@ -1657,15 +1670,17 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
   padding: 7px 14px 7px 10px;
   border: 0;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--accent) 11%, transparent);
-  color: var(--accent);
+  background-color: var(--cloth-base);
+  background-image: var(--cloth);
+  color: var(--brand-text);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .12), 0 1px 3px rgb(42 20 24 / .28);
   font: inherit;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: background .15s, transform .15s;
+  transition: filter .15s, transform .15s;
 }
-.media-add:hover { background: color-mix(in srgb, var(--accent) 17%, transparent); }
+.media-add:hover { filter: brightness(1.06); }
 .media-add:active { transform: scale(.96); }
 .media-add svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; }
 /* Ikoner för film, serie och bok, ifyllda när de är valda */
@@ -2393,7 +2408,7 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
         <p>Allt du skrivit och alla bilder tas bort. Det går inte att ångra.</p>
         <div class="buttons">
           <button type="button" class="danger-btn" id="wipe-yes">Ta bort allt</button>
-          <button type="button" id="wipe-no">Avbryt</button>
+          <button type="button" class="ghost" id="wipe-no">Avbryt</button>
         </div>
       </div>
       <p class="muted" id="wipe-msg" aria-live="polite"></p>
