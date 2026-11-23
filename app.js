@@ -3082,15 +3082,19 @@ function renderWeatherStats(keys) {
       facts.push(['Kallast', `${fmtTemp(t(cold))}, ${shortDate(cold)}`]);
     }
   }
-  // Humöret i olika väder, bara när det finns minst tre dagar i minst två sorters väder
-  const byWx = order.map((g) => [g, groups[g].map((k) => entries[k].mood).filter(Boolean)]).filter(([, m]) => m.length >= 3);
-  if (byWx.length >= 2) {
+  // Snitthumöret i varje sorts väder som har dagar med humör
+  const byWx = order.map((g) => [g, groups[g].map((k) => entries[k].mood).filter(Boolean)]).filter(([, m]) => m.length);
+  if (byWx.length) {
     const avgOf = (m) => m.reduce((s, x) => s + x, 0) / m.length;
     byWx.sort((a, b) => avgOf(b[1]) - avgOf(a[1]));
-    const [best, worst] = [byWx[0], byWx[byWx.length - 1]];
-    facts.push(['Humör och väder', `Bäst vid ${WX_NAME[best[0]].toLowerCase()} (${fmtDec(avgOf(best[1]))}), sämst vid ${WX_NAME[worst[0]].toLowerCase()} (${fmtDec(avgOf(worst[1]))})`]);
+    // Snitthumöret för varje sorts väder, bäst först, med humörets färg som en prick
+    const html = byWx.map(([g, m]) => {
+      const avg = avgOf(m);
+      return `<span class="wx-mood" role="img" aria-label="${WX_NAME[g]}, snitthumör ${fmtDec(avg)}" title="${WX_NAME[g]}"><svg viewBox="0 0 24 24" aria-hidden="true">${WEATHER_ICONS[g]}</svg><i style="--m: var(--m${Math.min(10, Math.max(1, Math.round(avg)))})"></i>${fmtDec(avg)}</span>`;
+    }).join('');
+    facts.push(['Humör och väder', html, true]);
   }
-  $('wx-facts').innerHTML = facts.map(([k, v]) => `<dt>${k}</dt><dd>${escapeHtml(v)}</dd>`).join('');
+  $('wx-facts').innerHTML = facts.map(([k, v, raw]) => `<dt>${k}</dt><dd${raw ? ' class="wx-moods"' : ''}>${raw ? v : escapeHtml(v)}</dd>`).join('');
   renderTempTrend();
 }
 

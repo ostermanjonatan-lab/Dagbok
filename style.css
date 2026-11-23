@@ -2091,6 +2091,11 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
 .wx-chip { display: inline-flex; align-items: center; gap: 6px; }
 .wx-chip svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; color: var(--muted); }
 .wx-chip b { font-weight: 600; font-variant-numeric: tabular-nums; }
+/* Snitthumöret per väder: ikonen, en prick i humörets färg och snittet */
+.facts .wx-moods { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.wx-mood { display: inline-flex; align-items: center; gap: 5px; }
+.wx-mood svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; color: var(--muted); }
+.wx-mood i { width: 8px; height: 8px; border-radius: 50%; background: var(--m); }
 #temp-trend .gl.zero { stroke: color-mix(in srgb, var(--text) 30%, transparent); }
 #temp-trend .ln.temp { stroke: var(--muted); }
 #temp-trend .pt.temp { fill: var(--text); }
