@@ -2576,6 +2576,25 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .reader-card .empty { margin: 0; line-height: 28px; }
 /* Första raden lämnar plats åt bokmärket och stäng uppe till höger */
 .reader-card .post-body::before { content: ''; float: right; width: 72px; height: 28px; }
+/* Papperslapparna har lite ojämna, småkröliga kanter som rivet papper. Papperet ligger
+   i ett eget lager med en mask för kanterna, och skuggan följer kanten med drop-shadow. */
+#list .post, .reader-card { isolation: isolate; background: none; box-shadow: none; filter: drop-shadow(0 1px .6px rgb(42 20 24 / .14)) drop-shadow(0 5px 5px rgb(42 20 24 / .16)); }
+.reader-card { filter: drop-shadow(0 1px .6px rgb(42 20 24 / .14)) drop-shadow(0 12px 14px rgb(0 0 0 / .3)); }
+#list .post::before, .reader-card::before {
+  content: '';
+  display: block;
+  position: absolute;
+  inset: 0;
+  height: auto;
+  z-index: -1;
+  background-color: #fffdf8;
+  background-image: linear-gradient(#fffdf8, #fffdf8), linear-gradient(to bottom, transparent 27px, color-mix(in srgb, var(--line) 42%, transparent) 0);
+  background-size: 100% 21px, 100% 28px;
+  background-position: 0 0, 0 21px;
+  background-repeat: no-repeat, repeat-y;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='97' height='4' viewBox='0 0 97 4'%3E%3Cpath d='M0.0 0.85 L3.9 0.67 L7.1 0.64 L12.2 0.87 L15.1 1.48 L19.7 0.72 L23.8 1.20 L26.7 1.27 L31.2 0.95 L34.0 1.16 L38.3 0.58 L41.2 0.57 L44.3 0.75 L48.5 1.32 L54.2 1.01 L57.3 0.88 L60.8 1.20 L65.8 1.04 L71.9 0.86 L76.7 1.45 L80.8 1.34 L87.0 0.79 L89.9 1.19 L95.7 1.13 L97.0 0.85 L97 4 L0 4Z'/%3E%3C/svg%3E") top left / 97px 4px repeat-x, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='97' height='4' viewBox='0 0 97 4'%3E%3Cpath d='M0 0 L97 0 L97.0 2.93 L94.6 3.40 L88.5 2.45 L82.8 3.03 L78.4 3.20 L73.6 3.34 L68.8 2.58 L63.6 3.43 L59.8 3.36 L53.9 3.30 L49.2 2.95 L43.7 3.47 L38.6 2.70 L35.8 3.04 L31.3 3.16 L28.0 2.51 L22.6 2.31 L18.4 2.72 L15.3 2.66 L9.1 3.43 L5.3 2.70 L0.0 2.93Z'/%3E%3C/svg%3E") bottom left / 97px 4px repeat-x, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='89' viewBox='0 0 4 89'%3E%3Cpath d='M1.64 0.0 L1.33 4.7 L1.12 10.6 L1.24 16.2 L1.31 22.0 L0.56 25.7 L1.58 29.9 L1.44 33.9 L1.55 39.8 L1.46 45.9 L0.97 49.2 L0.98 52.5 L0.62 56.1 L1.26 59.6 L0.57 64.0 L0.58 68.9 L0.75 72.5 L0.69 75.2 L0.91 79.4 L0.56 83.5 L0.50 88.2 L1.64 89.0 L4 89 L4 0Z'/%3E%3C/svg%3E") top left / 4px 89px repeat-y, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='89' viewBox='0 0 4 89'%3E%3Cpath d='M0 0 L0 89 L2.36 89.0 L2.52 84.8 L2.53 82.1 L2.48 78.8 L2.32 73.1 L2.53 69.4 L3.23 65.5 L3.10 62.4 L2.57 59.4 L2.86 55.0 L2.57 50.6 L3.30 44.3 L3.06 38.6 L3.19 35.4 L2.66 31.4 L2.46 27.5 L2.33 23.9 L2.87 20.6 L3.47 15.7 L2.85 9.9 L3.32 7.1 L2.87 3.1 L2.36 0.0Z'/%3E%3C/svg%3E") top right / 4px 89px repeat-y, linear-gradient(#000, #000) center / calc(100% - 6px) calc(100% - 6px) no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='97' height='4' viewBox='0 0 97 4'%3E%3Cpath d='M0.0 0.85 L3.9 0.67 L7.1 0.64 L12.2 0.87 L15.1 1.48 L19.7 0.72 L23.8 1.20 L26.7 1.27 L31.2 0.95 L34.0 1.16 L38.3 0.58 L41.2 0.57 L44.3 0.75 L48.5 1.32 L54.2 1.01 L57.3 0.88 L60.8 1.20 L65.8 1.04 L71.9 0.86 L76.7 1.45 L80.8 1.34 L87.0 0.79 L89.9 1.19 L95.7 1.13 L97.0 0.85 L97 4 L0 4Z'/%3E%3C/svg%3E") top left / 97px 4px repeat-x, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='97' height='4' viewBox='0 0 97 4'%3E%3Cpath d='M0 0 L97 0 L97.0 2.93 L94.6 3.40 L88.5 2.45 L82.8 3.03 L78.4 3.20 L73.6 3.34 L68.8 2.58 L63.6 3.43 L59.8 3.36 L53.9 3.30 L49.2 2.95 L43.7 3.47 L38.6 2.70 L35.8 3.04 L31.3 3.16 L28.0 2.51 L22.6 2.31 L18.4 2.72 L15.3 2.66 L9.1 3.43 L5.3 2.70 L0.0 2.93Z'/%3E%3C/svg%3E") bottom left / 97px 4px repeat-x, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='89' viewBox='0 0 4 89'%3E%3Cpath d='M1.64 0.0 L1.33 4.7 L1.12 10.6 L1.24 16.2 L1.31 22.0 L0.56 25.7 L1.58 29.9 L1.44 33.9 L1.55 39.8 L1.46 45.9 L0.97 49.2 L0.98 52.5 L0.62 56.1 L1.26 59.6 L0.57 64.0 L0.58 68.9 L0.75 72.5 L0.69 75.2 L0.91 79.4 L0.56 83.5 L0.50 88.2 L1.64 89.0 L4 89 L4 0Z'/%3E%3C/svg%3E") top left / 4px 89px repeat-y, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='89' viewBox='0 0 4 89'%3E%3Cpath d='M0 0 L0 89 L2.36 89.0 L2.52 84.8 L2.53 82.1 L2.48 78.8 L2.32 73.1 L2.53 69.4 L3.23 65.5 L3.10 62.4 L2.57 59.4 L2.86 55.0 L2.57 50.6 L3.30 44.3 L3.06 38.6 L3.19 35.4 L2.66 31.4 L2.46 27.5 L2.33 23.9 L2.87 20.6 L3.47 15.7 L2.85 9.9 L3.32 7.1 L2.87 3.1 L2.36 0.0Z'/%3E%3C/svg%3E") top right / 4px 89px repeat-y, linear-gradient(#000, #000) center / calc(100% - 6px) calc(100% - 6px) no-repeat;
+}
 /* Datumet och humöret står i marginalen, som i en kalenderdagbok. Texten börjar överst. */
 .post { grid-template-columns: 34px minmax(0, 1fr); column-gap: 18px; padding-left: 12px; }
 .post::after { left: 55px; }
