@@ -2539,6 +2539,24 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .pf-v { font-size: 17px; }
 .post .pf-s .avatar { font-size: 16px; }
 .pf-v svg { stroke: var(--pencil); }
+
+/* Läsläget: dagen ligger på samma papperslapp som i flödet, utan lutning */
+.reader-card { margin: 0; cursor: auto; border-radius: 0; box-shadow: 0 1px 1px rgb(42 20 24 / .08), 0 9px 10px -8px rgb(42 20 24 / .32); padding-bottom: 14px; }
+.reader-card .when { cursor: default; }
+.reader .reader-card .prose { position: static; padding: 0 6px 0 0; border: 0; border-radius: 0; background: none; box-shadow: none; font-size: 16px; line-height: 28px; color: rgb(30 30 40 / .88); }
+.reader .reader-card .prose::before, .reader .reader-card .prose::after { content: none; }
+.reader .reader-card .prose :is(p, h2, h3, ul, ol, li) { line-height: 28px; }
+.reader-card .reader-names { margin: 0; line-height: 28px; font-size: 14px; color: var(--muted); }
+.reader-card .reader-film { margin: 0 0 6px; }
+/* Detaljerna står en per rad på linjerna, i blyerts */
+.rd-details { margin-top: 0; }
+.rd-row { display: flex; align-items: flex-start; gap: 8px; min-height: 28px; color: var(--pencil); }
+.rd-row svg { width: 21px; height: 21px; margin-top: 3.5px; flex: none; fill: none; stroke: var(--pencil); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.rd-v { font-family: var(--hand); font-weight: 600; font-size: 16px; line-height: 28px; min-width: 0; }
+.rd-note { font-size: 13px; line-height: 28px; color: var(--muted); }
+.rd-scale { display: inline-flex; align-self: center; gap: 3px; margin-left: 4px; }
+.rd-scale i { width: 6px; height: 6px; border-radius: 50%; border: 1px solid var(--pencil); opacity: .5; }
+.rd-scale i.on { background: var(--pencil); opacity: .8; }
 /* Datumet och humöret står i marginalen, som i en kalenderdagbok. Texten börjar överst. */
 .post { grid-template-columns: 34px minmax(0, 1fr); column-gap: 18px; padding-left: 12px; }
 .post::after { left: 55px; }

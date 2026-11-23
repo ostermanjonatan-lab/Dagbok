@@ -2488,6 +2488,24 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .pf-v { font-size: 17px; }
 .post .pf-s .avatar { font-size: 16px; }
 .pf-v svg { stroke: var(--pencil); }
+
+/* Läsläget: dagen ligger på samma papperslapp som i flödet, utan lutning */
+.reader-card { margin: 0; cursor: auto; border-radius: 0; box-shadow: 0 1px 1px rgb(42 20 24 / .08), 0 9px 10px -8px rgb(42 20 24 / .32); padding-bottom: 14px; }
+.reader-card .when { cursor: default; }
+.reader .reader-card .prose { position: static; padding: 0 6px 0 0; border: 0; border-radius: 0; background: none; box-shadow: none; font-size: 16px; line-height: 28px; color: rgb(30 30 40 / .88); }
+.reader .reader-card .prose::before, .reader .reader-card .prose::after { content: none; }
+.reader .reader-card .prose :is(p, h2, h3, ul, ol, li) { line-height: 28px; }
+.reader-card .reader-names { margin: 0; line-height: 28px; font-size: 14px; color: var(--muted); }
+.reader-card .reader-film { margin: 0 0 6px; }
+/* Detaljerna står en per rad på linjerna, i blyerts */
+.rd-details { margin-top: 0; }
+.rd-row { display: flex; align-items: flex-start; gap: 8px; min-height: 28px; color: var(--pencil); }
+.rd-row svg { width: 21px; height: 21px; margin-top: 3.5px; flex: none; fill: none; stroke: var(--pencil); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.rd-v { font-family: var(--hand); font-weight: 600; font-size: 16px; line-height: 28px; min-width: 0; }
+.rd-note { font-size: 13px; line-height: 28px; color: var(--muted); }
+.rd-scale { display: inline-flex; align-self: center; gap: 3px; margin-left: 4px; }
+.rd-scale i { width: 6px; height: 6px; border-radius: 50%; border: 1px solid var(--pencil); opacity: .5; }
+.rd-scale i.on { background: var(--pencil); opacity: .8; }
 /* Datumet och humöret står i marginalen, som i en kalenderdagbok. Texten börjar överst. */
 .post { grid-template-columns: 34px minmax(0, 1fr); column-gap: 18px; padding-left: 12px; }
 .post::after { left: 55px; }
@@ -6149,6 +6167,26 @@ function bigPhotos(list) {
 
 // Under sidan i läsläget: humöret som en liten skala, vädret och vem man var med
 const PEOPLE_TINTS = ['#c9826b', '#8aa37a', '#7f97b5', '#c2a35a', '#a58bb4', '#6fa3a0'];
+// Humör, väder och personer i läsläget, en rad var i blyerts som i flödet men utförligare
+function readerDetails(e) {
+  const rows = [];
+  if (e.mood) {
+    const ticks = Array.from({ length: 10 }, (_, i) => `<i${i < e.mood ? ' class="on"' : ''}></i>`).join('');
+    rows.push(`<div class="rd-row" role="img" aria-label="Humör ${e.mood} av 10">${moodFace(e.mood)}<span class="rd-v">${e.mood} av 10</span><span class="rd-scale" aria-hidden="true">${ticks}</span></div>`);
+  }
+  if (e.weather) {
+    const w = e.weather;
+    const g = weatherGroup(w.code);
+    const what = w.code == null ? '' : w.code === 0 ? 'Sol' : WEATHER_TEXT[w.code] || '';
+    const temp = w.temp != null ? `${String(Math.round(w.temp)).replace('-', '\u2212')}\u00a0°C` : '';
+    rows.push(`<div class="rd-row">${g != null ? `<svg viewBox="0 0 24 24" aria-hidden="true">${WEATHER_ICONS[g]}</svg>` : ''}<span class="rd-v">${[temp, escapeHtml(what.toLowerCase())].filter(Boolean).join(', ')}</span>${w.time ? `<span class="rd-note">kl ${escapeHtml(w.time)}</span>` : ''}</div>`);
+  }
+  if (e.people && e.people.length) {
+    rows.push(`<div class="rd-row"><svg viewBox="0 0 24 24" aria-hidden="true">${PEOPLE_ICON}</svg><span class="rd-v">${escapeHtml(joinNames(e.people))}</span></div>`);
+  }
+  return rows.length ? `<div class="rd-details">${rows.join('')}</div>` : '';
+}
+
 function readerInfo(e) {
   let html = '';
   if (e.mood) {
@@ -6191,14 +6229,22 @@ function readerPane(key) {
       <div class="reader-foot"><button type="button" class="link reader-edit" data-key="${key}">Skriv för den här dagen</button></div>
     </div>`;
   }
-  const info = readerInfo(e);
-  return `<div class="reader-pane" data-key="${key}">${readerTop(key)}
-    ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
-    ${info}
-    ${(e.media || []).map((f, i) => `<button type="button" class="reader-film" data-key="${key}" data-i="${i}">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
-      <div><div class="fs-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</div><div class="rf-title">${escapeHtml(f.title || 'Utan titel')}</div>${f.rating ? starsHtml(f.rating) : ''}</div></button>
+  // Dagen visas som kortet i flödet: datumet i marginalen och texten på linjerna,
+  // men med mer om humöret, vädret och vilka man var med
+  const d = parseKey(key);
+  return `<div class="reader-pane" data-key="${key}">
+    <article class="post reader-card${key === todayKey() ? ' today' : ''}">
+      <div class="post-margin"><span class="when"><b>${d.getDate()}</b><span>${WEEKDAY_CAP[d.getDay()].slice(0, 3).toLowerCase()}</span></span></div>
+      <div class="post-body">
+        ${readerTop(key)}
+        ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
+        ${(e.media || []).map((f, i) => `<button type="button" class="reader-film" data-key="${key}" data-i="${i}">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
+          <div><div class="fs-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</div><div class="rf-title">${escapeHtml(f.title || 'Utan titel')}</div>${f.rating ? starsHtml(f.rating) : ''}</div></button>
 `).join('')}
-    ${bigPhotos(e.photos)}
+        ${bigPhotos(e.photos)}
+        ${readerDetails(e)}
+      </div>
+    </article>
     <div class="reader-foot"><button type="button" class="link reader-edit" data-key="${key}">Redigera dagen</button></div>
   </div>`;
 }
