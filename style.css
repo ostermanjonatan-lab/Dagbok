@@ -2436,10 +2436,20 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
 @media (prefers-reduced-motion: reduce) { :is(.post, .reader-head) .star-btn.pop::before { animation: none; } }
 /* Texten i flödet står på linjer som i skrivblocket. Alla rader är lika höga, även
    rubriker, listor och nya stycken, så att texten alltid ligger på linjerna. */
-.post .prose {
-  line-height: 28px;
-  background: linear-gradient(to bottom, transparent 27px, color-mix(in srgb, var(--line) 75%, transparent) 0) 0 0 / 100% 28px repeat-y;
+/* Linjerna går över hela kortet som på ett skrivpapper. Rubriken, texten och raden
+   med väder står alla på hela rader om 28px, så att texten alltid ligger på en linje. */
+.post .prose { line-height: 28px; }
+.post {
+  background-image: linear-gradient(#fffdf8, #fffdf8), linear-gradient(to bottom, transparent 27px, color-mix(in srgb, var(--line) 75%, transparent) 0);
+  background-size: 100% 26px, 100% 28px;
+  background-position: 0 0, 0 26px;
+  background-repeat: no-repeat, repeat-y;
+  padding-bottom: 14px;
 }
+.post .post-head { margin: 0; line-height: 28px; min-height: 28px; align-items: center; }
+.post .post-head > * { line-height: 28px; }
+.post .post-foot { margin-top: 0; line-height: 28px; min-height: 28px; align-items: center; row-gap: 0; }
+.post .more { display: block; margin: 0; line-height: 28px; }
 .post .prose :is(p, h2, h3, ul, ol, li) { margin: 0; line-height: 28px; }
 .post .prose :is(h2, h3) { font-size: 1em; }
 .post .prose.clamp { max-height: calc(28px * 7); }
