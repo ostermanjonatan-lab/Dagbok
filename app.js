@@ -280,23 +280,34 @@ function starBtn(key) {
   const on = !!(entries[key] && entries[key].star);
   return `<button type="button" class="star-btn${on ? ' on' : ''}" data-star="${key}" aria-pressed="${on}" aria-label="${on ? 'Ta bort stjärnan' : 'Stjärnmärk dagen'}"><svg viewBox="0 0 24 24" aria-hidden="true">${STAR_SVG}</svg></button>`;
 }
+function setStarBtn(b, on, pop) {
+  b.classList.toggle('on', on);
+  b.setAttribute('aria-pressed', String(on));
+  b.setAttribute('aria-label', on ? 'Ta bort stjärnan' : 'Stjärnmärk dagen');
+  b.classList.remove('pop');
+  if (on && pop) {
+    void b.offsetWidth;
+    b.classList.add('pop');
+  }
+}
 function toggleStar(key) {
-  const e = entries[key];
-  if (!e) return;
-  e.star = !e.star;
-  e.updated = new Date().toISOString();
-  saveEntry(key);
+  const on = !(entries[key] && entries[key].star);
+  if (key === current) {
+    // I dagsvyn går det att stjärnmärka en tom dag. Dagen sparas då med bara stjärnan,
+    // och tas bort igen om stjärnan tas bort och inget annat är ifyllt.
+    clearTimeout(saveTimer);
+    if (entries[key]) entries[key].star = on;
+    else entries[key] = { star: on, weather: null };
+    save();
+  } else {
+    const e = entries[key];
+    if (!e) return;
+    e.star = on;
+    e.updated = new Date().toISOString();
+    saveEntry(key);
+  }
   buzz(8);
-  document.querySelectorAll(`.star-btn[data-star="${key}"]`).forEach((b) => {
-    b.classList.toggle('on', e.star);
-    b.setAttribute('aria-pressed', String(e.star));
-    b.setAttribute('aria-label', e.star ? 'Ta bort stjärnan' : 'Stjärnmärk dagen');
-    if (e.star) {
-      b.classList.remove('pop');
-      void b.offsetWidth;
-      b.classList.add('pop');
-    }
-  });
+  document.querySelectorAll(`.star-btn[data-star="${key}"]`).forEach((b) => setStarBtn(b, on, true));
   if (sortBy === 'starred') renderList();
 }
 document.addEventListener('click', (ev) => {
@@ -582,6 +593,8 @@ function showDay(key) {
   setMark(e ? e.mark : null);
   showWeather(e);
 
+  $('day-star').dataset.star = key;
+  setStarBtn($('day-star'), !!(e && e.star), false);
   setDateLabel(key);
   renderDayNames(key);
   toggleDatePop(false);
@@ -605,7 +618,7 @@ function setStatus(text) { $('status').textContent = text; }
 function save() {
   saveTimer = null;
   const data = readForm();
-  if (!data.text && data.mood == null && !data.mark && !data.photos.length && !data.people.length && !data.media.length) {
+  if (!data.text && data.mood == null && !data.mark && !data.star && !data.photos.length && !data.people.length && !data.media.length) {
     if (!entries[current]) return;
     delete entries[current];
     persist();

@@ -1819,17 +1819,43 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .reader .prose h2, .reader .prose h3 { margin: 0; line-height: 28px; }
 .reader .prose ul, .reader .prose ol { margin: 0; }
 
-/* Bokmärkesband som hänger från dagens överkant */
-.sheet-grab::before {
-  content: "";
+/* Bokmärket som hänger från dagens överkant är knappen för favorit. Som kontur när
+   dagen inte är favorit, som tygband när den är det. */
+.sheet-grab .day-star {
   position: absolute;
   top: 0;
-  left: 22px;
+  left: 12px;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--muted);
+}
+.sheet-grab .day-star::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10px;
   width: 22px;
   height: 30px;
-  background: var(--accent);
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 76%, 0 100%);
+  background: currentColor;
+  opacity: .8;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 30'%3E%3Cpath d='M1.5 0v28.2L11 21.8l9.5 6.4V0' fill='none' stroke='black' stroke-width='1.6' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 30'%3E%3Cpath d='M1.5 0v28.2L11 21.8l9.5 6.4V0' fill='none' stroke='black' stroke-width='1.6' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
 }
+.sheet-grab .day-star.on::before {
+  opacity: 1;
+  background-color: var(--cloth-base);
+  background-image: var(--cloth);
+  -webkit-mask: none;
+  mask: none;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 76%, 0 100%);
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / .25));
+}
+.sheet-grab .day-star.pop::before { animation: ribbon-drop .35s cubic-bezier(.3, 1.4, .5, 1); transform-origin: top; }
+@media (prefers-reduced-motion: reduce) { .sheet-grab .day-star.pop::before { animation: none; } }
 
 /* Dagen ligger överst i en bunt sidor */
 .sheet-panel {

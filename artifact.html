@@ -1768,17 +1768,43 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .reader .prose h2, .reader .prose h3 { margin: 0; line-height: 28px; }
 .reader .prose ul, .reader .prose ol { margin: 0; }
 
-/* Bokmärkesband som hänger från dagens överkant */
-.sheet-grab::before {
-  content: "";
+/* Bokmärket som hänger från dagens överkant är knappen för favorit. Som kontur när
+   dagen inte är favorit, som tygband när den är det. */
+.sheet-grab .day-star {
   position: absolute;
   top: 0;
-  left: 22px;
+  left: 12px;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--muted);
+}
+.sheet-grab .day-star::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10px;
   width: 22px;
   height: 30px;
-  background: var(--accent);
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 76%, 0 100%);
+  background: currentColor;
+  opacity: .8;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 30'%3E%3Cpath d='M1.5 0v28.2L11 21.8l9.5 6.4V0' fill='none' stroke='black' stroke-width='1.6' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 30'%3E%3Cpath d='M1.5 0v28.2L11 21.8l9.5 6.4V0' fill='none' stroke='black' stroke-width='1.6' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
 }
+.sheet-grab .day-star.on::before {
+  opacity: 1;
+  background-color: var(--cloth-base);
+  background-image: var(--cloth);
+  -webkit-mask: none;
+  mask: none;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 76%, 0 100%);
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / .25));
+}
+.sheet-grab .day-star.pop::before { animation: ribbon-drop .35s cubic-bezier(.3, 1.4, .5, 1); transform-origin: top; }
+@media (prefers-reduced-motion: reduce) { .sheet-grab .day-star.pop::before { animation: none; } }
 
 /* Dagen ligger överst i en bunt sidor */
 .sheet-panel {
@@ -2725,6 +2751,7 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
   <div class="sheet-panel" id="sheet-panel" role="dialog" aria-modal="true" aria-label="Dagen">
     <div class="sheet-grab" id="sheet-grab">
       <span class="grab-bar" aria-hidden="true"></span>
+        <button type="button" class="star-btn day-star" id="day-star" data-star="" aria-pressed="false" aria-label="Stjärnmärk dagen"></button>
       <button type="button" class="icon close-x" id="sheet-close" aria-label="Stäng"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     </div>
     <div class="wrap sheet-body">
@@ -3549,23 +3576,34 @@ function starBtn(key) {
   const on = !!(entries[key] && entries[key].star);
   return `<button type="button" class="star-btn${on ? ' on' : ''}" data-star="${key}" aria-pressed="${on}" aria-label="${on ? 'Ta bort stjärnan' : 'Stjärnmärk dagen'}"><svg viewBox="0 0 24 24" aria-hidden="true">${STAR_SVG}</svg></button>`;
 }
+function setStarBtn(b, on, pop) {
+  b.classList.toggle('on', on);
+  b.setAttribute('aria-pressed', String(on));
+  b.setAttribute('aria-label', on ? 'Ta bort stjärnan' : 'Stjärnmärk dagen');
+  b.classList.remove('pop');
+  if (on && pop) {
+    void b.offsetWidth;
+    b.classList.add('pop');
+  }
+}
 function toggleStar(key) {
-  const e = entries[key];
-  if (!e) return;
-  e.star = !e.star;
-  e.updated = new Date().toISOString();
-  saveEntry(key);
+  const on = !(entries[key] && entries[key].star);
+  if (key === current) {
+    // I dagsvyn går det att stjärnmärka en tom dag. Dagen sparas då med bara stjärnan,
+    // och tas bort igen om stjärnan tas bort och inget annat är ifyllt.
+    clearTimeout(saveTimer);
+    if (entries[key]) entries[key].star = on;
+    else entries[key] = { star: on, weather: null };
+    save();
+  } else {
+    const e = entries[key];
+    if (!e) return;
+    e.star = on;
+    e.updated = new Date().toISOString();
+    saveEntry(key);
+  }
   buzz(8);
-  document.querySelectorAll(`.star-btn[data-star="${key}"]`).forEach((b) => {
-    b.classList.toggle('on', e.star);
-    b.setAttribute('aria-pressed', String(e.star));
-    b.setAttribute('aria-label', e.star ? 'Ta bort stjärnan' : 'Stjärnmärk dagen');
-    if (e.star) {
-      b.classList.remove('pop');
-      void b.offsetWidth;
-      b.classList.add('pop');
-    }
-  });
+  document.querySelectorAll(`.star-btn[data-star="${key}"]`).forEach((b) => setStarBtn(b, on, true));
   if (sortBy === 'starred') renderList();
 }
 document.addEventListener('click', (ev) => {
@@ -3904,6 +3942,8 @@ function showDay(key) {
   setMark(e ? e.mark : null);
   showWeather(e);
 
+  $('day-star').dataset.star = key;
+  setStarBtn($('day-star'), !!(e && e.star), false);
   setDateLabel(key);
   renderDayNames(key);
   toggleDatePop(false);
@@ -3927,7 +3967,7 @@ function setStatus(text) { $('status').textContent = text; }
 function save() {
   saveTimer = null;
   const data = readForm();
-  if (!data.text && data.mood == null && !data.mark && !data.weather && !data.photos.length && !data.people.length && !data.media.length) {
+  if (!data.text && data.mood == null && !data.mark && !data.star && !data.weather && !data.photos.length && !data.people.length && !data.media.length) {
     if (!entries[current]) return;
     delete entries[current];
     writeCache();
