@@ -1859,6 +1859,7 @@ function postHtml(k, e, today, searching) {
     foot.push(`<button type="button" class="pf-s pf-people" aria-haspopup="dialog" aria-label="${e.people.length === 1 ? '1 person' : `${e.people.length} personer`}, visa vilka"><span class="pf-v"><svg viewBox="0 0 24 24" aria-hidden="true">${PEOPLE_ICON}</svg>${e.people.length}</span></button>`);
   }
   return `<article class="post${k === today ? ' today' : ''}" data-key="${k}">
+    ${foot.length ? `<div class="post-stats">${foot.join('')}</div>` : '<span></span>'}
     <div class="post-body">
       <header class="post-head">
         <button type="button" class="when" aria-label="${WEEKDAY_CAP[d.getDay()]} ${shortDate(k)}${MARK_OF[e.mark] ? `, ${MARK_OF[e.mark].label.toLowerCase()}` : ''}"><span class="wd">${WEEKDAY_CAP[d.getDay()]}</span> ${shortDate(k)}</button>${rel ? `<span class="rel">· ${rel}</span>` : ''}${starBtn(k)}${special ? `<span class="special">${escapeHtml(special)}</span>` : ''}
@@ -1868,7 +1869,6 @@ function postHtml(k, e, today, searching) {
       ${(e.media || []).map((f) => `<div class="post-film">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
         <span class="pf-text"><span class="pf-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</span><span class="pf-title">${escapeHtml(f.title || 'Utan titel')}</span></span>${f.rating ? starsHtml(f.rating) : ''}</div>`).join('')}
       ${postMedia(e.photos)}
-      ${foot.length ? `<div class="post-stats">${foot.join('')}</div>` : ''}
     </div>
   </article>`;
 }

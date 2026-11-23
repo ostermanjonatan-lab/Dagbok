@@ -2480,6 +2480,15 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .pv-list { margin: 0; padding: 0; list-style: none; }
 .pv-list li { padding: 10px 0; border-top: 1px solid var(--line); font-size: 17px; }
 
+/* Humör, väder och personer står under varandra i marginalen till vänster */
+.post { grid-template-columns: 40px minmax(0, 1fr); column-gap: 22px; padding-left: 12px; }
+.post::after { left: 63px; }
+.post-stats { flex-direction: column; flex-wrap: nowrap; align-items: center; align-self: start; gap: 12px; min-height: 0; margin: 0; padding-top: 4px; }
+.post-stats .pf-s { align-items: center; }
+.post-stats .pf-v { flex-direction: column; height: auto; gap: 2px; font-size: 13px; line-height: 1.1; white-space: nowrap; }
+.post-stats .pf-v svg { width: 22px; height: 22px; }
+.post-stats .pf-s .avatar { margin: 0; }
+
 
 .reader-head #reader-star { display: flex; }
 /* Bokmärket i läsläget hänger från dialogens överkant */
@@ -5232,6 +5241,7 @@ function postHtml(k, e, today, searching) {
     foot.push(`<button type="button" class="pf-s pf-people" aria-haspopup="dialog" aria-label="${e.people.length === 1 ? '1 person' : `${e.people.length} personer`}, visa vilka"><span class="pf-v"><svg viewBox="0 0 24 24" aria-hidden="true">${PEOPLE_ICON}</svg>${e.people.length}</span></button>`);
   }
   return `<article class="post${k === today ? ' today' : ''}" data-key="${k}">
+    ${foot.length ? `<div class="post-stats">${foot.join('')}</div>` : '<span></span>'}
     <div class="post-body">
       <header class="post-head">
         <button type="button" class="when" aria-label="${WEEKDAY_CAP[d.getDay()]} ${shortDate(k)}${MARK_OF[e.mark] ? `, ${MARK_OF[e.mark].label.toLowerCase()}` : ''}"><span class="wd">${WEEKDAY_CAP[d.getDay()]}</span> ${shortDate(k)}</button>${rel ? `<span class="rel">· ${rel}</span>` : ''}${starBtn(k)}${special ? `<span class="special">${escapeHtml(special)}</span>` : ''}
@@ -5241,7 +5251,6 @@ function postHtml(k, e, today, searching) {
       ${(e.media || []).map((f) => `<div class="post-film">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
         <span class="pf-text"><span class="pf-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</span><span class="pf-title">${escapeHtml(f.title || 'Utan titel')}</span></span>${f.rating ? starsHtml(f.rating) : ''}</div>`).join('')}
       ${postMedia(e.photos)}
-      ${foot.length ? `<div class="post-stats">${foot.join('')}</div>` : ''}
     </div>
   </article>`;
 }
