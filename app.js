@@ -1842,17 +1842,15 @@ function moodFace(m) {
   return `<svg class="mood-face" viewBox="0 0 24 24" aria-hidden="true" style="stroke: var(--m${m})"><circle cx="12" cy="12" r="8.5"/><path d="M9.2 10h.01M14.8 10h.01" stroke-width="2.4"/><path d="M8.4 15.2Q12 ${y} 15.6 15.2"/></svg>`;
 }
 
-function postHtml(k, e, today, searching) {
+function postHtml(k, e, today, searching, showMonth) {
   const d = parseKey(k);
   const yesterday = shiftKey(today, -1);
   const rel = k === today ? 'Idag' : k === yesterday ? 'Igår' : '';
   // Vilken särskild dag det är: ens eget märke och helgdagen, om det finns
   const special = [MARK_OF[e.mark] && MARK_OF[e.mark].label, holidays(d.getFullYear())[k]].filter(Boolean).join(', ');
-  // Raden längst ner: humöret, vädret och vem man var med
+  // Humöret står under datumet i marginalen, vädret och personerna på raden under texten
+  const mood = e.mood ? `<span class="pf-s pf-mood" role="img" aria-label="Humör ${e.mood}" title="Humör"><span class="pf-v">${moodFace(e.mood)}${e.mood}</span></span>` : '';
   const foot = [];
-  if (e.mood) {
-    foot.push(`<span class="pf-s" role="img" aria-label="Humör ${e.mood}" title="Humör"><span class="pf-v">${moodFace(e.mood)}${e.mood}</span></span>`);
-  }
   if (e.weather) {
     const w = e.weather;
     const g = weatherGroup(w.code);
@@ -1865,10 +1863,12 @@ function postHtml(k, e, today, searching) {
     foot.push(`<button type="button" class="pf-s pf-people" aria-haspopup="dialog" aria-label="${e.people.length === 1 ? '1 person' : `${e.people.length} personer`}, visa vilka"><span class="pf-v"><svg viewBox="0 0 24 24" aria-hidden="true">${PEOPLE_ICON}</svg>${e.people.length}</span></button>`);
   }
   return `<article class="post${k === today ? ' today' : ''}" data-key="${k}">
+    <div class="post-margin">
+      <button type="button" class="when" aria-label="${WEEKDAY_CAP[d.getDay()]} ${shortDate(k)}${showMonth ? ` ${d.getFullYear()}` : ''}${rel ? `, ${rel.toLowerCase()}` : ''}${MARK_OF[e.mark] ? `, ${MARK_OF[e.mark].label.toLowerCase()}` : ''}"><b>${d.getDate()}</b><span>${WEEKDAY_CAP[d.getDay()].slice(0, 3).toLowerCase()}</span>${showMonth ? `<span class="mo">${MONTH_SHORT[d.getMonth()]}<br>${d.getFullYear()}</span>` : ''}</button>
+      ${mood}
+    </div>
     <div class="post-body">
-      <header class="post-head">
-        <button type="button" class="when" aria-label="${WEEKDAY_CAP[d.getDay()]} ${shortDate(k)}${MARK_OF[e.mark] ? `, ${MARK_OF[e.mark].label.toLowerCase()}` : ''}"><span class="wd">${WEEKDAY_CAP[d.getDay()]}</span> ${shortDate(k)}</button>${rel ? `<span class="rel">· ${rel}</span>` : ''}${starBtn(k)}${special ? `<span class="special">${escapeHtml(special)}</span>` : ''}
-      </header>
+      <header class="post-head${special ? '' : ' empty'}">${special ? `<span class="special">${escapeHtml(special)}</span>` : ''}${starBtn(k)}</header>
       ${e.text ? `<div class="prose${searching ? '' : ' clamp'}">${Paper.mdToHtml(e.text)}</div>
       <button type="button" class="link more" hidden>Visa mer</button>` : ''}
       ${(e.media || []).map((f) => `<div class="post-film">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
@@ -1879,6 +1879,7 @@ function postHtml(k, e, today, searching) {
   </article>`;
 }
 const WEEKDAY_CAP = ['Söndag', 'Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag'];
+const MONTH_SHORT = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
 const PEOPLE_ICON = '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.5" cy="9" r="2.6"/><path d="M15.5 14.2c2.3.1 4.1 1.6 4.8 4.3"/>';
 
 // Långa inlägg visas förkortade tills man trycker på Visa mer
@@ -2343,7 +2344,7 @@ function renderList() {
       month = m;
       html += `<h2 class="month">${m}</h2>`;
     }
-    html += postHtml(k, entries[k], today, !!text);
+    html += postHtml(k, entries[k], today, !!text, whole && !byMonth);
   }
   if (whole && keys.length > shownCount) {
     html += `<button type="button" class="link show-more" id="show-more">Visa fler (${keys.length - shownCount} kvar)</button>`;

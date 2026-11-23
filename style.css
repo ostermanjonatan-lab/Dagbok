@@ -2537,6 +2537,24 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .pf-v { font-size: 17px; }
 .post .pf-s .avatar { font-size: 16px; }
 .pf-v svg { stroke: var(--pencil); }
+/* Datumet och humöret står i marginalen, som i en kalenderdagbok. Texten börjar överst. */
+.post { grid-template-columns: 34px minmax(0, 1fr); column-gap: 18px; padding-left: 12px; }
+.post::after { left: 55px; }
+.post-margin { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.post .when { position: static; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 0; border: 0; background: none; font: inherit; color: var(--text); letter-spacing: 0; cursor: pointer; }
+.post .when b { font-size: 26px; line-height: 26px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.post .when span { font-size: 12px; font-weight: 600; line-height: 1; color: var(--muted); }
+.post .when .mo { line-height: 1.25; text-align: center; font-weight: 500; }
+.post.today .when, .post.today .when span { color: var(--accent); }
+.post-margin .pf-v { flex-direction: column; gap: 1px; height: auto; font-size: 15px; }
+.post-margin .pf-v svg { width: 22px; height: 22px; }
+.post .post-head.empty { min-height: 0; height: 0; }
+.post .post-head .star-btn { position: absolute; top: 6px; right: 10px; margin: 0; }
+.post .post-head .special { flex-basis: auto; }
+.post .prose { padding-right: 20px; }
+/* Väder och personer lite mindre än humöret */
+.post-stats .pf-v { font-size: 15px; }
+.post-stats .pf-v svg { width: 19px; height: 19px; }
 
 
 .reader-head #reader-star { display: flex; }
