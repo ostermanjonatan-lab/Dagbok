@@ -4135,24 +4135,49 @@ function stepDay(dir) { showDay(shiftKey(current, dir)); }
 
 // area tar emot svepet, moving är det som följer fingret. canNext säger om det går
 // att gå framåt, step(dir) byter med -1 eller 1. Svep som börjar i skip räknas inte.
-function attachSwipe({ area, moving, skip, canNext, step }) {
+function attachSwipe({ area, moving, skip, canNext, step, preview }) {
   const reduce = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const GAP = 24;
   let sx = 0;
   let sy = 0;
   let dx = 0;
   let mode = null; // null, 'start', 'x' (sidled) eller 'y' (vanlig scroll)
+  let side = null; // grannen som glider in bredvid medan man drar
+  let sideDir = 0;
+  let hist = [];
+  let busy = false;
 
-  function reset(animated) {
-    moving.style.transition = animated && !reduce() ? 'transform .16s ease-out, opacity .16s' : 'none';
-    moving.style.transform = '';
-    moving.style.opacity = '';
+  const width = () => moving.getBoundingClientRect().width + GAP;
+  const place = (el, x, ease) => {
+    el.style.transition = ease || 'none';
+    el.style.transform = x ? `translateX(${x}px)` : '';
+  };
+  // Lägger ett element bredvid det som flyttas, utanför skärmen åt dir
+  function beside(el, dir, x) {
+    const parent = moving.parentElement;
+    if (getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
+    Object.assign(el.style, {
+      position: 'absolute', top: `${moving.offsetTop}px`, left: `${moving.offsetLeft + dir * width()}px`,
+      width: `${moving.offsetWidth}px`, pointerEvents: 'none', margin: '0',
+    });
+    el.setAttribute('aria-hidden', 'true');
+    el.inert = true;
+    moving.after(el);
+    place(el, x);
+    return el;
+  }
+  function dropSide() {
+    if (side) side.remove();
+    side = null;
+    sideDir = 0;
   }
 
   area.addEventListener('pointerdown', (ev) => {
-    if (ev.pointerType !== 'touch' || (skip && ev.target.closest(skip))) return;
+    if (busy || ev.pointerType !== 'touch' || (skip && ev.target.closest(skip))) return;
     sx = ev.clientX;
     sy = ev.clientY;
     dx = 0;
+    hist = [];
     mode = 'start';
   });
 
@@ -4167,10 +4192,23 @@ function attachSwipe({ area, moving, skip, canNext, step }) {
     }
     if (mode !== 'x') return;
     dx = mx;
-    const blocked = dx < 0 && !canNext();
-    moving.style.transition = 'none';
-    moving.style.transform = `translateX(${dx * (blocked ? 0.12 : 0.5)}px)`;
-    moving.style.opacity = String(1 - Math.min(Math.abs(dx) / 700, 0.3));
+    hist.push([ev.timeStamp, mx]);
+    if (hist.length > 6) hist.shift();
+    const dir = dx < 0 ? 1 : -1;
+    const blocked = dir > 0 && !canNext();
+    // Grannen visas bredvid redan medan man drar, som när man bläddrar
+    if (blocked || (side && sideDir !== dir)) dropSide();
+    if (!blocked && !side && preview && !reduce()) {
+      const el = preview(dir);
+      if (el) {
+        side = beside(el, dir, dx);
+        sideDir = dir;
+      }
+    }
+    // Sidan följer fingret, med motstånd när det inte finns något åt det hållet
+    const x = blocked ? dx * 0.15 : dx;
+    place(moving, x);
+    if (side) place(side, x);
   });
 
   function end() {
@@ -4180,25 +4218,62 @@ function attachSwipe({ area, moving, skip, canNext, step }) {
     }
     mode = null;
     const dir = dx < 0 ? 1 : -1;
-    if (Math.abs(dx) < 70 || (dir > 0 && !canNext())) {
-      reset(true);
+    const w = width();
+    // Fart i px per ms de sista rörelserna, så att en snabb snärt räcker
+    const [t0, x0] = hist[0] || [0, 0];
+    const [t1, x1] = hist[hist.length - 1] || [0, 0];
+    const v = t1 > t0 ? (x1 - x0) / (t1 - t0) : 0;
+    const go = !(dir > 0 && !canNext()) && (Math.abs(dx) > w * 0.22 || -v * dir > 0.35);
+    if (!go) {
+      const back = 'transform .24s cubic-bezier(.2, .8, .2, 1)';
+      place(moving, 0, back);
+      if (side) {
+        const s = side;
+        place(s, 0, back);
+        side = null;
+        sideDir = 0;
+        setTimeout(() => s.remove(), 250);
+      }
       return;
     }
     if (reduce()) {
-      reset(false);
+      dropSide();
+      place(moving, 0);
       step(dir);
       return;
     }
-    // Glid ut åt samma håll som fingret, byt och glid in från andra sidan
-    moving.style.transition = 'transform .14s ease-in, opacity .14s';
-    moving.style.transform = `translateX(${dir > 0 ? -70 : 70}px)`;
-    moving.style.opacity = '0';
-    setTimeout(() => {
-      step(dir);
-      moving.style.transition = 'none';
-      moving.style.transform = `translateX(${dir > 0 ? 70 : -70}px)`;
-      requestAnimationFrame(() => requestAnimationFrame(() => reset(true)));
-    }, 140);
+    busy = true;
+    const target = -dir * w;
+    const dur = Math.round(Math.min(340, Math.max(170, Math.abs(target - dx) / Math.max(Math.abs(v), 1.3))));
+    const ease = `transform ${dur}ms cubic-bezier(.25, .8, .3, 1)`;
+    if (side) {
+      // Grannen glider på plats, sedan byts innehållet medan allt står still
+      place(moving, target, ease);
+      place(side, target, ease);
+      setTimeout(() => {
+        step(dir);
+        place(moving, 0);
+        dropSide();
+        busy = false;
+      }, dur);
+      return;
+    }
+    // Utan förhandsvisning: en kopia av det gamla glider ut medan det nya glider in bredvid
+    const ghost = moving.cloneNode(true);
+    ghost.removeAttribute('id');
+    ghost.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
+    beside(ghost, 0, dx);
+    step(dir);
+    place(moving, dx + dir * w);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      place(ghost, target, ease);
+      place(moving, 0, ease);
+      setTimeout(() => {
+        ghost.remove();
+        place(moving, 0);
+        busy = false;
+      }, dur);
+    }));
   }
 
   area.addEventListener('pointerup', end);
@@ -5636,6 +5711,40 @@ function setYearView(on) {
     { duration: 340, easing: 'cubic-bezier(.2, .8, .2, 1)' });
 }
 
+// Rutnätet för en månad, eller hela året, utan att röra det som visas
+function calGridHtml(ym, year) {
+  const [y, m] = ym.split('-').map(Number);
+  const first = new Date(y, m - 1, 1);
+  const days = new Date(y, m, 0).getDate();
+  const today = todayKey();
+  const moods = calShow.mood;
+  const weathers = calShow.weather;
+  let html = year ? yearHtml(y, today) : ['mån', 'tis', 'ons', 'tor', 'fre', 'lör', 'sön']
+    .map((d) => `<div class="wd">${d}</div>`).join('');
+  // Veckan börjar på måndag
+  const offset = (first.getDay() + 6) % 7;
+  if (!year) html += '<div></div>'.repeat(offset);
+  for (let d = 1; d <= (year ? 0 : days); d++) {
+    const key = `${ym}-${pad(d)}`;
+    const e = entries[key];
+    const cls = ['day'];
+    if (e) cls.push('has');
+    if (key === today) cls.push('today');
+    if (key === calSel) cls.push('sel');
+    const wx = weathers && e ? weatherCell(e.weather) : '';
+    if (wx) cls.push('has-wx');
+    const style = e && e.mood ? ` style="--m: var(--m${e.mood})"` : '';
+    let label = fmtDate(key) + (e && e.mood ? `, humör ${e.mood}` : e ? ', skrivet' : '');
+    if (e && MARK_OF[e.mark]) label += `, ${MARK_OF[e.mark].label.toLowerCase()}`;
+    const big = bigHoliday(key);
+    if (big) label += `, ${big.toLowerCase()}`;
+    if (e && e.weather) label += `, ${fmtWeather(e.weather)}`;
+    html += `<button type="button" class="${cls.join(' ')}" data-key="${key}"${style}
+      aria-label="${escapeHtml(label)}"${key > today ? ' disabled' : ''}><span>${d}</span>${wx}${e && MARK_OF[e.mark] ? `<span class="mk">${miniIcon(e.mark)}</span>` : big ? `<span class="mk auto">${miniIcon(big)}</span>` : ''}</button>`;
+  }
+  return html;
+}
+
 function renderCal() {
   const [y, m] = calMonth.split('-').map(Number);
   const first = new Date(y, m - 1, 1);
@@ -5661,29 +5770,7 @@ function renderCal() {
   $('cal-grid').classList.toggle('moods', moods);
   $('cal-grid').classList.toggle('weathers', weathers);
 
-  let html = calYear ? yearHtml(y, today) : ['mån', 'tis', 'ons', 'tor', 'fre', 'lör', 'sön']
-    .map((d) => `<div class="wd">${d}</div>`).join('');
-  // Veckan börjar på måndag
-  const offset = (first.getDay() + 6) % 7;
-  if (!calYear) html += '<div></div>'.repeat(offset);
-  for (let d = 1; d <= (calYear ? 0 : days); d++) {
-    const key = `${calMonth}-${pad(d)}`;
-    const e = entries[key];
-    const cls = ['day'];
-    if (e) cls.push('has');
-    if (key === today) cls.push('today');
-    if (key === calSel) cls.push('sel');
-    const wx = weathers && e ? weatherCell(e.weather) : '';
-    if (wx) cls.push('has-wx');
-    const style = e && e.mood ? ` style="--m: var(--m${e.mood})"` : '';
-    let label = fmtDate(key) + (e && e.mood ? `, humör ${e.mood}` : e ? ', skrivet' : '');
-    if (e && MARK_OF[e.mark]) label += `, ${MARK_OF[e.mark].label.toLowerCase()}`;
-    const big = bigHoliday(key);
-    if (big) label += `, ${big.toLowerCase()}`;
-    if (e && e.weather) label += `, ${fmtWeather(e.weather)}`;
-    html += `<button type="button" class="${cls.join(' ')}" data-key="${key}"${style}
-      aria-label="${escapeHtml(label)}"${key > today ? ' disabled' : ''}><span>${d}</span>${wx}${e && MARK_OF[e.mark] ? `<span class="mk">${miniIcon(e.mark)}</span>` : big ? `<span class="mk auto">${miniIcon(big)}</span>` : ''}</button>`;
-  }
+  const html = calGridHtml(calMonth, calYear);
   $('cal-grid').innerHTML = html;
   renderList();
   renderStats();
@@ -6601,6 +6688,15 @@ attachSwipe({
   skip: '.seg, #feed-panel, #month-stats, #media-panel, .layers',
   canNext: () => (calYear ? calMonth.slice(0, 4) < todayKey().slice(0, 4) : calMonth < todayKey().slice(0, 7)),
   step: (dir) => shiftMonth(dir),
+  // Grannmånaden, eller grannåret, ritas bredvid medan man drar
+  preview: (dir) => {
+    const [y, m] = calMonth.split('-').map(Number);
+    const d = new Date(y, m - 1 + (calYear ? 12 * dir : dir), 1);
+    const el = document.createElement('div');
+    el.className = $('cal-grid').className;
+    el.innerHTML = calGridHtml(`${d.getFullYear()}-${pad(d.getMonth() + 1)}`, calYear);
+    return el;
+  },
 });
 
 $('cal-prev').addEventListener('click', () => shiftMonth(-1));
