@@ -3601,12 +3601,14 @@ function refreshBase() {
 
 function closeSheet() { go(baseView === 'set' ? '#/installningar' : '#/kalender'); }
 
-// Kalendern och inställningarna har ett färgat band överst, så statusraden får samma färg
+// Kalendern och inställningarna har ett färgat band överst, så statusraden får samma färg.
+// Tonerna är bandets genomsnittliga färg med tygmönstret, uppmätt för varje huvudfärg.
+const BAND_TONE = { '': '#7e0925', bla: '#234275', gron: '#225c3f', lila: '#4e2d6c', orange: '#9f4816', rosa: '#953c5c' };
 function syncTop() {
   const band = baseView === 'cal' || baseView === 'set';
   document.body.classList.toggle('band-top', band);
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.content = band ? getComputedStyle(document.documentElement).getPropertyValue('--cloth-base').trim() || '#b4062f' : '#f3e6d5';
+  if (meta) meta.content = band ? BAND_TONE[accent] || BAND_TONE[''] : '#f3e6d5';
 }
 
 function route() {
