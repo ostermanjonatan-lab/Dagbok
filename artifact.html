@@ -2346,7 +2346,8 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 20'%3E%3Cpath d='M1.5 1.5h12v17l-6-4.2-6 4.2z' fill='none' stroke='black' stroke-width='1.6' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
   opacity: .8;
 }
-.post .star-btn.on::after { display: none; }
+/* Konturen ligger kvar osynlig, annars flyttar sig knappens baslinje och raden blir högre */
+.post .star-btn.on::after { visibility: hidden; }
 .post .star-btn.on::before {
   content: '';
   position: absolute;
