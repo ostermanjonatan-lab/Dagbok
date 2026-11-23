@@ -1842,21 +1842,21 @@ function postHtml(k, e, today, searching) {
   const rel = k === today ? 'Idag' : k === yesterday ? 'Igår' : '';
   // Vilken särskild dag det är: ens eget märke och helgdagen, om det finns
   const special = [MARK_OF[e.mark] && MARK_OF[e.mark].label, holidays(d.getFullYear())[k]].filter(Boolean).join(', ');
-  // Raden längst ner: humöret, vädret och vem man var med, var och en med en kort text under
+  // Raden längst ner: humöret, vädret och vem man var med
   const foot = [];
   if (e.mood) {
-    foot.push(`<span class="pf-s"><span class="avatar" data-m="${e.mood}" style="--m: var(--m${e.mood})">${e.mood}${MARK_OF[e.mark] ? `<span class="av-mk">${miniIcon(e.mark)}</span>` : ''}</span><span class="pf-l">Humör</span></span>`);
+    foot.push(`<span class="pf-s" role="img" aria-label="Humör ${e.mood}" title="Humör"><span class="avatar" data-m="${e.mood}" style="--m: var(--m${e.mood})">${e.mood}${MARK_OF[e.mark] ? `<span class="av-mk">${miniIcon(e.mark)}</span>` : ''}</span></span>`);
   }
   if (e.weather) {
     const w = e.weather;
     const g = weatherGroup(w.code);
     const desc = w.code == null ? '' : w.code === 0 ? 'Sol' : WEATHER_TEXT[w.code] || 'Okänt väder';
     const temp = w.temp != null ? `${String(Math.round(w.temp)).replace('-', '\u2212')}\u00a0°C` : '';
-    foot.push(`<span class="pf-s"><span class="pf-v">${g != null ? `<svg viewBox="0 0 24 24" aria-hidden="true">${WEATHER_ICONS[g]}</svg>` : ''}${temp}</span><span class="pf-l">${escapeHtml(desc || 'Väder')}</span></span>`);
+    foot.push(`<span class="pf-s" role="img" aria-label="${escapeHtml([desc, temp].filter(Boolean).join(', '))}" title="${escapeHtml(desc || 'Väder')}"><span class="pf-v">${g != null ? `<svg viewBox="0 0 24 24" aria-hidden="true">${WEATHER_ICONS[g]}</svg>` : ''}${temp}</span></span>`);
   }
   if (e.people && e.people.length) {
     // Namnen visas i en egen ruta när man trycker på personerna
-    foot.push(`<button type="button" class="pf-s pf-people" aria-haspopup="dialog" aria-label="${e.people.length === 1 ? '1 person' : `${e.people.length} personer`}, visa vilka"><span class="pf-v"><svg viewBox="0 0 24 24" aria-hidden="true">${PEOPLE_ICON}</svg>${e.people.length}</span><span class="pf-l">${e.people.length === 1 ? 'Person' : 'Personer'}</span></button>`);
+    foot.push(`<button type="button" class="pf-s pf-people" aria-haspopup="dialog" aria-label="${e.people.length === 1 ? '1 person' : `${e.people.length} personer`}, visa vilka"><span class="pf-v"><svg viewBox="0 0 24 24" aria-hidden="true">${PEOPLE_ICON}</svg>${e.people.length}</span></button>`);
   }
   return `<article class="post${k === today ? ' today' : ''}" data-key="${k}">
     <div class="post-body">
