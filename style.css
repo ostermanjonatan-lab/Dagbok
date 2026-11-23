@@ -2491,7 +2491,7 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
 /* Konturen ligger kvar osynlig, annars flyttar sig knappens baslinje och raden blir högre */
 :is(.post, .reader-head) .star-btn.on::after { visibility: hidden; }
 /* Konturen i flödet ligger högre upp, närmare kortets överkant */
-.post .star-btn::after { transform: translateY(3px); }
+.post .star-btn::after { transform: translateY(-3px); }
 /* Humöret i flödet är siffran i bläck, inringad för hand med humörets färg */
 .post .avatar, .post .avatar[data-m] { background: none; color: var(--text); font-size: 18px; }
 .post .avatar.none { background: none; }
