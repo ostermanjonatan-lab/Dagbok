@@ -2335,7 +2335,7 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
   pointer-events: none;
 }
 /* Favoriter får ett tygbokmärke som hänger från kanten, i stället för en stjärna */
-.post .star-btn { position: relative; }
+:is(.post, .reader-head) .star-btn { position: relative; }
 .post { column-gap: 24px; }
 /* Veckodagen står förkortad under humöret, rubriken är bara datumet */
 .post .when { font-size: 16.5px; font-weight: 700; }
@@ -2354,8 +2354,8 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
   background: color-mix(in srgb, var(--accent) 22%, transparent);
   pointer-events: none;
 }
-.post .star-btn svg { display: none; }
-.post .star-btn::after {
+:is(.post, .reader-head) .star-btn svg { display: none; }
+:is(.post, .reader-head) .star-btn::after {
   content: '';
   width: 15px;
   height: 20px;
@@ -2365,8 +2365,8 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
   opacity: .8;
 }
 /* Konturen ligger kvar osynlig, annars flyttar sig knappens baslinje och raden blir högre */
-.post .star-btn.on::after { visibility: hidden; }
-.post .star-btn.on::before {
+:is(.post, .reader-head) .star-btn.on::after { visibility: hidden; }
+:is(.post, .reader-head) .star-btn.on::before {
   content: '';
   position: absolute;
   /* Börjar vid kortets överkant, under tygkanten, så att inget glapp syns */
@@ -2380,9 +2380,9 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
   clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 76%, 0 100%);
   filter: drop-shadow(0 1px 1px rgb(0 0 0 / .25));
 }
-.post .star-btn.pop::before { animation: ribbon-drop .35s cubic-bezier(.3, 1.4, .5, 1); transform-origin: top; }
+:is(.post, .reader-head) .star-btn.pop::before { animation: ribbon-drop .35s cubic-bezier(.3, 1.4, .5, 1); transform-origin: top; }
 @keyframes ribbon-drop { from { transform: scaleY(.3); } }
-@media (prefers-reduced-motion: reduce) { .post .star-btn.pop::before { animation: none; } }
+@media (prefers-reduced-motion: reduce) { :is(.post, .reader-head) .star-btn.pop::before { animation: none; } }
 /* Texten i flödet står på linjer som i skrivblocket. Alla rader är lika höga, även
    rubriker, listor och nya stycken, så att texten alltid ligger på linjerna. */
 .post .prose {
@@ -2395,6 +2395,9 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
 
 
 .reader-head #reader-star { display: flex; }
+/* Bokmärket i läsläget hänger från dialogens överkant */
+.reader-head #reader-star { align-self: stretch; align-items: center; }
+.reader-head .star-btn.on::before { top: -18px; height: 44px; }
 
 /* Temperatur per månad: stapel från kallast till varmast i temperaturens färg, snittet som prick */
 #temp-trend .tbar { transform-box: fill-box; transform-origin: bottom; animation: bar-grow .45s cubic-bezier(.2, .8, .2, 1) backwards; }
