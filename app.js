@@ -1838,10 +1838,32 @@ function postMedia(list) {
       i === 3 && extra > 0 ? `<span class="extra">+${extra}</span>` : ''}</button>`).join('')}</div>`;
 }
 
-// Ett litet ansikte i blyerts. Munnen går från ledsen vid 1 till glad vid 10.
+// Ett ansikte för varje steg på skalan, från ledset vid 1 till glatt vid 10
+const EYES = '<path d="M9.2 10h.01M14.8 10h.01" stroke-width="2.4"/>';
+const MOOD_FACES = [
+  // 1: gråter, med ledsna ögonbryn och en tår
+  '<path d="M7.4 9.3l2.8-1.2M16.6 9.3l-2.8-1.2"/><path d="M9.2 11h.01M14.8 11h.01" stroke-width="2.4"/><path d="M8.6 17.3Q12 13.4 15.4 17.3"/><path d="M8.4 12.9q-1 1.5-1 2.1a1 1 0 0 0 2 0q0-.6-1-2.1z" stroke-width="1.3"/>',
+  // 2: mycket ledsen, med ledsna ögonbryn
+  '<path d="M7.4 9.3l2.8-1.2M16.6 9.3l-2.8-1.2"/><path d="M9.2 11h.01M14.8 11h.01" stroke-width="2.4"/><path d="M8.4 16.9Q12 13 15.6 16.9"/>',
+  // 3: ledsen
+  EYES + '<path d="M8.6 16.4Q12 13.6 15.4 16.4"/>',
+  // 4: lite ledsen
+  EYES + '<path d="M8.8 15.9Q12 14.4 15.2 15.9"/>',
+  // 5: neutral, åt det tunga hållet
+  EYES + '<path d="M9 15.6l6-.5"/>',
+  // 6: neutral
+  EYES + '<path d="M9 15.2h6"/>',
+  // 7: lite glad
+  EYES + '<path d="M8.8 14.8Q12 16.4 15.2 14.8"/>',
+  // 8: glad
+  EYES + '<path d="M8.4 14.4Q12 17.6 15.6 14.4"/>',
+  // 9: mycket glad, öppen mun
+  EYES + '<path d="M8.4 14h7.2a3.6 3.8 0 0 1-7.2 0z"/>',
+  // 10: skrattar, med glada ögon och stor öppen mun
+  '<path d="M7.9 10.6q1.3-1.8 2.6 0M13.5 10.6q1.3-1.8 2.6 0"/><path d="M7.8 13.4h8.4a4.2 4.6 0 0 1-8.4 0z"/>',
+];
 function moodFace(m) {
-  const y = (15.2 + (m - 5.5) * 0.6).toFixed(1);
-  return `<svg class="mood-face" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M9.2 10h.01M14.8 10h.01" stroke-width="2.4"/><path d="M8.4 15.2Q12 ${y} 15.6 15.2"/></svg>`;
+  return `<svg class="mood-face" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/>${MOOD_FACES[Math.min(10, Math.max(1, m)) - 1]}</svg>`;
 }
 
 function postHtml(k, e, today, searching, showMonth) {
