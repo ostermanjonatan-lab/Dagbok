@@ -578,6 +578,7 @@ function showDay(key) {
   renderPeople();
   setDayMedia(e && e.media ? e.media : []);
   setMood(e ? e.mood : null);
+  if (!moodValue) moodHint();
   setMark(e ? e.mark : null);
   showWeather(e);
 
@@ -704,6 +705,14 @@ function setMood(v) {
   if (moodValue) thumb.style.setProperty('--m', `var(--m${moodValue})`);
   drawMood();
 }
+// Utan humör vickar en knopp kort fram och tillbaka i mitten, så att det syns att skalan går att dra
+function moodHint() {
+  moodEl.classList.remove('hinting');
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  void moodEl.offsetWidth;
+  moodEl.classList.add('hinting');
+}
+$('mood-hint').addEventListener('animationend', () => moodEl.classList.remove('hinting'));
 function pickMood(v) {
   if (v === moodValue) return;
   setMood(v);
@@ -722,6 +731,7 @@ function moodPop() {
 }
 // Ett tryck väljer först när fingret släpps, så att man kan scrolla förbi utan att välja
 moodEl.addEventListener('pointerdown', (ev) => {
+  moodEl.classList.remove('hinting');
   moodDrag = { id: ev.pointerId, x: ev.clientX, start: moodValue, moved: false, onThumb: !!ev.target.closest('.mood-thumb') };
   moodEl.setPointerCapture(ev.pointerId);
 });
