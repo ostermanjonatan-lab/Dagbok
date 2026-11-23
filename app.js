@@ -3600,6 +3600,14 @@ function refreshBase() {
 
 function closeSheet() { go(baseView === 'set' ? '#/installningar' : '#/kalender'); }
 
+// Kalendern har ett färgat band överst, så statusraden får samma färg där
+function syncTop() {
+  const band = baseView === 'cal';
+  document.body.classList.toggle('band-top', band);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.content = band ? getComputedStyle(document.documentElement).getPropertyValue('--cloth-base').trim() || '#b4062f' : '#f3e6d5';
+}
+
 function route() {
   const hash = location.hash || '#/kalender';
   const day = hash.match(/^#\/dag(?:\/(\d{4}-\d{2}-\d{2}))?$/);
@@ -3610,6 +3618,7 @@ function route() {
   }
   // Flödet ligger numera under kalendern, så gamla länkar dit öppnar kalendern
   baseView = hash.startsWith('#/installningar') ? 'set' : 'cal';
+  syncTop();
   if (baseView === 'set') $('wipe-msg').textContent = '';
   if (daySheet.hidden) {
     showBase();

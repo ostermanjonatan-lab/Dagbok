@@ -1857,6 +1857,31 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .year-view #cal-title::after { margin-top: 4px; transform: rotate(-135deg); }
 /* Huvudet ligger över kalendern, så att zoomen glider in under det */
 .cal-head, .cal-top { position: relative; z-index: 2; background: var(--bg); }
+/* Huvudet över kalendern är ett tygband i huvudfärgen, som menyn längst ner */
+.cal-band {
+  position: relative;
+  z-index: 3;
+  margin: -8px calc(50% - 50vw) 14px;
+  padding: 4px max(16px, calc(50vw - 304px)) 2px;
+  background-color: var(--cloth-base);
+  background-image: var(--cloth);
+  color: var(--brand-text);
+  box-shadow: 0 2px 8px rgba(42, 20, 24, .18);
+}
+.cal-band .cal-head, .cal-band .cal-top { background: none; }
+.cal-band .cal-head { margin-top: 6px; }
+.cal-band #cal-title { color: var(--brand-text); }
+.cal-band #cal-title::after { border-color: color-mix(in srgb, var(--brand-text) 80%, transparent); }
+.cal-band .icon { color: var(--brand-text); }
+.cal-band .icon:active { background: rgb(255 255 255 / .14); }
+.cal-band .cal-mode { background: rgb(0 0 0 / .2); }
+.cal-band .cal-mode button { color: color-mix(in srgb, var(--brand-text) 80%, transparent); }
+.cal-band .cal-mode [aria-checked="true"] { background: var(--brand-text); color: var(--brand-dark); box-shadow: 0 1px 3px rgb(0 0 0 / .25); }
+.cal-band .hd-btn { border-color: rgb(255 255 255 / .28); background: rgb(0 0 0 / .14); color: var(--brand-text); }
+.cal-band .hd-btn.on { border-color: var(--brand-text); background: var(--brand-text); color: var(--brand-dark); }
+.cal-band .layers-pop { color: var(--text); }
+/* Statusraden får samma färg när kalendern visas */
+body.band-top::before { background-color: var(--cloth-base); background-image: var(--cloth); }
 .cal-top { margin: 0; padding: 6px 0 14px; }
 /* Månaderna i årsvyn är knappar: större träffyta och tydlig tryckeffekt */
 .ym { margin: -6px; padding: 6px; border-radius: 8px; transition: background .12s; }

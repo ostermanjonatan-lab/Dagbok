@@ -1803,6 +1803,31 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .year-view #cal-title::after { margin-top: 4px; transform: rotate(-135deg); }
 /* Huvudet ligger över kalendern, så att zoomen glider in under det */
 .cal-head, .cal-top { position: relative; z-index: 2; background: var(--bg); }
+/* Huvudet över kalendern är ett tygband i huvudfärgen, som menyn längst ner */
+.cal-band {
+  position: relative;
+  z-index: 3;
+  margin: -8px calc(50% - 50vw) 14px;
+  padding: 4px max(16px, calc(50vw - 304px)) 2px;
+  background-color: var(--cloth-base);
+  background-image: var(--cloth);
+  color: var(--brand-text);
+  box-shadow: 0 2px 8px rgba(42, 20, 24, .18);
+}
+.cal-band .cal-head, .cal-band .cal-top { background: none; }
+.cal-band .cal-head { margin-top: 6px; }
+.cal-band #cal-title { color: var(--brand-text); }
+.cal-band #cal-title::after { border-color: color-mix(in srgb, var(--brand-text) 80%, transparent); }
+.cal-band .icon { color: var(--brand-text); }
+.cal-band .icon:active { background: rgb(255 255 255 / .14); }
+.cal-band .cal-mode { background: rgb(0 0 0 / .2); }
+.cal-band .cal-mode button { color: color-mix(in srgb, var(--brand-text) 80%, transparent); }
+.cal-band .cal-mode [aria-checked="true"] { background: var(--brand-text); color: var(--brand-dark); box-shadow: 0 1px 3px rgb(0 0 0 / .25); }
+.cal-band .hd-btn { border-color: rgb(255 255 255 / .28); background: rgb(0 0 0 / .14); color: var(--brand-text); }
+.cal-band .hd-btn.on { border-color: var(--brand-text); background: var(--brand-text); color: var(--brand-dark); }
+.cal-band .layers-pop { color: var(--text); }
+/* Statusraden får samma färg när kalendern visas */
+body.band-top::before { background-color: var(--cloth-base); background-image: var(--cloth); }
 .cal-top { margin: 0; padding: 6px 0 14px; }
 /* Månaderna i årsvyn är knappar: större träffyta och tydlig tryckeffekt */
 .ym { margin: -6px; padding: 6px; border-radius: 8px; transition: background .12s; }
@@ -2155,33 +2180,35 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 <main class="wrap">
 
   <section id="view-cal" hidden>
-    <div class="cal-head" id="cal-head">
-      <button type="button" class="icon" id="cal-prev" aria-label="Föregående månad">&#8249;</button>
-      <h2><button type="button" id="cal-title"></button></h2>
-      <button type="button" class="icon" id="cal-next" aria-label="Nästa månad">&#8250;</button>
-    </div>
-    <div class="cal-top">
-      <div class="cal-mode" id="cal-mode" role="radiogroup" aria-label="Visa">
-        <button type="button" role="radio" data-mode="month">Månad</button>
-        <button type="button" role="radio" data-mode="year">År</button>
+      <div class="cal-band">
+      <div class="cal-head" id="cal-head">
+        <button type="button" class="icon" id="cal-prev" aria-label="Föregående månad">&#8249;</button>
+        <h2><button type="button" id="cal-title"></button></h2>
+        <button type="button" class="icon" id="cal-next" aria-label="Nästa månad">&#8250;</button>
       </div>
-      <div class="layers" id="layers">
-        <button type="button" class="hd-btn" id="layers-btn" aria-haspopup="true" aria-expanded="false"
-          aria-controls="layers-pop" aria-label="Visa i kalendern">
-          <svg class="ico-o" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 3 9l9 5 9-5z"/><path d="m3 14 9 5 9-5"/></svg><svg class="ico-f fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 2.8 8.6a.5.5 0 0 0 0 .8l9.2 5.1 9.2-5.1a.5.5 0 0 0 0-.8z"/><path d="m2.8 13.6 9.2 5.1 9.2-5.1v2.3L12 21l-9.2-5.1z"/></svg>
-        </button>
-        <div class="layers-pop" id="layers-pop" hidden>
-          <label class="switch-row">
-            <span>Visa humör</span>
-            <input type="checkbox" role="switch" id="show-mood">
-          </label>
-          <label class="switch-row">
-            <span>Visa väder</span>
-            <input type="checkbox" role="switch" id="show-weather">
-          </label>
+      <div class="cal-top">
+        <div class="cal-mode" id="cal-mode" role="radiogroup" aria-label="Visa">
+          <button type="button" role="radio" data-mode="month">Månad</button>
+          <button type="button" role="radio" data-mode="year">År</button>
+        </div>
+        <div class="layers" id="layers">
+          <button type="button" class="hd-btn" id="layers-btn" aria-haspopup="true" aria-expanded="false"
+            aria-controls="layers-pop" aria-label="Visa i kalendern">
+            <svg class="ico-o" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 3 9l9 5 9-5z"/><path d="m3 14 9 5 9-5"/></svg><svg class="ico-f fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 2.8 8.6a.5.5 0 0 0 0 .8l9.2 5.1 9.2-5.1a.5.5 0 0 0 0-.8z"/><path d="m2.8 13.6 9.2 5.1 9.2-5.1v2.3L12 21l-9.2-5.1z"/></svg>
+          </button>
+          <div class="layers-pop" id="layers-pop" hidden>
+            <label class="switch-row">
+              <span>Visa humör</span>
+              <input type="checkbox" role="switch" id="show-mood">
+            </label>
+            <label class="switch-row">
+              <span>Visa väder</span>
+              <input type="checkbox" role="switch" id="show-weather">
+            </label>
+          </div>
         </div>
       </div>
-    </div>
+      </div>
     <div class="grid" id="cal-grid"></div>
     <div class="seg" role="tablist" aria-label="Under kalendern">
       <button type="button" role="tab" id="seg-feed" aria-controls="feed-panel" aria-selected="true"><svg class="ico-o" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg><svg class="ico-f fill" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="3.4" rx="1.7"/><rect x="3" y="10.3" width="18" height="3.4" rx="1.7"/><rect x="3" y="16.1" width="12" height="3.4" rx="1.7"/></svg>Flöde</button>
@@ -6597,6 +6624,8 @@ $('import-file').addEventListener('change', async (ev) => {
 // Kalendern eller inställningarna ligger under, dagen öppnas som ett ark ovanpå
 function setView(v) {
   view = v;
+  // Kalendern har ett färgat band överst
+  document.body.classList.toggle('band-top', v === 'cal');
   for (const name of ['cal', 'set']) {
     $(`view-${name}`).hidden = name !== v;
     $(`tab-${name}`).classList.toggle('on', name === v);

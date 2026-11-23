@@ -27,38 +27,40 @@
   <main>
 
     <section id="view-cal" hidden>
+      <div class="cal-band">
+      <div class="cal-head" id="cal-head">
+          <button type="button" class="icon" id="cal-prev" aria-label="Föregående månad">&#8249;</button>
+          <h2><button type="button" id="cal-title"></button></h2>
+          <button type="button" class="icon" id="cal-next" aria-label="Nästa månad">&#8250;</button>
+        </div>
+        <div class="cal-top">
+          <div class="cal-mode" id="cal-mode" role="radiogroup" aria-label="Visa">
+            <button type="button" role="radio" data-mode="month">Månad</button>
+            <button type="button" role="radio" data-mode="year">År</button>
+          </div>
+          <div class="layers" id="layers">
+            <button type="button" class="hd-btn" id="layers-btn" aria-haspopup="true" aria-expanded="false"
+              aria-controls="layers-pop" aria-label="Visa i kalendern">
+              <svg class="ico-o" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 3 9l9 5 9-5z"/><path d="m3 14 9 5 9-5"/></svg><svg class="ico-f fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 2.8 8.6a.5.5 0 0 0 0 .8l9.2 5.1 9.2-5.1a.5.5 0 0 0 0-.8z"/><path d="m2.8 13.6 9.2 5.1 9.2-5.1v2.3L12 21l-9.2-5.1z"/></svg>
+            </button>
+            <div class="layers-pop" id="layers-pop" hidden>
+              <label class="switch-row">
+                <span>Visa humör</span>
+                <input type="checkbox" role="switch" id="show-mood">
+              </label>
+              <label class="switch-row">
+                <span>Visa väder</span>
+                <input type="checkbox" role="switch" id="show-weather">
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="notice" id="backup-notice" hidden>
         <p id="backup-text"></p>
         <div class="notice-actions">
           <button type="button" class="link" id="backup-now">Exportera nu</button>
           <button type="button" class="link quiet" id="backup-later">Senare</button>
-        </div>
-      </div>
-      <div class="cal-head" id="cal-head">
-        <button type="button" class="icon" id="cal-prev" aria-label="Föregående månad">&#8249;</button>
-        <h2><button type="button" id="cal-title"></button></h2>
-        <button type="button" class="icon" id="cal-next" aria-label="Nästa månad">&#8250;</button>
-      </div>
-      <div class="cal-top">
-        <div class="cal-mode" id="cal-mode" role="radiogroup" aria-label="Visa">
-          <button type="button" role="radio" data-mode="month">Månad</button>
-          <button type="button" role="radio" data-mode="year">År</button>
-        </div>
-        <div class="layers" id="layers">
-          <button type="button" class="hd-btn" id="layers-btn" aria-haspopup="true" aria-expanded="false"
-            aria-controls="layers-pop" aria-label="Visa i kalendern">
-            <svg class="ico-o" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 3 9l9 5 9-5z"/><path d="m3 14 9 5 9-5"/></svg><svg class="ico-f fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 2.8 8.6a.5.5 0 0 0 0 .8l9.2 5.1 9.2-5.1a.5.5 0 0 0 0-.8z"/><path d="m2.8 13.6 9.2 5.1 9.2-5.1v2.3L12 21l-9.2-5.1z"/></svg>
-          </button>
-          <div class="layers-pop" id="layers-pop" hidden>
-            <label class="switch-row">
-              <span>Visa humör</span>
-              <input type="checkbox" role="switch" id="show-mood">
-            </label>
-            <label class="switch-row">
-              <span>Visa väder</span>
-              <input type="checkbox" role="switch" id="show-weather">
-            </label>
-          </div>
         </div>
       </div>
       <div class="grid" id="cal-grid"></div>
