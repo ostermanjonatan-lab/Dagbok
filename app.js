@@ -718,6 +718,8 @@ function setMood(v) {
   if (moodValue) thumb.style.setProperty('--m', `var(--m${moodValue})`);
   // Knoppen visar ansiktet, siffran står vid rubriken
   $('mood-face-now').textContent = moodValue || '';
+  // Utan valt humör står ett neutralt ansikte på knoppen i mitten
+  if (!moodValue && !$('mood-hint').firstChild) $('mood-hint').innerHTML = moodFace(6);
   drawMood();
 }
 // Utan humör står en knopp i mitten. Den vickar kort när dagen öppnas, så att det syns att skalan går att dra.
