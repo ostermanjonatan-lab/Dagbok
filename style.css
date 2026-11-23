@@ -2659,6 +2659,8 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 /* I dagsvyn visar knoppen på skalan humörets ansikte och siffran står vid rubriken */
 .mood-face-now { margin-left: 4px; font-family: var(--hand); font-weight: 600; color: var(--pencil); }
 .mood-thumb .num svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+/* Egen text för märkningen, under menyn */
+.mark-text { margin-top: 8px; }
 /* Väder och personer lite mindre än humöret */
 .post-stats .pf-v { font-size: 15px; }
 .post-stats .pf-v svg { width: 19px; height: 19px; }
