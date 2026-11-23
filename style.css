@@ -2552,6 +2552,9 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .post .post-head .star-btn { position: absolute; top: 6px; right: 10px; margin: 0; }
 .post .post-head .special { flex-basis: auto; }
 .post .prose { padding-right: 20px; }
+/* Ansiktet bredvid rubriken Humör i dagsvyn, samma som i flödet */
+.mood-face-now { display: inline-flex; vertical-align: -5px; margin-left: 4px; }
+.mood-face-now svg { width: 21px; height: 21px; fill: none; stroke: var(--pencil); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 /* Väder och personer lite mindre än humöret */
 .post-stats .pf-v { font-size: 15px; }
 .post-stats .pf-v svg { width: 19px; height: 19px; }

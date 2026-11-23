@@ -716,6 +716,8 @@ function setMood(v) {
   rollMood(thumb.firstElementChild, moodValue, prev);
   thumb.dataset.m = moodValue || '';
   if (moodValue) thumb.style.setProperty('--m', `var(--m${moodValue})`);
+  // Ansiktet vid rubriken visar humöret medan man drar
+  $('mood-face-now').innerHTML = moodValue ? moodFace(moodValue) : '';
   drawMood();
 }
 // Utan humör står en knopp i mitten. Den vickar kort när dagen öppnas, så att det syns att skalan går att dra.

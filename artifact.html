@@ -2501,6 +2501,9 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .post .post-head .star-btn { position: absolute; top: 6px; right: 10px; margin: 0; }
 .post .post-head .special { flex-basis: auto; }
 .post .prose { padding-right: 20px; }
+/* Ansiktet bredvid rubriken Humör i dagsvyn, samma som i flödet */
+.mood-face-now { display: inline-flex; vertical-align: -5px; margin-left: 4px; }
+.mood-face-now svg { width: 21px; height: 21px; fill: none; stroke: var(--pencil); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 /* Väder och personer lite mindre än humöret */
 .post-stats .pf-v { font-size: 15px; }
 .post-stats .pf-v svg { width: 19px; height: 19px; }
@@ -2843,7 +2846,7 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
             </div>
           </div>
           <fieldset class="field">
-            <legend>Humör</legend>
+            <legend>Humör <span class="mood-face-now" id="mood-face-now" aria-hidden="true"></span></legend>
             <div class="mood-slider" id="f-mood" role="slider" tabindex="0" aria-label="Humör"
               aria-valuemin="1" aria-valuemax="10" aria-valuetext="Inget humör valt">
               <svg class="mood-svg" aria-hidden="true"><defs><linearGradient id="mood-grad" gradientUnits="userSpaceOnUse"><stop offset="0.000" style="stop-color: var(--m1)"/><stop offset="0.111" style="stop-color: var(--m2)"/><stop offset="0.222" style="stop-color: var(--m3)"/><stop offset="0.333" style="stop-color: var(--m4)"/><stop offset="0.444" style="stop-color: var(--m5)"/><stop offset="0.556" style="stop-color: var(--m6)"/><stop offset="0.667" style="stop-color: var(--m7)"/><stop offset="0.778" style="stop-color: var(--m8)"/><stop offset="0.889" style="stop-color: var(--m9)"/><stop offset="1.000" style="stop-color: var(--m10)"/></linearGradient></defs><path class="mood-line" id="mood-path"/></svg>
@@ -4112,6 +4115,8 @@ function setMood(v) {
   rollMood(thumb.firstElementChild, moodValue, prev);
   thumb.dataset.m = moodValue || '';
   if (moodValue) thumb.style.setProperty('--m', `var(--m${moodValue})`);
+  // Ansiktet vid rubriken visar humöret medan man drar
+  $('mood-face-now').innerHTML = moodValue ? moodFace(moodValue) : '';
   drawMood();
 }
 // Utan humör står en knopp i mitten. Den vickar kort när dagen öppnas, så att det syns att skalan går att dra.
