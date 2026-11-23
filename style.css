@@ -2441,8 +2441,9 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
 .post .prose { line-height: 28px; }
 .post {
   background-image: linear-gradient(#fffdf8, #fffdf8), linear-gradient(to bottom, transparent 27px, color-mix(in srgb, var(--line) 75%, transparent) 0);
-  background-size: 100% 26px, 100% 28px;
-  background-position: 0 0, 0 26px;
+  /* Linjen ligger strax under textens baslinje, inte längst ner i raden */
+  background-size: 100% 21px, 100% 28px;
+  background-position: 0 0, 0 21px;
   background-repeat: no-repeat, repeat-y;
   padding-bottom: 14px;
 }
