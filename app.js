@@ -2506,13 +2506,8 @@ function setYearView(on) {
     const [gx, gy] = center(g);
     from = { transformOrigin: '50% 50%', transform: `translate(${tx - gx}px, ${ty - gy}px) scale(${s})`, opacity: 0 };
   }
-  // Hela sidan klipps i sidled under zoomen. Klipps bara kalendervyn försvinner
-  // kanterna på bandet överst, som går ut till skärmkanten.
-  const view = document.documentElement;
-  view.style.overflowX = 'clip';
-  const anim = grid.animate([from, { transformOrigin: from.transformOrigin, transform: 'none', opacity: 1 }],
+  grid.animate([from, { transformOrigin: from.transformOrigin, transform: 'none', opacity: 1 }],
     { duration: 340, easing: 'cubic-bezier(.2, .8, .2, 1)' });
-  anim.onfinish = anim.oncancel = () => { view.style.overflowX = ''; };
 }
 
 function renderCal() {
