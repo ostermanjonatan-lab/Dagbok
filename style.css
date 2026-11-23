@@ -2440,6 +2440,8 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
 #list .post:nth-of-type(5n + 3) { --tilt: -.3deg; }
 #list .post:nth-of-type(5n + 4) { --tilt: .8deg; }
 #list .post:nth-of-type(5n + 5) { --tilt: -.5deg; }
+/* Raka hörn som papperslappar, och en mjuk skugga under nederkanten */
+#list .post { border-radius: 0; box-shadow: 0 1px 1px rgb(42 20 24 / .08), 0 9px 10px -8px rgb(42 20 24 / .32); }
 :is(.post, .reader-head) .star-btn.on::before {
   content: '';
   position: absolute;
