@@ -2754,7 +2754,7 @@ function readerDetails(e) {
     const g = weatherGroup(w.code);
     const what = w.code == null ? '' : w.code === 0 ? 'Sol' : WEATHER_TEXT[w.code] || '';
     const temp = w.temp != null ? `${String(Math.round(w.temp)).replace('-', '\u2212')}\u00a0°C` : '';
-    rows.push(`<div class="rd-row">${g != null ? `<svg viewBox="0 0 24 24" aria-hidden="true">${WEATHER_ICONS[g]}</svg>` : ''}<span class="rd-v">${[temp, escapeHtml(what.toLowerCase())].filter(Boolean).join(', ')}</span>${w.time ? `<span class="rd-note">kl ${escapeHtml(w.time)}</span>` : ''}</div>`);
+    rows.push(`<div class="rd-row">${g != null ? `<svg viewBox="0 0 24 24" aria-hidden="true">${WEATHER_ICONS[g]}</svg>` : ''}<span class="rd-v">${[temp, escapeHtml(what.toLowerCase())].filter(Boolean).join(', ')}</span></div>`);
   }
   if (e.people && e.people.length) {
     rows.push(`<div class="rd-row"><svg viewBox="0 0 24 24" aria-hidden="true">${PEOPLE_ICON}</svg><span class="rd-v">${escapeHtml(joinNames(e.people))}</span></div>`);
