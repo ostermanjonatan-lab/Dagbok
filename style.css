@@ -1673,11 +1673,20 @@ body.sheet-open .nav .on:not(.main) svg { stroke-width: 1.6; }
 button.reader-film { width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 
 /* Sortering och vy i Sett och läst */
-/* Fem typer får inte plats på smal skärm, raden skrollar i sidled */
-#media-kind { position: relative; flex-wrap: nowrap; gap: 20px; margin: 0 -16px 12px; padding: 0 16px; overflow-x: auto; scrollbar-width: none; box-shadow: inset 0 -1px var(--line); scroll-padding: 0 16px; }
-#media-kind::-webkit-scrollbar { display: none; }
-#media-kind .pill, #media-kind .pill:hover { flex: none; white-space: nowrap; padding: 6px 0 8px; border-bottom: 2px solid transparent; font-size: 16px; }
-#media-kind .pill[aria-checked="true"] { border-bottom-color: var(--accent); }
+/* Typ: en knapp med vald typ som fäller ut en meny med alla typer */
+.kind-pick { position: relative; margin: 0 0 12px; }
+.kind-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 2px; border: 0; background: none; color: var(--text); font: inherit; font-size: 20px; font-weight: 700; cursor: pointer; }
+.kind-cur { display: inline-flex; align-items: center; gap: 8px; }
+.kind-cur .ki { display: block; width: 22px; height: 22px; color: var(--accent); }
+.kind-chev { width: 20px; height: 20px; fill: none; stroke: var(--muted); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s; }
+.kind-btn[aria-expanded="true"] .kind-chev { transform: rotate(180deg); }
+.kind-menu { position: absolute; z-index: 30; top: calc(100% + 4px); left: 0; display: flex; flex-direction: column; min-width: 230px; padding: 6px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); box-shadow: 0 8px 24px rgba(42, 20, 24, .16); animation: kind-in .16s ease-out; }
+.kind-menu[hidden] { display: none; }
+@keyframes kind-in { from { opacity: 0; transform: translateY(-4px); } }
+#media-kind .pill, #media-kind .pill:hover { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 0; border-radius: 8px; background: none; color: var(--text); font-size: 16px; text-align: left; }
+#media-kind .pill:hover, #media-kind .pill:focus-visible { background: color-mix(in srgb, var(--line) 55%, transparent); outline: none; }
+#media-kind .pill[aria-checked="true"] { background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent); font-weight: 600; }
+#media-kind .kind-n { margin-left: auto; padding-left: 16px; color: var(--muted); font-size: 14px; font-weight: 400; font-variant-numeric: tabular-nums; }
 .media-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 10px; }
 .media-panel .media-tools .period, .media-views { display: flex; gap: 2px; margin: 0; padding: 2px; border-radius: 9px; background: color-mix(in srgb, var(--line) 60%, transparent); }
 .media-panel .media-tools .period .pill, .media-panel .media-tools .period .pill:hover { padding: 5px 12px; border-radius: 7px; font-size: 14px; }
@@ -1715,7 +1724,7 @@ button.reader-film { width: 100%; padding: 0; border: 0; background: none; color
 .ki-f .st { fill: none; stroke: currentColor; stroke-width: 1.8; }
 [aria-checked="true"] > .ki-o { display: none; }
 [aria-checked="true"] > .ki-f { display: block; }
-#media-kind .pill, .fd-kind button { display: inline-flex; align-items: center; gap: 7px; }
+.fd-kind button { display: inline-flex; align-items: center; gap: 7px; }
 .ki-s { width: 1.15em; height: 1.15em; flex: none; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; }
 .fs-kind, .pf-kind, #fv-kind { display: inline-flex; align-items: center; gap: 5px; }
 .mr-review { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 2px; font-size: 14px; color: var(--text); white-space: pre-line; }

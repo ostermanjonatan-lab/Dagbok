@@ -3291,13 +3291,24 @@ const MEDIA_SORTS = {
 const KIND_COUNT = { film: ['film', 'filmer'], serie: ['serie', 'serier'], bok: ['bok', 'böcker'], spel: ['spel', 'spel'], forestallning: ['föreställning', 'föreställningar'], alla: ['titel', 'titlar'] };
 
 function renderMediaAll() {
+  // Antal per typ visas i menyn
+  const counts = { alla: 0 };
+  const tally = (f) => { counts.alla++; counts[f.kind] = (counts[f.kind] || 0) + 1; };
+  for (const k of Object.keys(entries)) (entries[k].media || []).forEach(tally);
+  Object.values(shelf).forEach(tally);
   document.querySelectorAll('#media-kind [data-kind]').forEach((b) => {
-    b.setAttribute('aria-checked', String(b.dataset.kind === mediaKind));
-    // Bara raden skrollar i sidled, sidan står still
-    const row = b.parentElement;
-    if (b.dataset.kind === mediaKind && (b.offsetLeft + b.offsetWidth > row.scrollLeft + row.clientWidth - 16 || b.offsetLeft < row.scrollLeft + 16)) {
-      row.scrollTo({ left: b.offsetLeft - 16, behavior: 'smooth' });
+    const on = b.dataset.kind === mediaKind;
+    b.setAttribute('aria-checked', String(on));
+    b.tabIndex = on ? 0 : -1;
+    let n = b.querySelector('.kind-n');
+    if (!n) {
+      n = document.createElement('span');
+      n.className = 'kind-n';
+      b.append(n);
     }
+    n.textContent = counts[b.dataset.kind] || '';
+    // Knappen visar vald typ med den fyllda ikonen
+    if (on) $('kind-cur').innerHTML = `${b.querySelector('.ki-f').outerHTML}<span>${b.textContent.replace(n.textContent, '').trim()}</span>`;
   });
   document.querySelectorAll('#media-sort [data-sort]').forEach((b) => {
     const on = b.dataset.sort === mediaOpts.sort;
@@ -3349,10 +3360,34 @@ document.querySelector('.media-views').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-view]');
   if (b) setMediaOpt('view', b.dataset.view);
 });
+// Typerna ligger i en meny som fälls ut under knappen
+function kindMenu(open) {
+  $('media-kind').hidden = !open;
+  $('kind-btn').setAttribute('aria-expanded', String(open));
+  if (open) $('media-kind').querySelector('[aria-checked="true"]')?.focus();
+}
+$('kind-btn').addEventListener('click', () => kindMenu($('media-kind').hidden));
+document.addEventListener('click', (ev) => {
+  if (!$('media-kind').hidden && !ev.target.closest('#kind-pick')) kindMenu(false);
+});
+$('kind-pick').addEventListener('keydown', (ev) => {
+  if (ev.key === 'Escape' && !$('media-kind').hidden) {
+    kindMenu(false);
+    $('kind-btn').focus();
+  }
+  if ((ev.key === 'ArrowDown' || ev.key === 'ArrowUp') && !$('media-kind').hidden) {
+    ev.preventDefault();
+    const items = [...$('media-kind').querySelectorAll('[data-kind]')];
+    const i = items.indexOf(document.activeElement);
+    items[(i + (ev.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus();
+  }
+});
 $('media-kind').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-kind]');
   if (!b) return;
   mediaKind = b.dataset.kind;
+  kindMenu(false);
+  $('kind-btn').focus();
   renderMediaAll();
 });
 $('media-all').addEventListener('click', (ev) => {
