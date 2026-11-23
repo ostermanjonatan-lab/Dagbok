@@ -2838,10 +2838,24 @@ function showReaderDay(key) {
   $('reader-star').innerHTML = entries[key] ? starBtn(key) : '';
   $('reader-prev').disabled = !prev;
   $('reader-next').disabled = !next;
+  fitReader(key);
 
   calSel = key;
   if (key.slice(0, 7) !== calMonth) calMonth = key.slice(0, 7);
   renderCal();
+}
+
+// Rutan är så hög som dagen behöver, högst 82 % av skärmen, och lutar lite som korten i flödet
+const READER_TILTS = [-0.7, 0.5, -0.3, 0.8, -0.5];
+function fitReader(key) {
+  const reader = $('reader');
+  const card = $('reader-track').querySelector(`[data-key="${key}"] .reader-card`);
+  if (!card) return;
+  card.style.minHeight = '0';
+  const h = card.offsetHeight;
+  card.style.minHeight = '';
+  reader.style.height = `${Math.min(h, Math.round(window.innerHeight * 0.82))}px`;
+  reader.style.rotate = `${READER_TILTS[parseKey(key).getDate() % READER_TILTS.length]}deg`;
 }
 
 function openReader(key) {

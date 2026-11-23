@@ -2570,7 +2570,10 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .reader .reader-head .close-x { margin: 2px 0 0; }
 .reader-pane { padding: 0; }
 .reader-card { min-height: 100%; padding-top: 54px; box-shadow: none; }
-.reader-card .reader-foot { margin: 0; line-height: 28px; padding-top: 28px; }
+.reader-card .reader-foot { margin: 0; line-height: 28px; padding-top: 0; }
+/* Höjden sätts efter dagen, se fitReader */
+.reader { height: auto; transition: height .18s ease-out; }
+@media (prefers-reduced-motion: reduce) { .reader { transition: none; } }
 /* Datumet och humöret står i marginalen, som i en kalenderdagbok. Texten börjar överst. */
 .post { grid-template-columns: 34px minmax(0, 1fr); column-gap: 18px; padding-left: 12px; }
 .post::after { left: 55px; }
