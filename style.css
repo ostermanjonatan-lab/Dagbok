@@ -2531,15 +2531,6 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .pv-list { margin: 0; padding: 0; list-style: none; }
 .pv-list li { padding: 10px 0; border-top: 1px solid var(--line); font-size: 17px; }
 
-/* Humör, väder och personer står under varandra i marginalen till vänster */
-.post { grid-template-columns: 40px minmax(0, 1fr); column-gap: 22px; padding-left: 12px; }
-.post::after { left: 63px; }
-.post-stats { flex-direction: column; flex-wrap: nowrap; align-items: center; align-self: start; gap: 12px; min-height: 0; margin: 0; padding-top: 4px; }
-.post-stats .pf-s { align-items: center; }
-.post-stats .pf-v { flex-direction: column; height: auto; gap: 2px; font-size: 13px; line-height: 1.1; white-space: nowrap; }
-.post-stats .pf-v svg { width: 22px; height: 22px; }
-.post-stats .pf-s .avatar { margin: 0; }
-
 
 .reader-head #reader-star { display: flex; }
 /* Bokmärket i läsläget hänger från dialogens överkant */
