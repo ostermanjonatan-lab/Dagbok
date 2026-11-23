@@ -2534,9 +2534,6 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .pv-list li { padding: 10px 0; border-top: 1px solid var(--line); font-size: 17px; }
 /* Texten i flödet har bläckets mjukare svarta, som släpper igenom lite av papperet */
 .post .prose { color: rgb(30 30 40 / .88); }
-/* Brödtexten i korten är handskriven med samma typsnitt som humör och väder */
-.post .prose, .reader .reader-card .prose { font-family: var(--hand); font-size: 16px; }
-.post .prose :is(h2, h3, strong, b) { font-weight: 600; }
 /* Siffrorna i raden är handskrivna med blyerts, som en anteckning i kanten */
 .pf-v, .post .pf-s .avatar { font-family: var(--hand); font-weight: 600; color: var(--pencil); }
 .pf-v { font-size: 17px; }
