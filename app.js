@@ -1836,10 +1836,10 @@ function postMedia(list) {
       i === 3 && extra > 0 ? `<span class="extra">+${extra}</span>` : ''}</button>`).join('')}</div>`;
 }
 
-// Ett litet ansikte i humörets färg. Munnen går från ledsen vid 1 till glad vid 10.
+// Ett litet ansikte i blyerts. Munnen går från ledsen vid 1 till glad vid 10.
 function moodFace(m) {
   const y = (15.2 + (m - 5.5) * 0.6).toFixed(1);
-  return `<svg class="mood-face" viewBox="0 0 24 24" aria-hidden="true" style="stroke: var(--m${m})"><circle cx="12" cy="12" r="8.5"/><path d="M9.2 10h.01M14.8 10h.01" stroke-width="2.4"/><path d="M8.4 15.2Q12 ${y} 15.6 15.2"/></svg>`;
+  return `<svg class="mood-face" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M9.2 10h.01M14.8 10h.01" stroke-width="2.4"/><path d="M8.4 15.2Q12 ${y} 15.6 15.2"/></svg>`;
 }
 
 function postHtml(k, e, today, searching, showMonth) {
