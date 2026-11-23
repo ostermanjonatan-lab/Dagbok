@@ -705,7 +705,7 @@ function setMood(v) {
   if (moodValue) thumb.style.setProperty('--m', `var(--m${moodValue})`);
   drawMood();
 }
-// Utan humör vickar en knopp kort fram och tillbaka i mitten, så att det syns att skalan går att dra
+// Utan humör står en knopp i mitten. Den vickar kort när dagen öppnas, så att det syns att skalan går att dra.
 function moodHint() {
   moodEl.classList.remove('hinting');
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;

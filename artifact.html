@@ -1952,15 +1952,16 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
 .mood-slider.dragging .mood-thumb { transition: none; }
 .mood-slider:not(.set) .mood-thumb { display: none; }
 /* Knoppen som visar att skalan går att dra, när dagen saknar humör */
-.mood-hint { display: none; position: absolute; top: 28px; left: 50%; width: 36px; height: 36px; margin: -18px 0 0 -18px; border-radius: 50%; background: var(--m6); box-shadow: 0 0 0 3px var(--bg), 0 3px 8px rgb(42 20 24 / .25); pointer-events: none; }
-.mood-slider.hinting:not(.set) .mood-hint { display: block; animation: mood-hint 2.8s .5s cubic-bezier(.45, 0, .55, 1) both; }
+.mood-hint { display: none; opacity: .85; position: absolute; top: 28px; left: 50%; width: 36px; height: 36px; margin: -18px 0 0 -18px; border-radius: 50%; background: var(--m6); box-shadow: 0 0 0 3px var(--bg), 0 3px 8px rgb(42 20 24 / .25); pointer-events: none; }
+/* Knoppen står kvar i mitten tills man väljer, vickningen spelas en gång när dagen öppnas */
+.mood-slider:not(.set) .mood-hint { display: block; }
+.mood-slider.hinting:not(.set) .mood-hint { animation: mood-hint 2.8s .5s cubic-bezier(.45, 0, .55, 1) both; }
 @keyframes mood-hint {
   0% { opacity: 0; transform: scale(.8); }
   16% { opacity: .85; transform: scale(1); }
   38% { transform: translateX(-16px); background: var(--m5); }
   62% { transform: translateX(16px); background: var(--m7); }
-  80% { opacity: .85; transform: translateX(0); background: var(--m6); }
-  100% { opacity: 0; transform: scale(.9); }
+  84%, 100% { opacity: .85; transform: none; background: var(--m6); }
 }
 
 .mood-thumb > span {
@@ -3891,7 +3892,7 @@ function setMood(v) {
   if (moodValue) thumb.style.setProperty('--m', `var(--m${moodValue})`);
   drawMood();
 }
-// Utan humör vickar en knopp kort fram och tillbaka i mitten, så att det syns att skalan går att dra
+// Utan humör står en knopp i mitten. Den vickar kort när dagen öppnas, så att det syns att skalan går att dra.
 function moodHint() {
   moodEl.classList.remove('hinting');
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
