@@ -2527,6 +2527,8 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
 .pf-l { margin-top: 2px; font-size: 12.5px; font-weight: 600; line-height: 16px; color: var(--muted); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .post .pf-s .avatar { width: 32px; height: 32px; margin: 0 0 0 4px; }
 .post .pf-s .avatar + .pf-l { align-self: flex-start; }
+button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.pf-names { color: var(--text); white-space: normal; max-width: 200px; }
 
 
 .reader-head #reader-star { display: flex; }

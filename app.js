@@ -1855,7 +1855,8 @@ function postHtml(k, e, today, searching) {
     foot.push(`<span class="pf-s"><span class="pf-v">${g != null ? `<svg viewBox="0 0 24 24" aria-hidden="true">${WEATHER_ICONS[g]}</svg>` : ''}${temp}</span><span class="pf-l">${escapeHtml(desc || 'Väder')}</span></span>`);
   }
   if (e.people && e.people.length) {
-    foot.push(`<span class="pf-s pf-people" title="${escapeHtml(joinNames(e.people))}"><span class="pf-v"><svg viewBox="0 0 24 24" aria-hidden="true">${PEOPLE_ICON}</svg>${e.people.length}</span><span class="pf-l">${escapeHtml(joinNames(e.people))}</span></span>`);
+    // Namnen visas först när man trycker på personerna
+    foot.push(`<button type="button" class="pf-s pf-people" aria-expanded="false"><span class="pf-v"><svg viewBox="0 0 24 24" aria-hidden="true">${PEOPLE_ICON}</svg>${e.people.length}</span><span class="pf-l">${e.people.length === 1 ? 'Person' : 'Personer'}</span><span class="pf-l pf-names" hidden>${escapeHtml(joinNames(e.people))}</span></button>`);
   }
   return `<article class="post${k === today ? ' today' : ''}" data-key="${k}">
     <div class="post-body">
@@ -1889,6 +1890,14 @@ $('list').addEventListener('click', (ev) => {
   const post = ev.target.closest('.post');
   if (post && (ev.target.closest('.when') || !ev.target.closest('button, a')) && window.getSelection().isCollapsed) {
     openReader(post.dataset.key);
+  }
+  const ppl = ev.target.closest('.pf-people');
+  if (ppl) {
+    const open = ppl.getAttribute('aria-expanded') !== 'true';
+    ppl.setAttribute('aria-expanded', String(open));
+    ppl.querySelector('.pf-l:not(.pf-names)').hidden = open;
+    ppl.querySelector('.pf-names').hidden = !open;
+    return;
   }
   const more = ev.target.closest('.more');
   if (!more) return;
