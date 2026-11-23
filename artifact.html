@@ -2479,6 +2479,8 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .pv-date { margin: -6px 0 10px; font-size: 14px; color: var(--muted); }
 .pv-list { margin: 0; padding: 0; list-style: none; }
 .pv-list li { padding: 10px 0; border-top: 1px solid var(--line); font-size: 17px; }
+/* Texten i flödet är bläck som flutit ut lite i papperet: mjukare färg och ojämna kanter */
+.post .prose { color: rgb(30 30 40 / .88); filter: url(#ink-bleed); text-shadow: 0 0 .5px rgb(30 30 40 / .5); }
 /* Siffrorna i raden är handskrivna med blyerts, som en anteckning i kanten */
 .pf-v, .post .pf-s .avatar { font-family: var(--hand); font-weight: 600; color: var(--pencil); }
 .pf-v { font-size: 17px; }
@@ -2502,6 +2504,8 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 </style>
 
 
+  <!-- Bläcket i flödet flyter ut lite i papperet -->
+  <svg width="0" height="0" style="position: absolute" aria-hidden="true" focusable="false"><filter id="ink-bleed" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.1"/></filter></svg>
 <main class="wrap">
 
   <section id="view-cal" hidden>
