@@ -3401,7 +3401,7 @@ $('trend').addEventListener('focusin', (ev) => {
 /* Flöde, statistik eller underhållning under kalendern */
 
 const PANEL_KEY = 'dagbok.kalenderpanel';
-const PANELS = [['feed', 'seg-feed', 'feed-panel'], ['stats', 'seg-stats', 'month-stats'], ['media', 'seg-media', 'media-panel']];
+const PANELS = [['feed', 'seg-feed', 'feed-panel'], ['media', 'seg-media', 'media-panel'], ['stats', 'seg-stats', 'month-stats']];
 let calPanel = 'feed';
 try {
   const saved = localStorage.getItem(PANEL_KEY);
