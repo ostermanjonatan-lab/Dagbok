@@ -2314,6 +2314,56 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
 @media (prefers-reduced-motion: reduce) { .star-btn.pop svg { animation: none; } }
 .post .post-head .star-btn { margin: -7px -9px -7px auto; }
 .post .post-head .special { order: 5; }
+/* Korten i flödet är blad med en tygrygg till vänster, som en liten bok. Ingen ram, mjuk skugga. */
+.post {
+  position: relative;
+  padding-left: 24px;
+  border: 0;
+  border-radius: 3px 12px 12px 3px;
+  background-color: #fffdf8;
+  box-shadow: 0 1px 2px rgb(42 20 24 / .12), 0 6px 16px rgb(42 20 24 / .07);
+}
+.post::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background-color: var(--cloth-base);
+  background-image: var(--cloth);
+  pointer-events: none;
+}
+/* Favoriter får ett tygbokmärke som hänger från kanten, i stället för en stjärna */
+.post .star-btn { position: relative; }
+.post .star-btn svg { display: none; }
+.post .star-btn::after {
+  content: '';
+  width: 15px;
+  height: 20px;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 20'%3E%3Cpath d='M1.5 1.5h12v17l-6-4.2-6 4.2z' fill='none' stroke='black' stroke-width='1.6' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 20'%3E%3Cpath d='M1.5 1.5h12v17l-6-4.2-6 4.2z' fill='none' stroke='black' stroke-width='1.6' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  opacity: .8;
+}
+.post .star-btn.on::after { display: none; }
+.post .star-btn.on::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  width: 16px;
+  height: 30px;
+  margin-left: -8px;
+  background-color: var(--cloth-base);
+  background-image: var(--cloth);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 76%, 0 100%);
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / .25));
+}
+.post .star-btn.pop::before { animation: ribbon-drop .35s cubic-bezier(.3, 1.4, .5, 1); transform-origin: top; }
+@keyframes ribbon-drop { from { transform: scaleY(.3); } }
+@media (prefers-reduced-motion: reduce) { .post .star-btn.pop::before { animation: none; } }
+
 .reader-head #reader-star { display: flex; }
 
 /* Temperatur per månad: stapel från kallast till varmast i temperaturens färg, snittet som prick */
