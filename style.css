@@ -2638,7 +2638,8 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .reader-card .reader-film { display: block; margin: 4px 0 10px; }
 .reader-card .reader-film .post-film { display: flex; align-items: center; margin: 0; }
 /* Detaljerna står en per rad på linjerna, i blyerts */
-.rd-details { margin-top: 0; }
+/* En tom rad mellan texten och informationen */
+.rd-details { margin-top: 28px; }
 .rd-row { display: flex; align-items: flex-start; gap: 8px; min-height: 28px; color: var(--pencil); }
 .rd-row svg { width: 21px; height: 21px; margin-top: 3.5px; flex: none; fill: none; stroke: var(--pencil); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .rd-v { font-family: var(--sans); font-weight: 500; font-size: 15px; line-height: 28px; min-width: 0; }
