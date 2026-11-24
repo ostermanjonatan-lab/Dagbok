@@ -2102,7 +2102,7 @@ function postHtml(k, e, today, searching, showMonth) {
       ${(e.media || []).map((f) => `<div class="post-film-wrap"><div class="post-film">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
         <span class="pf-text"><span class="pf-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</span><span class="pf-title">${escapeHtml(f.title || 'Utan titel')}</span></span>${f.rating ? starsHtml(f.rating) : ''}</div></div>`).join('')}
       ${postMedia(e.photos)}
-      ${e.training && e.training.length ? `<div class="post-training"><span class="pf-v"><svg viewBox="0 0 24 24" aria-hidden="true">${TRAINING_ICON}</svg>${escapeHtml(joinNames(e.training.map(trainingText)))}</span></div>` : ''}
+      ${e.training && e.training.length ? `<div class="post-training">${e.training.map((t) => `<div class="bib-wrap"><div class="bib" role="img" aria-label="${escapeHtml(trainingText(t))}"><span class="bib-ico" aria-hidden="true"><svg viewBox="0 0 24 24">${TRAINING_ICON}</svg></span><span class="bib-text"><span class="bib-kind">Träning</span><span class="bib-title">${escapeHtml(t.type)}</span></span>${t.min ? `<span class="bib-min"><b>${t.min}</b>min</span>` : ''}</div></div>`).join('')}</div>` : ''}
       ${foot.length ? `<div class="post-stats">${foot.join('')}</div>` : ''}
     </div>
   </article>`;
@@ -3324,13 +3324,37 @@ function renderStats() {
   const other = [];
   if (top && top[1] >= 2) other.push(['Oftast med', `${top[0]}, ${dagar(top[1])}`]);
 
-  // Träning under perioden: antal pass och den sammanlagda tiden
+  // Träning under perioden, under en egen rubrik
   const passes = keys.flatMap((k) => entries[k].training || []);
+  const tf = [];
   if (passes.length) {
+    const hm = (m) => (m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ''}` : `${m} min`);
     const mins = passes.reduce((sum, t) => sum + (t.min || 0), 0);
-    const time = mins >= 60 ? `${Math.floor(mins / 60)} h${mins % 60 ? ` ${mins % 60} min` : ''}` : mins ? `${mins} min` : '';
-    other.push(['Träning', `${passes.length} pass${time ? `, ${time}` : ''}`]);
+    const trainDays = keys.filter((k) => (entries[k].training || []).length);
+    tf.push(['Pass', `${passes.length} pass på ${dagar(trainDays.length)}`]);
+    if (mins) tf.push(['Sammanlagt', hm(mins)]);
+    // Vanligaste träningen, och hur mycket tid den fått
+    const byType = {};
+    for (const t of passes) {
+      const k = t.type.toLowerCase();
+      byType[k] = byType[k] || { name: t.type, n: 0, min: 0 };
+      byType[k].n++;
+      byType[k].min += t.min || 0;
+    }
+    const types = Object.values(byType).sort((x, y) => y.n - x.n || y.min - x.min);
+    tf.push(['Vanligast', `${types[0].name}, ${types[0].n} pass${types[0].min ? `, ${hm(types[0].min)}` : ''}`]);
+    if (types.length > 1) tf.push(['Per sort', joinNames(types.map((t) => `${t.name} ${t.n}`))]);
+    // Humöret på dagar med och utan träning, när det finns minst två dagar av varje
+    const moodOf = (list) => list.map((k) => entries[k].mood).filter(Boolean);
+    const withT = moodOf(trainDays);
+    const without = moodOf(keys.filter((k) => !(entries[k].training || []).length));
+    if (withT.length >= 2 && without.length >= 2) {
+      const avg = (v) => v.reduce((x, y) => x + y, 0) / v.length;
+      tf.push(['Humör', `${fmtDec(avg(withT))} med träning, ${fmtDec(avg(without))} utan`]);
+    }
   }
+  $('training-facts').innerHTML = tf.map(([k, v]) => `<dt>${k}</dt><dd>${escapeHtml(v)}</dd>`).join('');
+  $('st-training').hidden = !tf.length;
 
   // Underhållning under perioden
   const seen = { film: 0, serie: 0, bok: 0, spel: 0, forestallning: 0 };

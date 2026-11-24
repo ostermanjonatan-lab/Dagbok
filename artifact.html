@@ -2579,10 +2579,6 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .tr-del { width: 40px; height: 40px; display: grid; place-items: center; }
 .tr-del svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
 /* Träningen står på en egen rad ovanför humör, väder och personer */
-.post-training { line-height: 28px; }
-.post-training .pf-v { display: flex; height: auto; min-height: 28px; align-items: flex-start; font-size: 15px; }
-.post-training .pf-v svg { width: 19px; height: 19px; margin-top: 4.5px; }
-.post-training + .post-stats { margin-top: 0; }
 /* En tom rad mellan texten och informationen i flödet, som i läsläget */
 #list .post-training, #list .post-stats:not(.post-training + .post-stats) { margin-top: 28px; }
 /* Statistiken är uppdelad i Humör, Väder och Övrigt med en tydlig rubrik och en tunn linje emellan */
@@ -2591,6 +2587,29 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .stats .wx-stats { margin-top: 0; padding-top: 0; border-top: 0; }
 .stats .st-sec.wx-stats { margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--line); }
 #st-mood:first-child, .stats #st-mood { margin-top: 0; }
+/* Träning i flödet ser ut som en nummerlapp från ett lopp: vit lapp med ett färgat band
+   överst och fyra hål för säkerhetsnålar i hörnen. Minuterna står stort till höger. */
+.post-training { display: flex; flex-direction: column; gap: 8px; }
+.bib-wrap { filter: drop-shadow(0 0 .6px rgb(42 20 24 / .4)) drop-shadow(0 1.5px 1.5px rgb(42 20 24 / .12)); }
+.bib {
+  --hole: 2.6px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 12px 18px 8px;
+  border-radius: 3px;
+  background: linear-gradient(var(--accent) 0 5px, #fdfcf9 5px);
+  -webkit-mask: radial-gradient(circle at 9px 13px, #0000 var(--hole), #000 calc(var(--hole) + .5px)) top left / 51% 51% no-repeat, radial-gradient(circle at calc(100% - 9px) 13px, #0000 var(--hole), #000 calc(var(--hole) + .5px)) top right / 51% 51% no-repeat, radial-gradient(circle at 9px calc(100% - 9px), #0000 var(--hole), #000 calc(var(--hole) + .5px)) bottom left / 51% 51% no-repeat, radial-gradient(circle at calc(100% - 9px) calc(100% - 9px), #0000 var(--hole), #000 calc(var(--hole) + .5px)) bottom right / 51% 51% no-repeat;
+  mask: radial-gradient(circle at 9px 13px, #0000 var(--hole), #000 calc(var(--hole) + .5px)) top left / 51% 51% no-repeat, radial-gradient(circle at calc(100% - 9px) 13px, #0000 var(--hole), #000 calc(var(--hole) + .5px)) top right / 51% 51% no-repeat, radial-gradient(circle at 9px calc(100% - 9px), #0000 var(--hole), #000 calc(var(--hole) + .5px)) bottom left / 51% 51% no-repeat, radial-gradient(circle at calc(100% - 9px) calc(100% - 9px), #0000 var(--hole), #000 calc(var(--hole) + .5px)) bottom right / 51% 51% no-repeat;
+}
+.bib-ico svg { display: block; width: 24px; height: 24px; fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.bib-text { display: flex; flex-direction: column; min-width: 0; flex: 1; line-height: 1.25; }
+.bib-kind { font-size: 13px; color: var(--muted); }
+.bib-title { font-size: 16px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bib-min { display: flex; flex-direction: column; align-items: center; flex: none; min-width: 44px; font-size: 12px; line-height: 1; color: var(--muted); }
+.bib-min b { font-size: 24px; font-weight: 800; letter-spacing: -.02em; color: var(--text); font-variant-numeric: tabular-nums; margin-bottom: 2px; }
+.post-training + .post-stats { margin-top: 10px; }
 /* Underhållning i läsläget är samma biljett som i flödet */
 .reader-card .reader-film { display: block; margin: 4px 0 10px; }
 .reader-card .reader-film .post-film { display: flex; align-items: center; margin: 0; }
@@ -2804,6 +2823,10 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
         <dl class="facts" id="wx-facts"></dl>
         <h3 id="temp-title"></h3>
         <div class="trend" id="temp-trend"></div>
+      </section>
+      <section class="st-sec" id="st-training" hidden>
+        <h3 class="st-head">Träning</h3>
+        <dl class="facts" id="training-facts"></dl>
       </section>
       <section class="st-sec" id="st-other" hidden>
         <h3 class="st-head">Övrigt</h3>
@@ -5686,7 +5709,7 @@ function postHtml(k, e, today, searching, showMonth) {
       ${(e.media || []).map((f) => `<div class="post-film-wrap"><div class="post-film">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
         <span class="pf-text"><span class="pf-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</span><span class="pf-title">${escapeHtml(f.title || 'Utan titel')}</span></span>${f.rating ? starsHtml(f.rating) : ''}</div></div>`).join('')}
       ${postMedia(e.photos)}
-      ${e.training && e.training.length ? `<div class="post-training"><span class="pf-v"><svg viewBox="0 0 24 24" aria-hidden="true">${TRAINING_ICON}</svg>${escapeHtml(joinNames(e.training.map(trainingText)))}</span></div>` : ''}
+      ${e.training && e.training.length ? `<div class="post-training">${e.training.map((t) => `<div class="bib-wrap"><div class="bib" role="img" aria-label="${escapeHtml(trainingText(t))}"><span class="bib-ico" aria-hidden="true"><svg viewBox="0 0 24 24">${TRAINING_ICON}</svg></span><span class="bib-text"><span class="bib-kind">Träning</span><span class="bib-title">${escapeHtml(t.type)}</span></span>${t.min ? `<span class="bib-min"><b>${t.min}</b>min</span>` : ''}</div></div>`).join('')}</div>` : ''}
       ${foot.length ? `<div class="post-stats">${foot.join('')}</div>` : ''}
     </div>
   </article>`;
@@ -6911,13 +6934,37 @@ function renderStats() {
   const other = [];
   if (top && top[1] >= 2) other.push(['Oftast med', `${top[0]}, ${dagar(top[1])}`]);
 
-  // Träning under perioden: antal pass och den sammanlagda tiden
+  // Träning under perioden, under en egen rubrik
   const passes = keys.flatMap((k) => entries[k].training || []);
+  const tf = [];
   if (passes.length) {
+    const hm = (m) => (m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ''}` : `${m} min`);
     const mins = passes.reduce((sum, t) => sum + (t.min || 0), 0);
-    const time = mins >= 60 ? `${Math.floor(mins / 60)} h${mins % 60 ? ` ${mins % 60} min` : ''}` : mins ? `${mins} min` : '';
-    other.push(['Träning', `${passes.length} pass${time ? `, ${time}` : ''}`]);
+    const trainDays = keys.filter((k) => (entries[k].training || []).length);
+    tf.push(['Pass', `${passes.length} pass på ${dagar(trainDays.length)}`]);
+    if (mins) tf.push(['Sammanlagt', hm(mins)]);
+    // Vanligaste träningen, och hur mycket tid den fått
+    const byType = {};
+    for (const t of passes) {
+      const k = t.type.toLowerCase();
+      byType[k] = byType[k] || { name: t.type, n: 0, min: 0 };
+      byType[k].n++;
+      byType[k].min += t.min || 0;
+    }
+    const types = Object.values(byType).sort((x, y) => y.n - x.n || y.min - x.min);
+    tf.push(['Vanligast', `${types[0].name}, ${types[0].n} pass${types[0].min ? `, ${hm(types[0].min)}` : ''}`]);
+    if (types.length > 1) tf.push(['Per sort', joinNames(types.map((t) => `${t.name} ${t.n}`))]);
+    // Humöret på dagar med och utan träning, när det finns minst två dagar av varje
+    const moodOf = (list) => list.map((k) => entries[k].mood).filter(Boolean);
+    const withT = moodOf(trainDays);
+    const without = moodOf(keys.filter((k) => !(entries[k].training || []).length));
+    if (withT.length >= 2 && without.length >= 2) {
+      const avg = (v) => v.reduce((x, y) => x + y, 0) / v.length;
+      tf.push(['Humör', `${fmtDec(avg(withT))} med träning, ${fmtDec(avg(without))} utan`]);
+    }
   }
+  $('training-facts').innerHTML = tf.map(([k, v]) => `<dt>${k}</dt><dd>${escapeHtml(v)}</dd>`).join('');
+  $('st-training').hidden = !tf.length;
 
   // Underhållning under perioden
   const seen = { film: 0, serie: 0, bok: 0, spel: 0, forestallning: 0 };
