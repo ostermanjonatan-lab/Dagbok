@@ -2410,6 +2410,9 @@ body.band-top::before { background-color: var(--cloth-base); background-image: v
 .post .post-film-wrap { filter: drop-shadow(0 0 .6px rgb(42 20 24 / .45)) drop-shadow(0 1.5px 1.5px rgb(42 20 24 / .12)); }
 .post .post-film + .post-film, .post .post-film-wrap + .post-film-wrap { margin-top: 8px; }
 .post .post-film .stars { align-self: stretch; display: flex; align-items: center; padding-left: 14px; border-left: 1.5px dashed color-mix(in srgb, var(--muted) 45%, transparent); }
+/* På biljettens stub står stjärnan stor och betyget under */
+.post .post-film .stars { flex-direction: column; justify-content: center; width: 52px; flex: none; box-sizing: content-box; gap: 2px; font-size: 13px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.post .post-film .stars > span { width: 26px; height: 26px; }
 .post .post-film img { border-radius: 2px; }
 .post .pf-text { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
 .post .pf-title { font-weight: 600; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
