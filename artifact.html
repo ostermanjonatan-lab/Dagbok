@@ -2563,6 +2563,15 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .reader .reader-card .prose :is(p, h2, h3, ul, ol, li) { line-height: 28px; }
 /* Namnsdagen står liten och ljus, som en tryckt rad i almanackan */
 .reader-card .reader-names { margin: 0; line-height: 28px; font-size: 12.5px; color: color-mix(in srgb, var(--muted) 65%, transparent); }
+/* Bilderna i läsläget är samma gamla papperskopior som i flödet: raka hörn, vit kant
+   och en liten skugga, lite snett inklistrade */
+.reader-card .reader-photos { gap: 14px; margin: 6px 4px 12px 0; }
+.reader-card .reader-photos button { padding: 6px; border-radius: 0; background: #fff; box-shadow: 0 1px 1.5px rgb(42 20 24 / .22), 0 4px 8px -2px rgb(42 20 24 / .14); transform: none; }
+.reader-card .reader-photos button:nth-child(4n + 1) { rotate: -.8deg; }
+.reader-card .reader-photos button:nth-child(4n + 2) { rotate: .7deg; }
+.reader-card .reader-photos button:nth-child(4n + 3) { rotate: .4deg; }
+.reader-card .reader-photos button:nth-child(4n + 4) { rotate: -.5deg; }
+.reader-card .reader-photos img { border-radius: 0; }
 /* Underhållning i läsläget är samma biljett som i flödet */
 .reader-card .reader-film { display: block; margin: 4px 0 10px; }
 .reader-card .reader-film .post-film { display: flex; align-items: center; margin: 0; }
