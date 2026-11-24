@@ -2634,6 +2634,8 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .post-training .pf-v { display: flex; height: auto; min-height: 28px; align-items: flex-start; font-size: 15px; }
 .post-training .pf-v svg { width: 19px; height: 19px; margin-top: 4.5px; }
 .post-training + .post-stats { margin-top: 0; }
+/* En tom rad mellan texten och informationen i flödet, som i läsläget */
+#list .post-training, #list .post-stats:not(.post-training + .post-stats) { margin-top: 28px; }
 /* Underhållning i läsläget är samma biljett som i flödet */
 .reader-card .reader-film { display: block; margin: 4px 0 10px; }
 .reader-card .reader-film .post-film { display: flex; align-items: center; margin: 0; }
