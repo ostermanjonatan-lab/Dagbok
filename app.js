@@ -67,6 +67,7 @@ function normalize(e) {
       : null,
     photos: Array.isArray(e.photos) ? e.photos.filter((id) => /^[A-Za-z0-9_-]{8,64}$/.test(id)) : [],
     people: cleanPeople(e.people),
+    training: cleanTraining(e.training),
     mark: cleanMark(e.mark),
     // Egen text för märkningen, till exempel Farfars 90-årsfirande i stället för Födelsedag
     markText: cleanMark(e.mark) && typeof e.markText === 'string' ? e.markText.trim().slice(0, 80) : '',
@@ -563,6 +564,7 @@ function readForm() {
     star: !!(entries[current] && entries[current].star),
     photos: photos.slice(),
     people: people.slice(),
+    training: cleanTraining(training),
     media: currentMedia(),
   };
 }
@@ -588,6 +590,8 @@ function showDay(key) {
   renderPhotos();
   $('photo-msg').textContent = '';
   people = e && e.people ? e.people.slice() : [];
+  training = e && e.training ? e.training.map((t) => ({ ...t })) : [];
+  renderTraining();
   $('people-input').value = '';
   renderPeople();
   setDayMedia(e && e.media ? e.media : []);
@@ -621,7 +625,7 @@ function setStatus(text) { $('status').textContent = text; }
 function save() {
   saveTimer = null;
   const data = readForm();
-  if (!data.text && data.mood == null && !data.mark && !data.star && !data.photos.length && !data.people.length && !data.media.length) {
+  if (!data.text && data.mood == null && !data.mark && !data.star && !data.photos.length && !data.people.length && !data.training.length && !data.media.length) {
     if (!entries[current]) return;
     delete entries[current];
     persist();
@@ -867,6 +871,41 @@ $('f-mark').addEventListener('click', (ev) => {
 });
 setMark(null);
 
+/* Träning i dagsvyn: en rad per pass med vad och hur många minuter */
+let training = [];
+function renderTraining() {
+  const used = Object.values(entries).flatMap((e) => (e.training || []).map((t) => t.type));
+  $('training-kinds').innerHTML = [...new Set([...TRAINING_KINDS, ...used])].map((k) => `<option value="${escapeHtml(k)}">`).join('');
+  $('training-list').innerHTML = training.map((t, i) => `<div class="tr-row" data-i="${i}">
+    <input class="tr-type" list="training-kinds" maxlength="40" autocomplete="off" placeholder="Vad" aria-label="Träning" value="${escapeHtml(t.type)}">
+    <input class="tr-min" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="min" aria-label="Minuter" value="${t.min || ''}">
+    <button type="button" class="icon tr-del" aria-label="Ta bort träningen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>`).join('');
+}
+$('training-list').addEventListener('input', (ev) => {
+  const row = ev.target.closest('.tr-row');
+  if (!row) return;
+  const t = training[Number(row.dataset.i)];
+  if (ev.target.classList.contains('tr-type')) t.type = ev.target.value;
+  else {
+    ev.target.value = ev.target.value.replace(/\D/g, '').slice(0, 4);
+    t.min = Number(ev.target.value) || null;
+  }
+  scheduleSave();
+});
+$('training-list').addEventListener('click', (ev) => {
+  const del = ev.target.closest('.tr-del');
+  if (!del) return;
+  training.splice(Number(del.closest('.tr-row').dataset.i), 1);
+  renderTraining();
+  scheduleSave();
+});
+$('training-add').addEventListener('click', () => {
+  training.push({ type: '', min: null });
+  renderTraining();
+  $('training-list').lastElementChild.querySelector('.tr-type').focus();
+});
+
 function stepDay(dir) { go(`#/dag/${shiftKey(current, dir)}`); }
 
 /* Svep åt höger eller vänster för att byta dag i dagvyn och månad i kalendern */
@@ -1021,7 +1060,7 @@ function attachSwipe({ area, moving, skip, canNext, step, preview }) {
 attachSwipe({
   area: $('view-day'),
   moving: $('view-day'),
-  skip: '.photos, .fmt, .date-pop, .people-pick, .mark-pick, .film-list, .mood-slider',
+  skip: '.photos, .fmt, .date-pop, .people-pick, .mark-pick, .film-list, .training-list, .mood-slider',
   canNext: () => current < todayKey(),
   step: (dir) => stepDay(dir),
 });
@@ -1393,6 +1432,19 @@ function openMediaRow(b) {
 function cleanName(s) {
   return String(s).replace(/\s+/g, ' ').trim().slice(0, 40);
 }
+/* Träning: vad man gjorde och hur länge. Fylls i i dagsvyn och visas bara i läsläget. */
+function cleanTraining(list) {
+  const out = [];
+  for (const t of Array.isArray(list) ? list : []) {
+    const type = t && typeof t.type === 'string' ? t.type.trim().slice(0, 40) : '';
+    if (!type) continue;
+    const min = Math.round(Number(t.min));
+    out.push({ type, min: min >= 1 && min <= 1440 ? min : null });
+  }
+  return out.slice(0, 10);
+}
+const TRAINING_KINDS = ['Promenad', 'Löpning', 'Gym', 'Cykling', 'Simning', 'Yoga', 'Fotboll', 'Padel', 'Dans', 'Skidor'];
+
 function cleanPeople(list) {
   const out = [];
   for (const n of Array.isArray(list) ? list : []) {
@@ -2881,8 +2933,51 @@ function bigPhotos(list) {
 
 // Under sidan i läsläget: humöret som en liten skala, vädret och vem man var med
 const PEOPLE_TINTS = ['#c9826b', '#8aa37a', '#7f97b5', '#c2a35a', '#a58bb4', '#6fa3a0'];
-// Humör, väder och personer i läsläget, en rad var i blyerts som i flödet men utförligare
-function readerDetails(e) {
+/* Soluppgång och solnedgång räknas ut i appen från platsen som vädret använder,
+   med samma formel som almanackor (solens övre kant vid horisonten, med ljusbrytning) */
+function sunTimes(key, lat, lon) {
+  const rad = Math.PI / 180;
+  const [y, m, d] = key.split('-').map(Number);
+  const n = Math.round(Date.UTC(y, m - 1, d, 12) / 864e5 + 2440587.5 - 2451545 + 0.0008);
+  const js = n - lon / 360;
+  const M = (357.5291 + 0.98560028 * js) % 360;
+  const C = 1.9148 * Math.sin(M * rad) + 0.02 * Math.sin(2 * M * rad) + 0.0003 * Math.sin(3 * M * rad);
+  const L = (M + C + 180 + 102.9372) % 360;
+  const transit = 2451545 + js + 0.0053 * Math.sin(M * rad) - 0.0069 * Math.sin(2 * L * rad);
+  const dec = Math.asin(Math.sin(L * rad) * Math.sin(23.4397 * rad));
+  const cosW = (Math.sin(-0.833 * rad) - Math.sin(lat * rad) * Math.sin(dec)) / (Math.cos(lat * rad) * Math.cos(dec));
+  // Långt norrut går solen ibland inte upp, eller inte ner
+  if (cosW > 1) return { polar: 'night' };
+  if (cosW < -1) return { polar: 'day' };
+  const w = Math.acos(cosW) / rad / 360;
+  const at = (j) => new Date((j - 2440587.5) * 864e5);
+  return { rise: at(transit - w), set: at(transit + w) };
+}
+function savedPosition() {
+  try {
+    const p = JSON.parse(localStorage.getItem(POS_KEY) || 'null');
+    return p && typeof p.lat === 'number' && typeof p.lon === 'number' ? p : null;
+  } catch {
+    return null;
+  }
+}
+const SUNRISE_ICON = '<path d="M3 18h18M7 18a5 5 0 0 1 10 0M12 4v5M9.5 6.5 12 4l2.5 2.5M4.6 12.2l1.5 1M19.4 12.2l-1.5 1"/>';
+const SUNSET_ICON = '<path d="M3 18h18M7 18a5 5 0 0 1 10 0M12 4v5M9.5 6.5 12 9l2.5-2.5M4.6 12.2l1.5 1M19.4 12.2l-1.5 1"/>';
+const TRAINING_ICON = '<path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11"/>';
+function sunRow(key) {
+  const pos = savedPosition();
+  if (!pos) return '';
+  const s = sunTimes(key, pos.lat, pos.lon);
+  if (s.polar) {
+    const t = s.polar === 'night' ? 'Solen går inte upp' : 'Solen går inte ner';
+    return `<div class="rd-row"><svg viewBox="0 0 24 24" aria-hidden="true">${s.polar === 'night' ? SUNSET_ICON : SUNRISE_ICON}</svg><span class="rd-v">${t}</span></div>`;
+  }
+  return `<div class="rd-row rd-sun" role="img" aria-label="Soluppgång ${timeFmt.format(s.rise)}, solnedgång ${timeFmt.format(s.set)}"><span class="rd-pair"><svg viewBox="0 0 24 24" aria-hidden="true">${SUNRISE_ICON}</svg><span class="rd-v">${timeFmt.format(s.rise)}</span></span><span class="rd-pair"><svg viewBox="0 0 24 24" aria-hidden="true">${SUNSET_ICON}</svg><span class="rd-v">${timeFmt.format(s.set)}</span></span></div>`;
+}
+const trainingText = (t) => (t.min ? `${t.type} ${t.min} min` : t.type);
+
+// Humör, väder, personer, träning och solen i läsläget, en rad var
+function readerDetails(e, key) {
   const rows = [];
   if (e.mood) {
     rows.push(`<div class="rd-row" role="img" aria-label="Humör ${e.mood} av 10">${moodFace(e.mood)}<span class="rd-v">${e.mood} av 10</span></div>`);
@@ -2897,7 +2992,11 @@ function readerDetails(e) {
   if (e.people && e.people.length) {
     rows.push(`<div class="rd-row"><svg viewBox="0 0 24 24" aria-hidden="true">${PEOPLE_ICON}</svg><span class="rd-v">${escapeHtml(joinNames(e.people))}</span></div>`);
   }
-  return rows.length ? `<div class="rd-details">${rows.join('')}</div>` : '';
+  if (e.training && e.training.length) {
+    rows.push(`<div class="rd-row"><svg viewBox="0 0 24 24" aria-hidden="true">${TRAINING_ICON}</svg><span class="rd-v">${escapeHtml(joinNames(e.training.map(trainingText)))}</span></div>`);
+  }
+  rows.push(sunRow(key));
+  return rows.join('') ? `<div class="rd-details">${rows.join('')}</div>` : '';
 }
 
 function readerInfo(e) {
@@ -2949,7 +3048,7 @@ function readerPane(key) {
           <span class="pf-text"><span class="pf-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</span><span class="pf-title">${escapeHtml(f.title || 'Utan titel')}</span></span>${f.rating ? starsHtml(f.rating) : ''}</span></button>
 `).join('')}
         ${bigPhotos(e.photos)}
-        ${readerDetails(e)}
+        ${readerDetails(e, key)}
         <div class="reader-foot"><button type="button" class="link reader-edit" data-key="${key}">Redigera dagen</button></div>`
     : `${readerTop(key)}
         <p class="empty">Inget skrivet den här dagen.</p>
