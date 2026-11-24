@@ -6988,7 +6988,7 @@ function renderWeatherStats(keys) {
       const avg = avgOf(m);
       return `<span class="wx-mood" role="img" aria-label="${WX_NAME[g]}, snitthumör ${fmtDec(avg)}" title="${WX_NAME[g]}"><svg viewBox="0 0 24 24" aria-hidden="true">${WEATHER_ICONS[g]}</svg><i style="--m: var(--m${Math.min(10, Math.max(1, Math.round(avg)))})"></i>${fmtDec(avg)}</span>`;
     }).join('');
-    facts.push(['Humör och väder', html, true]);
+    facts.push(['Humör efter väder', html, true]);
   }
   $('wx-facts').innerHTML = facts.map(([k, v, raw]) => `<dt>${k}</dt><dd${raw ? ' class="wx-moods"' : ''}>${raw ? v : escapeHtml(v)}</dd>`).join('');
   renderTempTrend();
