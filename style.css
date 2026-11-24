@@ -2629,9 +2629,6 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .tr-row { display: grid; grid-template-columns: minmax(0, 1fr) 72px 40px; gap: 6px; align-items: center; }
 .tr-del { width: 40px; height: 40px; display: grid; place-items: center; }
 .tr-del svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
-/* Soluppgång och solnedgång bredvid varandra på samma rad i läsläget */
-.rd-sun { gap: 18px; }
-.rd-pair { display: inline-flex; align-items: flex-start; gap: 8px; }
 /* Underhållning i läsläget är samma biljett som i flödet */
 .reader-card .reader-film { display: block; margin: 4px 0 10px; }
 .reader-card .reader-film .post-film { display: flex; align-items: center; margin: 0; }

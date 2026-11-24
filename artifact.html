@@ -2578,9 +2578,6 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .tr-row { display: grid; grid-template-columns: minmax(0, 1fr) 72px 40px; gap: 6px; align-items: center; }
 .tr-del { width: 40px; height: 40px; display: grid; place-items: center; }
 .tr-del svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
-/* Soluppgång och solnedgång bredvid varandra på samma rad i läsläget */
-.rd-sun { gap: 18px; }
-.rd-pair { display: inline-flex; align-items: flex-start; gap: 8px; }
 /* Underhållning i läsläget är samma biljett som i flödet */
 .reader-card .reader-film { display: block; margin: 4px 0 10px; }
 .reader-card .reader-film .post-film { display: flex; align-items: center; margin: 0; }
@@ -6502,42 +6499,10 @@ function bigPhotos(list) {
 
 // Under sidan i läsläget: humöret som en liten skala, vädret och vem man var med
 const PEOPLE_TINTS = ['#c9826b', '#8aa37a', '#7f97b5', '#c2a35a', '#a58bb4', '#6fa3a0'];
-/* Soluppgång och solnedgång räknas ut i appen,
-   med samma formel som almanackor (solens övre kant vid horisonten, med ljusbrytning) */
-function sunTimes(key, lat, lon) {
-  const rad = Math.PI / 180;
-  const [y, m, d] = key.split('-').map(Number);
-  const n = Math.round(Date.UTC(y, m - 1, d, 12) / 864e5 + 2440587.5 - 2451545 + 0.0008);
-  const js = n - lon / 360;
-  const M = (357.5291 + 0.98560028 * js) % 360;
-  const C = 1.9148 * Math.sin(M * rad) + 0.02 * Math.sin(2 * M * rad) + 0.0003 * Math.sin(3 * M * rad);
-  const L = (M + C + 180 + 102.9372) % 360;
-  const transit = 2451545 + js + 0.0053 * Math.sin(M * rad) - 0.0069 * Math.sin(2 * L * rad);
-  const dec = Math.asin(Math.sin(L * rad) * Math.sin(23.4397 * rad));
-  const cosW = (Math.sin(-0.833 * rad) - Math.sin(lat * rad) * Math.sin(dec)) / (Math.cos(lat * rad) * Math.cos(dec));
-  // Långt norrut går solen ibland inte upp, eller inte ner
-  if (cosW > 1) return { polar: 'night' };
-  if (cosW < -1) return { polar: 'day' };
-  const w = Math.acos(cosW) / rad / 360;
-  const at = (j) => new Date((j - 2440587.5) * 864e5);
-  return { rise: at(transit - w), set: at(transit + w) };
-}
-const SUNRISE_ICON = '<path d="M3 18h18M7 18a5 5 0 0 1 10 0M12 4v5M9.5 6.5 12 4l2.5 2.5M4.6 12.2l1.5 1M19.4 12.2l-1.5 1"/>';
-const SUNSET_ICON = '<path d="M3 18h18M7 18a5 5 0 0 1 10 0M12 4v5M9.5 6.5 12 9l2.5-2.5M4.6 12.2l1.5 1M19.4 12.2l-1.5 1"/>';
 const TRAINING_ICON = '<path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11"/>';
-// Tiderna räknas alltid för Uppsala
-const SUN_PLACE = { lat: 59.86, lon: 17.64 };
-function sunRow(key) {
-  const s = sunTimes(key, SUN_PLACE.lat, SUN_PLACE.lon);
-  if (s.polar) {
-    const t = s.polar === 'night' ? 'Solen går inte upp' : 'Solen går inte ner';
-    return `<div class="rd-row"><svg viewBox="0 0 24 24" aria-hidden="true">${s.polar === 'night' ? SUNSET_ICON : SUNRISE_ICON}</svg><span class="rd-v">${t}</span></div>`;
-  }
-  return `<div class="rd-row rd-sun" role="img" aria-label="Soluppgång ${timeFmt.format(s.rise)}, solnedgång ${timeFmt.format(s.set)}"><span class="rd-pair"><svg viewBox="0 0 24 24" aria-hidden="true">${SUNRISE_ICON}</svg><span class="rd-v">${timeFmt.format(s.rise)}</span></span><span class="rd-pair"><svg viewBox="0 0 24 24" aria-hidden="true">${SUNSET_ICON}</svg><span class="rd-v">${timeFmt.format(s.set)}</span></span></div>`;
-}
 const trainingText = (t) => (t.min ? `${t.type} ${t.min} min` : t.type);
 
-// Humör, väder, personer, träning och solen i läsläget, en rad var
+// Humör, väder, personer och träning i läsläget, en rad var
 function readerDetails(e, key) {
   const rows = [];
   if (e.mood) {
@@ -6556,8 +6521,7 @@ function readerDetails(e, key) {
   if (e.training && e.training.length) {
     rows.push(`<div class="rd-row"><svg viewBox="0 0 24 24" aria-hidden="true">${TRAINING_ICON}</svg><span class="rd-v">${escapeHtml(joinNames(e.training.map(trainingText)))}</span></div>`);
   }
-  rows.push(sunRow(key));
-  return rows.join('') ? `<div class="rd-details">${rows.join('')}</div>` : '';
+  return rows.length ? `<div class="rd-details">${rows.join('')}</div>` : '';
 }
 
 function readerInfo(e) {
