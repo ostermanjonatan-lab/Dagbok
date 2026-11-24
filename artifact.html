@@ -2578,6 +2578,11 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .tr-row { display: grid; grid-template-columns: minmax(0, 1fr) 72px 40px; gap: 6px; align-items: center; }
 .tr-del { width: 40px; height: 40px; display: grid; place-items: center; }
 .tr-del svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+/* Träningen står på en egen rad ovanför humör, väder och personer */
+.post-training { line-height: 28px; }
+.post-training .pf-v { display: flex; height: auto; min-height: 28px; align-items: flex-start; font-size: 15px; }
+.post-training .pf-v svg { width: 19px; height: 19px; margin-top: 4.5px; }
+.post-training + .post-stats { margin-top: 0; }
 /* Underhållning i läsläget är samma biljett som i flödet */
 .reader-card .reader-film { display: block; margin: 4px 0 10px; }
 .reader-card .reader-film .post-film { display: flex; align-items: center; margin: 0; }
@@ -5665,6 +5670,7 @@ function postHtml(k, e, today, searching, showMonth) {
       ${(e.media || []).map((f) => `<div class="post-film-wrap"><div class="post-film">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
         <span class="pf-text"><span class="pf-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</span><span class="pf-title">${escapeHtml(f.title || 'Utan titel')}</span></span>${f.rating ? starsHtml(f.rating) : ''}</div></div>`).join('')}
       ${postMedia(e.photos)}
+      ${e.training && e.training.length ? `<div class="post-training"><span class="pf-v"><svg viewBox="0 0 24 24" aria-hidden="true">${TRAINING_ICON}</svg>${escapeHtml(joinNames(e.training.map(trainingText)))}</span></div>` : ''}
       ${foot.length ? `<div class="post-stats">${foot.join('')}</div>` : ''}
     </div>
   </article>`;
@@ -6508,6 +6514,9 @@ function readerDetails(e, key) {
   if (e.mood) {
     rows.push(`<div class="rd-row" role="img" aria-label="Humör ${e.mood} av 10">${moodFace(e.mood)}<span class="rd-v">${e.mood} av 10</span></div>`);
   }
+  if (e.training && e.training.length) {
+    rows.push(`<div class="rd-row"><svg viewBox="0 0 24 24" aria-hidden="true">${TRAINING_ICON}</svg><span class="rd-v">${escapeHtml(joinNames(e.training.map(trainingText)))}</span></div>`);
+  }
   if (e.weather) {
     const w = e.weather;
     const g = weatherGroup(w.code);
@@ -6517,9 +6526,6 @@ function readerDetails(e, key) {
   }
   if (e.people && e.people.length) {
     rows.push(`<div class="rd-row"><svg viewBox="0 0 24 24" aria-hidden="true">${PEOPLE_ICON}</svg><span class="rd-v">${escapeHtml(joinNames(e.people))}</span></div>`);
-  }
-  if (e.training && e.training.length) {
-    rows.push(`<div class="rd-row"><svg viewBox="0 0 24 24" aria-hidden="true">${TRAINING_ICON}</svg><span class="rd-v">${escapeHtml(joinNames(e.training.map(trainingText)))}</span></div>`);
   }
   return rows.length ? `<div class="rd-details">${rows.join('')}</div>` : '';
 }

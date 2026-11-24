@@ -2102,6 +2102,7 @@ function postHtml(k, e, today, searching, showMonth) {
       ${(e.media || []).map((f) => `<div class="post-film-wrap"><div class="post-film">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
         <span class="pf-text"><span class="pf-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</span><span class="pf-title">${escapeHtml(f.title || 'Utan titel')}</span></span>${f.rating ? starsHtml(f.rating) : ''}</div></div>`).join('')}
       ${postMedia(e.photos)}
+      ${e.training && e.training.length ? `<div class="post-training"><span class="pf-v"><svg viewBox="0 0 24 24" aria-hidden="true">${TRAINING_ICON}</svg>${escapeHtml(joinNames(e.training.map(trainingText)))}</span></div>` : ''}
       ${foot.length ? `<div class="post-stats">${foot.join('')}</div>` : ''}
     </div>
   </article>`;
@@ -2942,6 +2943,9 @@ function readerDetails(e, key) {
   if (e.mood) {
     rows.push(`<div class="rd-row" role="img" aria-label="Humör ${e.mood} av 10">${moodFace(e.mood)}<span class="rd-v">${e.mood} av 10</span></div>`);
   }
+  if (e.training && e.training.length) {
+    rows.push(`<div class="rd-row"><svg viewBox="0 0 24 24" aria-hidden="true">${TRAINING_ICON}</svg><span class="rd-v">${escapeHtml(joinNames(e.training.map(trainingText)))}</span></div>`);
+  }
   if (e.weather) {
     const w = e.weather;
     const g = weatherGroup(w.code);
@@ -2951,9 +2955,6 @@ function readerDetails(e, key) {
   }
   if (e.people && e.people.length) {
     rows.push(`<div class="rd-row"><svg viewBox="0 0 24 24" aria-hidden="true">${PEOPLE_ICON}</svg><span class="rd-v">${escapeHtml(joinNames(e.people))}</span></div>`);
-  }
-  if (e.training && e.training.length) {
-    rows.push(`<div class="rd-row"><svg viewBox="0 0 24 24" aria-hidden="true">${TRAINING_ICON}</svg><span class="rd-v">${escapeHtml(joinNames(e.training.map(trainingText)))}</span></div>`);
   }
   return rows.length ? `<div class="rd-details">${rows.join('')}</div>` : '';
 }
