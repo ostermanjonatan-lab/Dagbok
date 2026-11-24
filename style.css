@@ -2614,7 +2614,9 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .reader .reader-card .prose :is(p, h2, h3, ul, ol, li) { line-height: 28px; }
 /* Namnsdagen står liten och ljus, som en tryckt rad i almanackan */
 .reader-card .reader-names { margin: 0; line-height: 28px; font-size: 12.5px; color: color-mix(in srgb, var(--muted) 65%, transparent); }
-.reader-card .reader-film { margin: 0 0 6px; }
+/* Underhållning i läsläget är samma biljett som i flödet */
+.reader-card .reader-film { display: block; margin: 4px 0 10px; }
+.reader-card .reader-film .post-film { display: flex; align-items: center; margin: 0; }
 /* Detaljerna står en per rad på linjerna, i blyerts */
 .rd-details { margin-top: 0; }
 .rd-row { display: flex; align-items: flex-start; gap: 8px; min-height: 28px; color: var(--pencil); }

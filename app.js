@@ -2945,8 +2945,8 @@ function readerPane(key) {
   const margin = `<div class="post-margin"><span class="when"><b>${d.getDate()}</b><span>${WEEKDAY_CAP[d.getDay()].slice(0, 3).toLowerCase()}</span></span></div>`;
   const body = e ? `${readerTop(key)}
         ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
-        ${(e.media || []).map((f, i) => `<button type="button" class="reader-film" data-key="${key}" data-i="${i}">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
-          <div><div class="fs-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</div><div class="rf-title">${escapeHtml(f.title || 'Utan titel')}</div>${f.rating ? starsHtml(f.rating) : ''}</div></button>
+        ${(e.media || []).map((f, i) => `<button type="button" class="reader-film post-film-wrap" data-key="${key}" data-i="${i}"><span class="post-film">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
+          <span class="pf-text"><span class="pf-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</span><span class="pf-title">${escapeHtml(f.title || 'Utan titel')}</span></span>${f.rating ? starsHtml(f.rating) : ''}</span></button>
 `).join('')}
         ${bigPhotos(e.photos)}
         ${readerDetails(e)}

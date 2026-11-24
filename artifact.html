@@ -2563,7 +2563,9 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .reader .reader-card .prose :is(p, h2, h3, ul, ol, li) { line-height: 28px; }
 /* Namnsdagen står liten och ljus, som en tryckt rad i almanackan */
 .reader-card .reader-names { margin: 0; line-height: 28px; font-size: 12.5px; color: color-mix(in srgb, var(--muted) 65%, transparent); }
-.reader-card .reader-film { margin: 0 0 6px; }
+/* Underhållning i läsläget är samma biljett som i flödet */
+.reader-card .reader-film { display: block; margin: 4px 0 10px; }
+.reader-card .reader-film .post-film { display: flex; align-items: center; margin: 0; }
 /* Detaljerna står en per rad på linjerna, i blyerts */
 .rd-details { margin-top: 0; }
 .rd-row { display: flex; align-items: flex-start; gap: 8px; min-height: 28px; color: var(--pencil); }
@@ -6488,8 +6490,8 @@ function readerPane(key) {
   const margin = `<div class="post-margin"><span class="when"><b>${d.getDate()}</b><span>${WEEKDAY_CAP[d.getDay()].slice(0, 3).toLowerCase()}</span></span></div>`;
   const body = e ? `${readerTop(key)}
         ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
-        ${(e.media || []).map((f, i) => `<button type="button" class="reader-film" data-key="${key}" data-i="${i}">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
-          <div><div class="fs-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</div><div class="rf-title">${escapeHtml(f.title || 'Utan titel')}</div>${f.rating ? starsHtml(f.rating) : ''}</div></button>
+        ${(e.media || []).map((f, i) => `<button type="button" class="reader-film post-film-wrap" data-key="${key}" data-i="${i}"><span class="post-film">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
+          <span class="pf-text"><span class="pf-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</span><span class="pf-title">${escapeHtml(f.title || 'Utan titel')}</span></span>${f.rating ? starsHtml(f.rating) : ''}</span></button>
 `).join('')}
         ${bigPhotos(e.photos)}
         ${readerDetails(e)}
