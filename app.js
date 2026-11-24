@@ -2102,7 +2102,7 @@ function postHtml(k, e, today, searching, showMonth) {
       ${(e.media || []).map((f) => `<div class="post-film-wrap"><div class="post-film">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
         <span class="pf-text"><span class="pf-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</span><span class="pf-title">${escapeHtml(f.title || 'Utan titel')}</span></span>${f.rating ? starsHtml(f.rating) : ''}</div></div>`).join('')}
       ${postMedia(e.photos)}
-      ${e.training && e.training.length ? `<div class="post-training">${e.training.map((t) => `<div class="bib-wrap"><div class="bib" role="img" aria-label="${escapeHtml(trainingText(t))}"><span class="bib-ico" aria-hidden="true"><svg viewBox="0 0 24 24">${TRAINING_ICON}</svg></span><span class="bib-text"><span class="bib-kind">Träning</span><span class="bib-title">${escapeHtml(t.type)}</span></span>${t.min ? `<span class="bib-min"><b>${t.min}</b>min</span>` : ''}</div></div>`).join('')}</div>` : ''}
+      ${e.training && e.training.length ? `<div class="post-training">${e.training.map((t) => `<div class="bib-wrap"><div class="bib" role="img" aria-label="${escapeHtml(trainingText(t))}"><span class="bib-ico" aria-hidden="true"><svg viewBox="0 0 24 24">${trainingIcon(t.type)}</svg></span><span class="bib-text"><span class="bib-kind">Träning</span><span class="bib-title">${escapeHtml(t.type)}</span></span>${t.min ? `<span class="bib-min"><b>${t.min}</b>min</span>` : ''}</div></div>`).join('')}</div>` : ''}
       ${foot.length ? `<div class="post-stats">${foot.join('')}</div>` : ''}
     </div>
   </article>`;
@@ -2936,6 +2936,23 @@ function bigPhotos(list) {
 const PEOPLE_TINTS = ['#c9826b', '#8aa37a', '#7f97b5', '#c2a35a', '#a58bb4', '#6fa3a0'];
 const TRAINING_ICON = '<path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11"/>';
 const trainingText = (t) => (t.min ? `${t.type} ${t.min} min` : t.type);
+// Ikoner för träningssorterna. Sorten känns igen på ord i namnet, annars blir det en hantel.
+const TRAINING_ICONS = [
+  [/löp|jogg/, '<circle cx="15" cy="4.5" r="1.8"/><path d="M13.6 8 10 10.4 7.2 9.6M13.6 8l-2 5 3.8 2.6-1.4 5.1M11.6 13l-2.4 2.8H5.5M13.6 8l2.3 3.4h3.4"/>'],
+  [/promenad|gå|vandr/, '<circle cx="12.5" cy="4.5" r="1.8"/><path d="M12 8 10.8 13.2l2.7 3.3V21M10.8 13.2 8.4 20.5M12 8.6 8.8 11l-.8 3M12.2 8.8l2.2 2.9 2.8.6"/>'],
+  [/cykl|spinning/, '<circle cx="6" cy="16.5" r="3.5"/><circle cx="18" cy="16.5" r="3.5"/><path d="M6 16.5 9.6 9.5h6.2L18 16.5M9.6 9.5l3 7 3.2-7M8.4 6.8h2.6M15 9.5l-.8-2.7h2.4"/>'],
+  [/sim/, '<circle cx="16.5" cy="7.5" r="1.8"/><path d="M5.5 12.5 9.5 9l3.5 2.3 2.6-1.3M3 16.5c1.5 0 2.3-1 3.8-1s2.2 1 3.7 1 2.3-1 3.8-1 2.2 1 3.7 1 2.3-1 3-1M3 20c1.5 0 2.3-1 3.8-1s2.2 1 3.7 1 2.3-1 3.8-1 2.2 1 3.7 1 2.3-1 3-1"/>'],
+  [/yoga|pilates|stretch/, '<circle cx="12" cy="4.5" r="1.8"/><path d="M12 7.6v5.6M5.5 9.6l6.5 1.6 6.5-1.6M12 13.2l-5.2 5.6h10.4z"/>'],
+  [/fotboll/, '<circle cx="12" cy="12" r="8.5"/><path d="M12 8.6l3.2 2.3-1.2 3.8h-4l-1.2-3.8zM12 8.6V3.5M15.2 10.9l4.7-1.5M14 14.7l2.9 4M10 14.7l-2.9 4M8.8 10.9 4.1 9.4"/>'],
+  [/padel|tennis|badminton|squash/, '<ellipse cx="9.8" cy="9.3" rx="5.3" ry="5.8" transform="rotate(-45 9.8 9.3)"/><path d="M13.6 13.1 19.5 19M8 8h.01M11 8h.01M9.5 10.5h.01M12 11h.01M8 11.5h.01" stroke-width="1.9"/><circle cx="18.2" cy="6" r="1.6"/>'],
+  [/dans|zumba/, '<path d="M9 18V6.5l10-2.5V16"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/><path d="M9 10l10-2.5"/>'],
+  [/skid|längd|slalom/, '<circle cx="15.5" cy="4.5" r="1.8"/><path d="M14.4 7.8 11.4 11l3 2.6-2.2 5M11.4 11 8.2 13.8M14.4 7.8l3.2 2.6M3 20.6l18-3.2M8.2 19.4l2.4-8.6"/>'],
+];
+function trainingIcon(type) {
+  const t = (type || '').toLowerCase();
+  const hit = TRAINING_ICONS.find(([re]) => re.test(t));
+  return hit ? hit[1] : TRAINING_ICON;
+}
 
 // Humör, väder, personer och träning i läsläget, en rad var
 function readerDetails(e, key) {
@@ -2944,7 +2961,8 @@ function readerDetails(e, key) {
     rows.push(`<div class="rd-row" role="img" aria-label="Humör ${e.mood} av 10">${moodFace(e.mood)}<span class="rd-v">${e.mood} av 10</span></div>`);
   }
   if (e.training && e.training.length) {
-    rows.push(`<div class="rd-row"><svg viewBox="0 0 24 24" aria-hidden="true">${TRAINING_ICON}</svg><span class="rd-v">${escapeHtml(joinNames(e.training.map(trainingText)))}</span></div>`);
+    // En rad per pass, med ikonen för sorten
+    for (const t of e.training) rows.push(`<div class="rd-row"><svg viewBox="0 0 24 24" aria-hidden="true">${trainingIcon(t.type)}</svg><span class="rd-v">${escapeHtml(trainingText(t))}</span></div>`);
   }
   if (e.weather) {
     const w = e.weather;
