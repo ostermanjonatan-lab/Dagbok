@@ -136,6 +136,8 @@
         <h2 id="month-stats-title"></h2>
         <p class="empty" id="stats-empty" hidden></p>
         <div id="stats-body">
+        <section class="st-sec" id="st-mood">
+        <h3 class="st-head">Humör</h3>
         <dl class="facts" id="facts"></dl>
         <div class="distr" id="distr" role="img">
           <div class="distr-bar" id="distr-bar"></div>
@@ -144,13 +146,18 @@
         <h3 id="trend-title">Snitthumör, senaste 12 månaderna</h3>
         <div class="trend" id="trend"></div>
         <p class="trend-read" id="trend-read" aria-live="polite"></p>
-        <div class="wx-stats" id="wx-stats" hidden>
-          <h3>Väder</h3>
+        </section>
+        <section class="st-sec wx-stats" id="wx-stats" hidden>
+          <h3 class="st-head">Väder</h3>
           <div class="wx-chips" id="wx-chips"></div>
           <dl class="facts" id="wx-facts"></dl>
           <h3 id="temp-title"></h3>
           <div class="trend" id="temp-trend"></div>
-        </div>
+        </section>
+        <section class="st-sec" id="st-other" hidden>
+          <h3 class="st-head">Övrigt</h3>
+          <dl class="facts" id="other-facts"></dl>
+        </section>
         </div>
       </section>
     </section>

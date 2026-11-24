@@ -3320,7 +3320,17 @@ function renderStats() {
     for (const n of entries[k].people || []) met[n] = (met[n] || 0) + 1;
   }
   const top = Object.entries(met).sort((a, b) => b[1] - a[1])[0];
-  if (top && top[1] >= 2) facts.push(['Oftast med', `${top[0]}, ${dagar(top[1])}`]);
+  // Övrigt: personer, träning och underhållning under perioden
+  const other = [];
+  if (top && top[1] >= 2) other.push(['Oftast med', `${top[0]}, ${dagar(top[1])}`]);
+
+  // Träning under perioden: antal pass och den sammanlagda tiden
+  const passes = keys.flatMap((k) => entries[k].training || []);
+  if (passes.length) {
+    const mins = passes.reduce((sum, t) => sum + (t.min || 0), 0);
+    const time = mins >= 60 ? `${Math.floor(mins / 60)} h${mins % 60 ? ` ${mins % 60} min` : ''}` : mins ? `${mins} min` : '';
+    other.push(['Träning', `${passes.length} pass${time ? `, ${time}` : ''}`]);
+  }
 
   // Underhållning under perioden
   const seen = { film: 0, serie: 0, bok: 0, spel: 0, forestallning: 0 };
@@ -3329,7 +3339,9 @@ function renderStats() {
   }
   const seenText = Object.entries(seen).filter(([, n]) => n)
     .map(([kind, n]) => `${n} ${KIND_COUNT[kind][n === 1 ? 0 : 1]}`);
-  if (seenText.length) facts.push(['Underhållning', joinNames(seenText)]);
+  if (seenText.length) other.push(['Underhållning', joinNames(seenText)]);
+  $('other-facts').innerHTML = other.map(([k, v]) => `<dt>${k}</dt><dd>${escapeHtml(v)}</dd>`).join('');
+  $('st-other').hidden = !other.length;
 
 
   $('facts').innerHTML = facts.map(([k, v]) => `<dt>${k}</dt><dd>${escapeHtml(v)}</dd>`).join('');

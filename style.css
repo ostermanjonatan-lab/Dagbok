@@ -2636,6 +2636,12 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .post-training + .post-stats { margin-top: 0; }
 /* En tom rad mellan texten och informationen i flödet, som i läsläget */
 #list .post-training, #list .post-stats:not(.post-training + .post-stats) { margin-top: 28px; }
+/* Statistiken är uppdelad i Humör, Väder och Övrigt med en tydlig rubrik och en tunn linje emellan */
+.stats .st-sec + .st-sec { margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--line); }
+.stats .st-head { margin: 0 0 10px; font-size: 18px; font-weight: 700; color: var(--text); }
+.stats .wx-stats { margin-top: 0; padding-top: 0; border-top: 0; }
+.stats .st-sec.wx-stats { margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--line); }
+#st-mood:first-child, .stats #st-mood { margin-top: 0; }
 /* Underhållning i läsläget är samma biljett som i flödet */
 .reader-card .reader-film { display: block; margin: 4px 0 10px; }
 .reader-card .reader-film .post-film { display: flex; align-items: center; margin: 0; }

@@ -2585,6 +2585,12 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .post-training + .post-stats { margin-top: 0; }
 /* En tom rad mellan texten och informationen i flödet, som i läsläget */
 #list .post-training, #list .post-stats:not(.post-training + .post-stats) { margin-top: 28px; }
+/* Statistiken är uppdelad i Humör, Väder och Övrigt med en tydlig rubrik och en tunn linje emellan */
+.stats .st-sec + .st-sec { margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--line); }
+.stats .st-head { margin: 0 0 10px; font-size: 18px; font-weight: 700; color: var(--text); }
+.stats .wx-stats { margin-top: 0; padding-top: 0; border-top: 0; }
+.stats .st-sec.wx-stats { margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--line); }
+#st-mood:first-child, .stats #st-mood { margin-top: 0; }
 /* Underhållning i läsläget är samma biljett som i flödet */
 .reader-card .reader-film { display: block; margin: 4px 0 10px; }
 .reader-card .reader-film .post-film { display: flex; align-items: center; margin: 0; }
@@ -2781,6 +2787,8 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
       <h2 id="month-stats-title"></h2>
       <p class="empty" id="stats-empty" hidden></p>
       <div id="stats-body">
+      <section class="st-sec" id="st-mood">
+      <h3 class="st-head">Humör</h3>
       <dl class="facts" id="facts"></dl>
       <div class="distr" id="distr" role="img">
         <div class="distr-bar" id="distr-bar"></div>
@@ -2789,13 +2797,18 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
       <h3 id="trend-title">Snitthumör, senaste 12 månaderna</h3>
       <div class="trend" id="trend"></div>
       <p class="trend-read" id="trend-read" aria-live="polite"></p>
-      <div class="wx-stats" id="wx-stats" hidden>
-        <h3>Väder</h3>
+      </section>
+      <section class="st-sec wx-stats" id="wx-stats" hidden>
+        <h3 class="st-head">Väder</h3>
         <div class="wx-chips" id="wx-chips"></div>
         <dl class="facts" id="wx-facts"></dl>
         <h3 id="temp-title"></h3>
         <div class="trend" id="temp-trend"></div>
-      </div>
+      </section>
+      <section class="st-sec" id="st-other" hidden>
+        <h3 class="st-head">Övrigt</h3>
+        <dl class="facts" id="other-facts"></dl>
+      </section>
       </div>
     </section>
   </section>
@@ -6894,7 +6907,17 @@ function renderStats() {
     for (const n of entries[k].people || []) met[n] = (met[n] || 0) + 1;
   }
   const top = Object.entries(met).sort((a, b) => b[1] - a[1])[0];
-  if (top && top[1] >= 2) facts.push(['Oftast med', `${top[0]}, ${dagar(top[1])}`]);
+  // Övrigt: personer, träning och underhållning under perioden
+  const other = [];
+  if (top && top[1] >= 2) other.push(['Oftast med', `${top[0]}, ${dagar(top[1])}`]);
+
+  // Träning under perioden: antal pass och den sammanlagda tiden
+  const passes = keys.flatMap((k) => entries[k].training || []);
+  if (passes.length) {
+    const mins = passes.reduce((sum, t) => sum + (t.min || 0), 0);
+    const time = mins >= 60 ? `${Math.floor(mins / 60)} h${mins % 60 ? ` ${mins % 60} min` : ''}` : mins ? `${mins} min` : '';
+    other.push(['Träning', `${passes.length} pass${time ? `, ${time}` : ''}`]);
+  }
 
   // Underhållning under perioden
   const seen = { film: 0, serie: 0, bok: 0, spel: 0, forestallning: 0 };
@@ -6903,7 +6926,9 @@ function renderStats() {
   }
   const seenText = Object.entries(seen).filter(([, n]) => n)
     .map(([kind, n]) => `${n} ${KIND_COUNT[kind][n === 1 ? 0 : 1]}`);
-  if (seenText.length) facts.push(['Underhållning', joinNames(seenText)]);
+  if (seenText.length) other.push(['Underhållning', joinNames(seenText)]);
+  $('other-facts').innerHTML = other.map(([k, v]) => `<dt>${k}</dt><dd>${escapeHtml(v)}</dd>`).join('');
+  $('st-other').hidden = !other.length;
 
 
   $('facts').innerHTML = facts.map(([k, v]) => `<dt>${k}</dt><dd>${escapeHtml(v)}</dd>`).join('');
