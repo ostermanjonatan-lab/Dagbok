@@ -2654,8 +2654,17 @@ const sortPop = $('sort-pop');
 
 function toggleSort(open) {
   sortPop.hidden = !open;
+  // Hela menyn ska synas ovanför menyraden längst ner. Rullar sidan inte tillräckligt
+  // fälls menyn ut uppåt i stället.
+  if (open) {
+    sortPop.classList.remove('up');
+    sortPop.scrollIntoView({ block: 'nearest' });
+    const nav = document.querySelector('nav');
+    const limit = (nav ? nav.getBoundingClientRect().top : innerHeight) - 8;
+    if (sortPop.getBoundingClientRect().bottom > limit) sortPop.classList.add('up');
+  }
   sortBtn.setAttribute('aria-expanded', String(open));
-  if (open) sortPop.querySelector('[aria-checked="true"]').focus();
+  if (open) sortPop.querySelector('[aria-checked="true"]').focus({ preventScroll: true });
 }
 
 sortBtn.addEventListener('click', () => toggleSort(sortPop.hidden));

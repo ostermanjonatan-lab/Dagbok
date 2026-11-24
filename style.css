@@ -2668,6 +2668,8 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .reader-card .reader-names { display: block; }
 .reader-card .reader-names > span { display: block; }
 .reader-card .reader-names .dn-mark .mk-ico { display: none; }
+.sort-pop { scroll-margin-bottom: calc(var(--nav-h, 64px) + 24px); }
+.sort-pop.up { top: auto; bottom: calc(100% + 8px); transform-origin: bottom right; }
 /* Underhållning i läsläget är samma biljett som i flödet */
 .reader-card .reader-film { display: block; margin: 14px 0 10px; }
 .reader-card .reader-film .post-film { display: flex; align-items: center; margin: 0; }
