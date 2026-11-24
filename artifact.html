@@ -6502,7 +6502,7 @@ function bigPhotos(list) {
 
 // Under sidan i läsläget: humöret som en liten skala, vädret och vem man var med
 const PEOPLE_TINTS = ['#c9826b', '#8aa37a', '#7f97b5', '#c2a35a', '#a58bb4', '#6fa3a0'];
-/* Soluppgång och solnedgång räknas ut i appen från platsen som vädret använder,
+/* Soluppgång och solnedgång räknas ut i appen,
    med samma formel som almanackor (solens övre kant vid horisonten, med ljusbrytning) */
 function sunTimes(key, lat, lon) {
   const rad = Math.PI / 180;
@@ -6522,21 +6522,13 @@ function sunTimes(key, lat, lon) {
   const at = (j) => new Date((j - 2440587.5) * 864e5);
   return { rise: at(transit - w), set: at(transit + w) };
 }
-function savedPosition() {
-  try {
-    const p = JSON.parse(localStorage.getItem(POS_KEY) || 'null');
-    return p && typeof p.lat === 'number' && typeof p.lon === 'number' ? p : null;
-  } catch {
-    return null;
-  }
-}
 const SUNRISE_ICON = '<path d="M3 18h18M7 18a5 5 0 0 1 10 0M12 4v5M9.5 6.5 12 4l2.5 2.5M4.6 12.2l1.5 1M19.4 12.2l-1.5 1"/>';
 const SUNSET_ICON = '<path d="M3 18h18M7 18a5 5 0 0 1 10 0M12 4v5M9.5 6.5 12 9l2.5-2.5M4.6 12.2l1.5 1M19.4 12.2l-1.5 1"/>';
 const TRAINING_ICON = '<path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11"/>';
+// Tiderna räknas alltid för Uppsala
+const SUN_PLACE = { lat: 59.86, lon: 17.64 };
 function sunRow(key) {
-  const pos = savedPosition();
-  if (!pos) return '';
-  const s = sunTimes(key, pos.lat, pos.lon);
+  const s = sunTimes(key, SUN_PLACE.lat, SUN_PLACE.lon);
   if (s.polar) {
     const t = s.polar === 'night' ? 'Solen går inte upp' : 'Solen går inte ner';
     return `<div class="rd-row"><svg viewBox="0 0 24 24" aria-hidden="true">${s.polar === 'night' ? SUNSET_ICON : SUNRISE_ICON}</svg><span class="rd-v">${t}</span></div>`;
