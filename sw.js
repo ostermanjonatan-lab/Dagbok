@@ -1,5 +1,5 @@
 // Höj versionen när filerna ändras så att telefonen hämtar de nya.
-const CACHE = 'dagbok-v311';
+const CACHE = 'dagbok-v312';
 const FILES = [
   './',
   'index.html',
@@ -18,7 +18,7 @@ const FILES = [
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES)));
+  event.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES.map((f) => new Request(f, { cache: 'reload' })))));
   self.skipWaiting();
 });
 
@@ -35,8 +35,13 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   // Väderanrop går direkt till nätet och sparas inte
   if (new URL(event.request.url).origin !== self.location.origin) return;
+  // no-cache: frågar alltid servern om filen har ändrats, så att webbläsarens egen cache
+  // aldrig ger en gammal version av appen
+  const req = event.request.mode === 'navigate'
+    ? fetch(event.request.url, { cache: 'no-cache', credentials: 'same-origin' })
+    : fetch(event.request, { cache: 'no-cache' });
   event.respondWith(
-    fetch(event.request)
+    req
       .then((res) => {
         const copy = res.clone();
         caches.open(CACHE).then((c) => c.put(event.request, copy));
