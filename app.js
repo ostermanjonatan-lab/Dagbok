@@ -2077,7 +2077,10 @@ function postHtml(k, e, today, searching, showMonth) {
   const yesterday = shiftKey(today, -1);
   const rel = k === today ? 'Idag' : k === yesterday ? 'Igår' : '';
   // Vilken särskild dag det är: ens eget märke och helgdagen, om det finns
-  const special = [markLabel(e), holidays(d.getFullYear())[k]].filter(Boolean).join(', ');
+  // Märkningen står som en rubrik, en helgdag som en liten rad under
+  const mark = markLabel(e);
+  const holiday = holidays(d.getFullYear())[k] || '';
+  const special = mark || holiday;
   // Humöret, vädret och personerna står på raden under texten
   const mood = e.mood ? `<span class="pf-s pf-mood" role="img" aria-label="Humör ${e.mood}" title="Humör"><span class="pf-v">${moodFace(e.mood)}${e.mood}</span></span>` : '';
   const foot = mood ? [mood] : [];
@@ -2097,7 +2100,7 @@ function postHtml(k, e, today, searching, showMonth) {
       <button type="button" class="when" aria-label="${WEEKDAY_CAP[d.getDay()]} ${shortDate(k)}${showMonth ? ` ${d.getFullYear()}` : ''}${rel ? `, ${rel.toLowerCase()}` : ''}${MARK_OF[e.mark] ? `, ${escapeHtml(markLabel(e))}` : ''}"><b>${d.getDate()}</b><span>${WEEKDAY_CAP[d.getDay()].slice(0, 3).toLowerCase()}</span>${showMonth ? `<span class="mo">${MONTH_SHORT[d.getMonth()]}<br>${d.getFullYear()}</span>` : ''}</button>
     </div>
     <div class="post-body">
-      <header class="post-head${special ? '' : ' empty'}">${special ? `<span class="special">${escapeHtml(special)}</span>` : ''}${starBtn(k)}</header>
+      <header class="post-head${special ? '' : ' empty'}">${mark ? `<span class="special mark-head">${escapeHtml(mark)}</span>` : ''}${holiday ? `<span class="special">${escapeHtml(holiday)}</span>` : ''}${starBtn(k)}</header>
       ${e.text ? `<div class="prose">${Paper.mdToHtml(e.text)}</div>` : ''}
       ${(e.media || []).map((f) => `<div class="post-film-wrap"><div class="post-film">${f.cover ? `<img src="${escapeHtml(photoUrl(f.cover))}" data-id="${escapeHtml(f.cover)}" alt="">` : ''}
         <span class="pf-text"><span class="pf-kind">${kindIcon(f.kind)}${KINDS[f.kind]}</span><span class="pf-title">${escapeHtml(f.title || 'Utan titel')}</span></span>${f.rating ? starsHtml(f.rating) : ''}</div></div>`).join('')}
@@ -2338,7 +2341,8 @@ function dayNamesHtml(key) {
 
 // Överst i läsläget: dagens märke, högtider och namnsdag
 function readerTop(key) {
-  const html = markHtml(entries[key] && entries[key].mark, 'dn-mark', entries[key] && entries[key].markText) + dayNamesHtml(key);
+  // Namnsdagen först bredvid knapparna, märkningen som rubrik under den
+  const html = dayNamesHtml(key) + markHtml(entries[key] && entries[key].mark, 'dn-mark', entries[key] && entries[key].markText);
   return html ? `<p class="reader-names">${html}</p>` : '';
 }
 
