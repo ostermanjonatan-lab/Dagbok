@@ -2587,28 +2587,28 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .stats .wx-stats { margin-top: 0; padding-top: 0; border-top: 0; }
 .stats .st-sec.wx-stats { margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--line); }
 #st-mood:first-child, .stats #st-mood { margin-top: 0; }
-/* Träning i flödet ser ut som en nummerlapp från ett lopp: vit lapp med ett färgat band
-   överst och fyra hål för säkerhetsnålar i hörnen. Minuterna står stort till höger. */
-.post-training { display: flex; flex-direction: column; gap: 8px; }
-.bib-wrap { filter: drop-shadow(0 0 .6px rgb(42 20 24 / .4)) drop-shadow(0 1.5px 1.5px rgb(42 20 24 / .12)); }
+/* Träning i flödet ser ut som en diskret nummerlapp från ett lopp: ljus lapp med ett tunt
+   band överst och fyra små hål för säkerhetsnålar i hörnen. Minuterna står till höger. */
+.post-training { display: flex; flex-direction: column; gap: 6px; }
+.bib-wrap { filter: drop-shadow(0 0 .5px rgb(42 20 24 / .3)) drop-shadow(0 1px 1px rgb(42 20 24 / .08)); }
 .bib {
-  --hole: 2.6px;
+  --hole: 2px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-height: 56px;
-  padding: 12px 18px 8px;
+  gap: 10px;
+  min-height: 44px;
+  padding: 8px 16px 6px;
   border-radius: 3px;
-  background: linear-gradient(var(--accent) 0 5px, #fdfcf9 5px);
+  background: linear-gradient(color-mix(in srgb, var(--accent) 45%, #fdfcf9) 0 3px, #fdfcf9 3px);
   -webkit-mask: radial-gradient(circle at 9px 13px, #0000 var(--hole), #000 calc(var(--hole) + .5px)) top left / 51% 51% no-repeat, radial-gradient(circle at calc(100% - 9px) 13px, #0000 var(--hole), #000 calc(var(--hole) + .5px)) top right / 51% 51% no-repeat, radial-gradient(circle at 9px calc(100% - 9px), #0000 var(--hole), #000 calc(var(--hole) + .5px)) bottom left / 51% 51% no-repeat, radial-gradient(circle at calc(100% - 9px) calc(100% - 9px), #0000 var(--hole), #000 calc(var(--hole) + .5px)) bottom right / 51% 51% no-repeat;
   mask: radial-gradient(circle at 9px 13px, #0000 var(--hole), #000 calc(var(--hole) + .5px)) top left / 51% 51% no-repeat, radial-gradient(circle at calc(100% - 9px) 13px, #0000 var(--hole), #000 calc(var(--hole) + .5px)) top right / 51% 51% no-repeat, radial-gradient(circle at 9px calc(100% - 9px), #0000 var(--hole), #000 calc(var(--hole) + .5px)) bottom left / 51% 51% no-repeat, radial-gradient(circle at calc(100% - 9px) calc(100% - 9px), #0000 var(--hole), #000 calc(var(--hole) + .5px)) bottom right / 51% 51% no-repeat;
 }
-.bib-ico svg { display: block; width: 24px; height: 24px; fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.bib-ico svg { display: block; width: 20px; height: 20px; fill: none; stroke: var(--muted); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .bib-text { display: flex; flex-direction: column; min-width: 0; flex: 1; line-height: 1.25; }
-.bib-kind { font-size: 13px; color: var(--muted); }
-.bib-title { font-size: 16px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bib-min { display: flex; flex-direction: column; align-items: center; flex: none; min-width: 44px; font-size: 12px; line-height: 1; color: var(--muted); }
-.bib-min b { font-size: 24px; font-weight: 800; letter-spacing: -.02em; color: var(--text); font-variant-numeric: tabular-nums; margin-bottom: 2px; }
+.bib-kind { display: none; }
+.bib-title { font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bib-min { display: flex; align-items: baseline; gap: 3px; flex: none; font-size: 13px; line-height: 1; color: var(--muted); }
+.bib-min b { font-size: 17px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
 .post-training + .post-stats { margin-top: 10px; }
 /* Underhållning i läsläget är samma biljett som i flödet */
 .reader-card .reader-film { display: block; margin: 4px 0 10px; }
