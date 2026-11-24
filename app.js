@@ -2483,6 +2483,7 @@ const SORTS = {
   words: { note: 'Mest skrivet i hela dagboken', keep: (e) => wordCount(e) > 0, order: (a, b) => wordCount(entries[b]) - wordCount(entries[a]) || (a < b ? 1 : -1) },
   photos: { note: 'Flest bilder i hela dagboken', keep: (e) => (e.photos || []).length > 0, order: (a, b) => entries[b].photos.length - entries[a].photos.length || (a < b ? 1 : -1) },
   starred: { note: 'Bokmärkta dagar', keep: (e) => e.star, order: (a, b) => (a < b ? 1 : -1) },
+  marked: { note: 'Märkta dagar', keep: (e) => !!MARK_OF[e.mark], order: (a, b) => (a < b ? 1 : -1) },
 };
 const PAGE = 30;
 let sortBy = 'newest';
@@ -2548,13 +2549,14 @@ function renderList() {
         : at && text ? 'Inga dagar matchar.'
         : at ? 'Inget skrivet då.'
         : sortBy === 'starred' && !lt ? 'Inga bokmärkta dagar ännu.'
+        : sortBy === 'marked' && !lt ? 'Inga märkta dagar ännu.'
         : whole ? 'Inga dagar matchar.' : `Inget skrivet i ${monthFmt.format(parseKey(calMonth + '-01'))}.`
     }</p>${whole ? '' : moreMonthHtml()}`;
     return;
   }
 
   const today = todayKey();
-  const byMonth = (whole && (sortBy === 'newest' || sortBy === 'oldest' || sortBy === 'starred')) || (!whole && !!feedFrom);
+  const byMonth = (whole && (sortBy === 'newest' || sortBy === 'oldest' || sortBy === 'starred' || sortBy === 'marked')) || (!whole && !!feedFrom);
   let html = '';
   let month = '';
   // Månaderna i flödet visas hela, sökningar en sida i taget
