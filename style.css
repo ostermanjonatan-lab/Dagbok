@@ -2813,3 +2813,24 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .post .when .mo { font-size: 9.5px; line-height: 1.15; margin-top: 1px; }
 .post.today .when b { color: var(--accent); }
 .post.today .when > span:not(.mo) { color: #fff; }
+
+/* Bokmärket som inte är valt har samma form och storlek som tygbandet, men bara som en kontur */
+.post .star-btn::after {
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  width: 16px;
+  height: 47px;
+  margin-left: -8px;
+  transform: none;
+  opacity: .7;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 47'%3E%3Cpath d='M.9 0V45.9L8 35.7l7.1 10.2V0' fill='none' stroke='black' stroke-width='1.5' stroke-linejoin='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 47'%3E%3Cpath d='M.9 0V45.9L8 35.7l7.1 10.2V0' fill='none' stroke='black' stroke-width='1.5' stroke-linejoin='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+}
+.reader .reader-card .reader-tools .star-btn::after {
+  top: 0;
+  height: 30px;
+  transform: none;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 30'%3E%3Cpath d='M.9 0V28.9L8 22.8l7.1 6.1V0' fill='none' stroke='black' stroke-width='1.5' stroke-linejoin='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 30'%3E%3Cpath d='M.9 0V28.9L8 22.8l7.1 6.1V0' fill='none' stroke='black' stroke-width='1.5' stroke-linejoin='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+}
