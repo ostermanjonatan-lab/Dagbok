@@ -2726,8 +2726,8 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 #temp-trend .gl.zero { stroke-dasharray: 3 3; }
 @media (prefers-reduced-motion: reduce) { #temp-trend .tbar { animation: none; } }
 #temp-trend .tbar.neg { transform-origin: top; }
-/* Datumet i marginalen är ett litet rivkalenderblad: ett band i bokens tyg med veckodagen,
-   två ringar som håller bladet, och dagens siffra stort på papperet under */
+/* Datumet i marginalen är ett litet rivkalenderblad: ett band i bokens tyg med veckodagen
+   och dagens siffra stort på papperet under */
 .post { grid-template-columns: 40px minmax(0, 1fr); column-gap: 14px; padding-left: 10px; }
 .post::after { left: 57px; }
 .post .when {
@@ -2748,7 +2748,7 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .post .when > span:not(.mo) {
   order: -1;
   display: block;
-  padding: 5px 0 2px;
+  padding: 3px 0 2px;
   border-radius: 4px 4px 0 0;
   background-color: var(--cloth-base);
   background-image: var(--cloth);
@@ -2759,19 +2759,6 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 }
 .post .when b { display: block; padding-top: 2px; font-size: 21px; line-height: 24px; }
 .post .when .mo { font-size: 9.5px; line-height: 1.15; margin-top: 1px; }
-/* Ringarna */
-.post .when::before, .post .when::after {
-  content: '';
-  position: absolute;
-  top: -3px;
-  width: 3px;
-  height: 7px;
-  border-radius: 2px;
-  background: #4a3b3d;
-  box-shadow: 0 0 0 1.5px #fffefb;
-}
-.post .when::before { left: 10px; }
-.post .when::after { right: 10px; }
 .post.today .when b { color: var(--accent); }
 .post.today .when > span:not(.mo) { color: #fff; }
 </style>
