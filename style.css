@@ -2777,3 +2777,52 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 #temp-trend .gl.zero { stroke-dasharray: 3 3; }
 @media (prefers-reduced-motion: reduce) { #temp-trend .tbar { animation: none; } }
 #temp-trend .tbar.neg { transform-origin: top; }
+
+/* Datumet i marginalen är ett litet rivkalenderblad: ett band i bokens tyg med veckodagen,
+   två ringar som håller bladet, och dagens siffra stort på papperet under */
+.post { grid-template-columns: 40px minmax(0, 1fr); column-gap: 14px; padding-left: 10px; }
+.post::after { left: 57px; }
+.post .when {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  width: 40px;
+  margin-top: 3px;
+  padding: 0 0 3px;
+  border-radius: 4px;
+  overflow: visible;
+  background: #fffefb;
+  box-shadow: 0 0 0 .5px rgb(42 20 24 / .22), 0 1px 2px rgb(42 20 24 / .14);
+  text-align: center;
+}
+.post .when > span:not(.mo) {
+  order: -1;
+  display: block;
+  padding: 5px 0 2px;
+  border-radius: 4px 4px 0 0;
+  background-color: var(--cloth-base);
+  background-image: var(--cloth);
+  color: #fdf3ee;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+}
+.post .when b { display: block; padding-top: 2px; font-size: 21px; line-height: 24px; }
+.post .when .mo { font-size: 9.5px; line-height: 1.15; margin-top: 1px; }
+/* Ringarna */
+.post .when::before, .post .when::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  width: 3px;
+  height: 7px;
+  border-radius: 2px;
+  background: #4a3b3d;
+  box-shadow: 0 0 0 1.5px #fffefb;
+}
+.post .when::before { left: 10px; }
+.post .when::after { right: 10px; }
+.post.today .when b { color: var(--accent); }
+.post.today .when > span:not(.mo) { color: #fff; }
