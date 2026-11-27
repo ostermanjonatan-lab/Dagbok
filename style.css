@@ -2682,6 +2682,13 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .stats .period-menu .pill[aria-checked="true"] { background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent); font-weight: 600; border: 0; }
 .stats .period-menu .ki { width: 20px; height: 20px; }
 .stats .period-menu.up { top: auto; bottom: calc(100% + 4px); }
+/* Två menyer bredvid varandra: vilken sorts period, och vilken av dem */
+.stat-pickers { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; margin: 0 0 16px; }
+.stat-pickers .period-pick { margin: 0; }
+.stat-pickers .range-pick[hidden] { display: none; }
+.range-pick .mark-cur { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; display: block; }
+.stats .range-menu { left: auto; right: 0; min-width: 240px; max-height: 340px; overflow-y: auto; }
+.stats .period-menu:not(.range-menu) { right: auto; }
 /* Underhållning i läsläget är samma biljett som i flödet */
 .reader-card .reader-film { display: block; margin: 14px 0 10px; }
 .reader-card .reader-film .post-film { display: flex; align-items: center; margin: 0; }

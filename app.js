@@ -3275,8 +3275,6 @@ try {
   if (p === 'week' || p === 'year' || p === 'all') statPeriod = p;
 } catch {}
 
-// Senaste veckan är de sju dagarna fram till och med idag
-const weekStart = () => shiftKey(todayKey(), -6);
 function weekRange(start) {
   const a = parseKey(start);
   const b = parseKey(shiftKey(start, 6));
@@ -3285,22 +3283,79 @@ function weekRange(start) {
 }
 
 
-function periodKeys(period, ym) {
+/* Vilken vecka, månad eller år statistiken gäller. 'latest' är de senaste 7 eller 30 dagarna
+   eller de senaste tolv månaderna, annars en bestämd vecka (måndagens datum), månad eller år. */
+const SEL_KEY = 'dagbok.statval';
+let statSel = { week: 'latest', month: 'latest', year: 'latest' };
+try { Object.assign(statSel, JSON.parse(localStorage.getItem(SEL_KEY) || '{}')); } catch {}
+const mondayOf = (k) => shiftKey(k, -((parseKey(k).getDay() + 6) % 7));
+// Veckonummer enligt ISO, som i svenska almanackor
+function weekNumber(k) {
+  const d = parseKey(k);
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
+  return Math.ceil(((t - Date.UTC(t.getUTCFullYear(), 0, 1)) / 864e5 + 1) / 7);
+}
+// Dagarna som Vecka och Månad visar
+function statDays() {
+  const sel = statSel[statPeriod];
+  if (statPeriod === 'week') {
+    const start = sel === 'latest' ? shiftKey(todayKey(), -6) : sel;
+    return [...Array(7)].map((_, i) => shiftKey(start, i));
+  }
+  if (sel === 'latest') return [...Array(30)].map((_, i) => shiftKey(todayKey(), i - 29));
+  const [y, m] = sel.split('-').map(Number);
+  return [...Array(new Date(y, m, 0).getDate())].map((_, i) => `${sel}-${pad(i + 1)}`);
+}
+// Månaderna som År visar
+function statMonths() {
+  const sel = statSel.year;
+  if (sel === 'latest') return [...Array(12)].map((_, i) => shiftYm(todayKey().slice(0, 7), i - 11));
+  return [...Array(12)].map((_, i) => `${sel}-${pad(i + 1)}`);
+}
+function periodKeys(period) {
   const all = Object.keys(entries).sort();
   if (period === 'all') return all;
-  if (period === 'week') return all.filter((k) => k >= weekStart() && k <= todayKey());
-  if (period === 'year') return all.filter((k) => k.slice(0, 4) === ym.slice(0, 4));
-  return all.filter((k) => k.slice(0, 7) === ym);
+  if (period === 'year') {
+    const ms = new Set(statMonths());
+    return all.filter((k) => ms.has(k.slice(0, 7)));
+  }
+  const days = statDays();
+  return all.filter((k) => k >= days[0] && k <= days[days.length - 1]);
+}
+// Namnet på det som är valt, i menyn och i diagrammens rubriker
+function selLabel(period, sel) {
+  if (sel === 'latest') return { week: 'Senaste 7 dagarna', month: 'Senaste 30 dagarna', year: 'Senaste 12 månaderna' }[period];
+  if (period === 'week') {
+    const y = parseKey(sel).getFullYear();
+    return `Vecka ${weekNumber(sel)}, ${weekRange(sel)}${String(y) !== todayKey().slice(0, 4) ? ` ${y}` : ''}`;
+  }
+  if (period === 'month') return cap(monthFmt.format(parseKey(sel + '-01')));
+  return sel;
+}
+// Valen i menyn: det senaste först, sedan varje vecka, månad eller år som har inlägg, nyast först
+function selOptions(period) {
+  const keys = Object.keys(entries).sort().reverse();
+  const of = period === 'week' ? mondayOf : period === 'month' ? (k) => k.slice(0, 7) : (k) => k.slice(0, 4);
+  return ['latest', ...new Set(keys.map(of))];
+}
+function renderSelMenu() {
+  const show = statPeriod !== 'all';
+  $('range-pick').hidden = !show;
+  if (!show) return;
+  const opts = selOptions(statPeriod);
+  if (!opts.includes(statSel[statPeriod])) statSel[statPeriod] = 'latest';
+  const cur = statSel[statPeriod];
+  $('range-cur').textContent = selLabel(statPeriod, cur);
+  $('stat-range').innerHTML = opts.map((o) => `<button type="button" class="pill" role="radio" data-sel="${o}" aria-checked="${o === cur}">${escapeHtml(selLabel(statPeriod, o))}</button>`).join('');
 }
 
 const moodsOf = (keys) => keys.map((k) => entries[k].mood).filter(Boolean);
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 function renderStats() {
-  const ym = calMonth;
-  const year = ym.slice(0, 4);
-  const keys = periodKeys(statPeriod, ym);
-  const monthName = monthFmt.format(parseKey(ym + '-01'));
+  renderSelMenu();
+  const keys = periodKeys(statPeriod);
 
   document.querySelectorAll('#stat-period .pill').forEach((b) => {
     b.setAttribute('aria-checked', String(b.dataset.period === statPeriod));
@@ -3310,9 +3365,13 @@ function renderStats() {
   const curBtn = document.querySelector(`#stat-period [data-period="${statPeriod}"]`);
   $('period-cur').innerHTML = curBtn ? curBtn.innerHTML : '';
 
-  // Perioden syns redan i valet och i kalendern, bara veckans datum behöver stå ut
-  $('month-stats-title').hidden = statPeriod !== 'week';
-  $('month-stats-title').textContent = statPeriod === 'week' ? weekRange(weekStart()) : '';
+  // Datumen står ut när det senaste är valt, annars syns perioden redan i valet
+  const latestDays = (statPeriod === 'week' || statPeriod === 'month') && statSel[statPeriod] === 'latest';
+  $('month-stats-title').hidden = !latestDays;
+  if (latestDays) {
+    const d = statDays();
+    $('month-stats-title').textContent = statPeriod === 'week' ? weekRange(d[0]) : `${shortDate(d[0])}–${shortDate(d[d.length - 1])}`;
+  }
 
   $('stats-body').hidden = !keys.length;
   $('stats-empty').hidden = !!keys.length;
@@ -3583,10 +3642,8 @@ function renderTempDays(data) {
 function renderTempTrend() {
   const tempOf = (k) => (entries[k] && entries[k].weather && entries[k].weather.temp != null ? entries[k].weather.temp : null);
   if (statPeriod === 'week' || statPeriod === 'month') {
-    const days = statPeriod === 'week'
-      ? [...Array(7)].map((_, i) => shiftKey(weekStart(), i))
-      : [...Array(new Date(...calMonth.split('-').map(Number), 0).getDate())].map((_, i) => `${calMonth}-${pad(i + 1)}`);
-    const data = days.map((k, i) => ({ v: tempOf(k), label: statPeriod === 'week' ? weekdayFmt.format(parseKey(k)).slice(0, 3) : (i === 0 || (i + 1) % 5 === 0 ? String(i + 1) : ''), name: shortDate(k) }));
+    const days = statDays();
+    const data = days.map((k, i) => ({ v: tempOf(k), label: dayLabel(k, i), name: shortDate(k) }));
     $('temp-title').textContent = 'Temperatur per dag';
     renderTempDays(data);
     return;
@@ -3628,10 +3685,7 @@ function renderTempTrend() {
 
 // Månaderna i diagrammet: senaste tolv, årets tolv eller alla sedan första inlägget
 function trendMonths() {
-  if (statPeriod === 'year') {
-    const y = calMonth.slice(0, 4);
-    return [...Array(12)].map((_, i) => `${y}-${pad(i + 1)}`);
-  }
+  if (statPeriod === 'year') return statMonths();
   if (statPeriod === 'all') {
     const first = Object.keys(entries).sort()[0];
     const end = todayKey().slice(0, 7);
@@ -3641,30 +3695,24 @@ function trendMonths() {
     return out;
   }
   const out = [];
-  for (let i = 11; i >= 0; i--) out.push(shiftYm(calMonth, -i));
+  for (let i = 11; i >= 0; i--) out.push(shiftYm(todayKey().slice(0, 7), -i));
   return out;
 }
 
 // Staplarna i diagrammet: dagar för Vecka och Månad, månader för År och Totalt
 let trendItems = {};
 let trendCur = '';
+// Veckodagen under veckans staplar, annars datumet under den första och var femte dag
+function dayLabel(k, i) {
+  if (statPeriod === 'week') return weekdayFmt.format(parseKey(k)).slice(0, 3);
+  const d = parseKey(k).getDate();
+  return i === 0 || d % 5 === 0 ? String(d) : '';
+}
 function trendBuckets() {
-  if (statPeriod === 'week') {
-    return [...Array(7)].map((_, i) => {
-      const k = shiftKey(weekStart(), i);
+  if (statPeriod === 'week' || statPeriod === 'month') {
+    return statDays().map((k, i) => {
       const e = entries[k];
-      const label = weekdayFmt.format(parseKey(k)).slice(0, 3);
-      return { id: k, ms: e && e.mood ? [e.mood] : [], label, name: shortDate(k), day: true };
-    });
-  }
-  if (statPeriod === 'month') {
-    const [y, m] = calMonth.split('-').map(Number);
-    return [...Array(new Date(y, m, 0).getDate())].map((_, i) => {
-      const k = `${calMonth}-${pad(i + 1)}`;
-      const e = entries[k];
-      // Datum under den första och var femte dag, annars blir det trångt
-      const label = i === 0 || (i + 1) % 5 === 0 ? String(i + 1) : '';
-      return { id: k, ms: e && e.mood ? [e.mood] : [], label, name: shortDate(k), day: true, future: k > todayKey() };
+      return { id: k, ms: e && e.mood ? [e.mood] : [], label: dayLabel(k, i), name: shortDate(k), day: true, future: k > todayKey() };
     });
   }
   if (statPeriod === 'all') {
@@ -3681,13 +3729,11 @@ function trendBuckets() {
 }
 
 function renderTrend() {
-  $('trend-title').textContent = statPeriod === 'year' ? `Snitthumör per månad ${calMonth.slice(0, 4)}`
-    : statPeriod === 'all' ? 'Snitthumör per år'
-      : statPeriod === 'week' ? 'Humör per dag, senaste veckan'
-        : `Humör per dag, ${monthFmt.format(parseKey(calMonth + '-01'))}`;
+  $('trend-title').textContent = statPeriod === 'all' ? 'Snitthumör per år'
+    : `${statPeriod === 'year' ? 'Snitthumör per månad' : 'Humör per dag'}, ${selLabel(statPeriod, statSel[statPeriod]).toLowerCase()}`;
   const data = trendBuckets().map((d) => ({ ...d, avg: d.ms.length ? avg(d.ms) : null }));
   trendItems = Object.fromEntries(data.map((d) => [d.id, d]));
-  trendCur = statPeriod === 'week' || statPeriod === 'month' ? todayKey() : statPeriod === 'all' ? todayKey().slice(0, 4) : calMonth;
+  trendCur = statPeriod === 'week' || statPeriod === 'month' ? todayKey() : statPeriod === 'all' ? todayKey().slice(0, 4) : todayKey().slice(0, 7);
   const n = data.length;
   // Staplar för alla perioder, Totalt har ett år per stapel
   const bars = true;
@@ -3782,6 +3828,45 @@ document.querySelectorAll('#stat-period .pill').forEach((b) => {
     periodMenu(false);
     $('period-btn').focus();
   });
+});
+// Andra menyn: vilken vecka, månad eller år, eller det senaste
+function rangeMenu(open) {
+  const menu = $('stat-range');
+  menu.hidden = !open;
+  $('range-btn').setAttribute('aria-expanded', String(open));
+  if (!open) return;
+  menu.classList.remove('up');
+  menu.querySelector('[aria-checked="true"]')?.focus({ preventScroll: true });
+  menu.scrollIntoView({ block: 'nearest' });
+  const nav = document.querySelector('nav');
+  if (menu.getBoundingClientRect().bottom > (nav ? nav.getBoundingClientRect().top : innerHeight) - 8) menu.classList.add('up');
+}
+$('range-btn').addEventListener('click', () => rangeMenu($('stat-range').hidden));
+document.addEventListener('click', (ev) => {
+  if (!$('stat-range').hidden && !ev.target.closest('#range-pick')) rangeMenu(false);
+});
+$('stat-range').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-sel]');
+  if (!b) return;
+  statSel[statPeriod] = b.dataset.sel;
+  try { localStorage.setItem(SEL_KEY, JSON.stringify(statSel)); } catch {}
+  rangeMenu(false);
+  renderStats();
+  $('range-btn').focus();
+});
+$('range-pick').addEventListener('keydown', (ev) => {
+  if ($('stat-range').hidden) return;
+  if (ev.key === 'Escape') {
+    ev.stopPropagation();
+    rangeMenu(false);
+    $('range-btn').focus();
+  }
+  if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+    ev.preventDefault();
+    const items = [...$('stat-range').querySelectorAll('.pill')];
+    const i = items.indexOf(document.activeElement);
+    items[(i + (ev.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus();
+  }
 });
 $('period-pick').addEventListener('keydown', (ev) => {
   if ($('stat-period').hidden) return;
