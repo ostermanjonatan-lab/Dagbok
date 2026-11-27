@@ -3306,6 +3306,9 @@ function renderStats() {
     b.setAttribute('aria-checked', String(b.dataset.period === statPeriod));
     b.tabIndex = b.dataset.period === statPeriod ? 0 : -1;
   });
+  // Fältet visar vald period med samma ikon som i menyn
+  const curBtn = document.querySelector(`#stat-period [data-period="${statPeriod}"]`);
+  $('period-cur').innerHTML = curBtn ? curBtn.innerHTML : '';
 
   // Perioden syns redan i valet och i kalendern, bara veckans datum behöver stå ut
   $('month-stats-title').hidden = statPeriod !== 'week';
@@ -3755,17 +3758,44 @@ function choosePeriod(p) {
   renderStats();
 }
 
-document.querySelectorAll('#stat-period .pill').forEach((b) => {
-  b.addEventListener('click', () => choosePeriod(b.dataset.period));
+// Perioden väljs i en meny som fälls ut, som Märk dagen
+function periodMenu(open) {
+  $('stat-period').hidden = !open;
+  $('period-btn').setAttribute('aria-expanded', String(open));
+  if (open) {
+    $('stat-period').querySelector('[aria-checked="true"]')?.focus({ preventScroll: true });
+    const menu = $('stat-period');
+    menu.classList.remove('up');
+    menu.scrollIntoView({ block: 'nearest' });
+    // Rullar sidan inte tillräckligt fälls menyn ut uppåt i stället
+    const nav = document.querySelector('nav');
+    if (menu.getBoundingClientRect().bottom > (nav ? nav.getBoundingClientRect().top : innerHeight) - 8) menu.classList.add('up');
+  }
+}
+$('period-btn').addEventListener('click', () => periodMenu($('stat-period').hidden));
+document.addEventListener('click', (ev) => {
+  if (!$('stat-period').hidden && !ev.target.closest('#period-pick')) periodMenu(false);
 });
-$('stat-period').addEventListener('keydown', (ev) => {
-  const order = ['week', 'month', 'year', 'all'];
-  const step = { ArrowRight: 1, ArrowLeft: -1 }[ev.key];
-  if (!step) return;
-  ev.preventDefault();
-  const next = order[(order.indexOf(statPeriod) + step + order.length) % order.length];
-  choosePeriod(next);
-  document.querySelector(`#stat-period [data-period="${next}"]`).focus();
+document.querySelectorAll('#stat-period .pill').forEach((b) => {
+  b.addEventListener('click', () => {
+    choosePeriod(b.dataset.period);
+    periodMenu(false);
+    $('period-btn').focus();
+  });
+});
+$('period-pick').addEventListener('keydown', (ev) => {
+  if ($('stat-period').hidden) return;
+  if (ev.key === 'Escape') {
+    ev.stopPropagation();
+    periodMenu(false);
+    $('period-btn').focus();
+  }
+  if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+    ev.preventDefault();
+    const items = [...$('stat-period').querySelectorAll('.pill')];
+    const i = items.indexOf(document.activeElement);
+    items[(i + (ev.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus();
+  }
 });
 
 function trendRead(id) {

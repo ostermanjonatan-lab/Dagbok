@@ -2670,6 +2670,18 @@ button.pf-s { padding: 0; border: 0; background: none; font: inherit; color: inh
 .reader-card .reader-names .dn-mark .mk-ico { display: none; }
 .sort-pop { scroll-margin-bottom: calc(var(--nav-h, 64px) + 24px); }
 .sort-pop.up { top: auto; bottom: calc(100% + 8px); transform-origin: bottom right; }
+/* Periodval i statistiken: ett fält som fäller ut en meny, som Märk dagen */
+.period-pick { position: relative; margin: 0 0 16px; }
+.period-pick .mark-cur .ki { width: 20px; height: 20px; color: var(--accent); }
+.period-pick .mark-cur .ki-o { display: none; }
+.period-pick .mark-cur .ki-f { display: block; }
+.stats .period-menu { right: 0; display: flex; margin: 0; scroll-margin-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 16px); }
+.stats .period-menu[hidden] { display: none; }
+.stats .period-menu .pill, .stats .period-menu .pill:hover { display: flex; align-items: center; flex: none; justify-content: flex-start; gap: 10px; width: 100%; margin: 0; padding: 10px 12px; border: 0; border-radius: 8px; background: none; color: var(--text); font-size: 16px; text-align: left; }
+.stats .period-menu .pill:hover, .stats .period-menu .pill:focus-visible { background: color-mix(in srgb, var(--line) 55%, transparent); outline: none; }
+.stats .period-menu .pill[aria-checked="true"] { background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent); font-weight: 600; border: 0; }
+.stats .period-menu .ki { width: 20px; height: 20px; }
+.stats .period-menu.up { top: auto; bottom: calc(100% + 4px); }
 /* Underhållning i läsläget är samma biljett som i flödet */
 .reader-card .reader-film { display: block; margin: 14px 0 10px; }
 .reader-card .reader-film .post-film { display: flex; align-items: center; margin: 0; }
